@@ -1,0 +1,5 @@
+Icons to be created:
+
+Tree View
+Delete Element -> Red X
+Toggle Vis Element -> Eye open/closed
