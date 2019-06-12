@@ -24,6 +24,7 @@ from DirectGuiDesignerProperties import DirectGuiDesignerProperties
 from DirectGuiDesignerStructure import DirectGuiDesignerStructure
 from DirectGuiDesignerExporterPy import DirectGuiDesignerExporterPy
 from DirectGuiDesignerExporterProject import DirectGuiDesignerExporterProject
+from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
 from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
 from DirectGuiDesignerTooltip import Tooltip
 
@@ -33,6 +34,7 @@ loadPrcFileData(
     """
     win-size 1280 720
     textures-power-2 none
+    show-frame-rate-meter #t
     """)
 
 class DirectGuiDesigner(ShowBase):
@@ -53,6 +55,9 @@ class DirectGuiDesigner(ShowBase):
         self.rightEdge = self.screenWidth * (1.0 / 3.0)
 
         self.tt = Tooltip()
+
+        self.dlgHelp = None
+        self.dlgQuit = None
 
         # 3/4 wide editor content frame
         color = (
@@ -84,7 +89,7 @@ class DirectGuiDesigner(ShowBase):
             horizontalScroll_decButton_frameColor=color,
             horizontalScroll_resizeThumb=True,
             parent=base.a2dLeftCenter)
-        self.grid = DirectGrid(gridSize=4.0, gridSpacing=0.05,parent=self.visualEditor.getCanvas())
+        self.grid = DirectGrid(gridSize=50.0, gridSpacing=0.05,parent=self.visualEditor.getCanvas())
         self.grid.setP(90)
         self.grid.snapMarker.hide()
 
@@ -121,7 +126,7 @@ class DirectGuiDesigner(ShowBase):
         self.propertiesEditor(self.visualEditorInfo)
         self.nextToolFrameY -= self.toolFrameHeight-0.02
 
-        self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.elementDict)
+        self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.elementDict, self.selectedElement)
 
         self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.visualEditor)
 
@@ -297,7 +302,7 @@ class DirectGuiDesigner(ShowBase):
         btn.bind(DGG.EXIT, self.tt.hide)
 
     def __refreshStructureTree(self):
-        self.structureFrame.refreshStructureTree(self.elementDict)
+        self.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
 
     def __setupToolboxFrame(self):
         self.toolboxHeader = DirectLabel(
@@ -422,13 +427,14 @@ class DirectGuiDesigner(ShowBase):
             if type(elementInfo) is tuple:
                 if self.selectedElement is not None and self.selectedElement.elementType == "DirectScrolledList":
                     self.selectedElement.element.addItem(elementInfo[0].element)
-                    elementInfo.parentElement = self.selectedElement.element
                 for entry in elementInfo:
+                    entry.parentElement = self.selectedElement
                     self.elementDict[entry.element.guiId] = entry
             else:
-                if self.selectedElement is not None and self.selectedElement.elementType == "DirectScrolledList":
-                    self.selectedElement.element.addItem(elementInfo.element)
-                    elementInfo.parentElement = self.selectedElement.element
+                if self.selectedElement is not None:
+                    elementInfo.parentElement = self.selectedElement
+                    if self.selectedElement.elementType == "DirectScrolledList":
+                        self.selectedElement.element.addItem(elementInfo.element)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
             base.messenger.send("refreshStructureTree")
 
@@ -448,11 +454,13 @@ class DirectGuiDesigner(ShowBase):
         if elementInfo.element is self.visualEditor:
             # we don't need to select the editor itself
             self.selectedElement = None
+            base.messenger.send("refreshStructureTree")
             return
         if elementInfo.element is None:
             return
         self.selectedElement = elementInfo
         elementInfo.element.setColorScale(1,1,0,1)
+        base.messenger.send("refreshStructureTree")
 
     def dragEditorFrame(self, dragEnabled):
         taskMgr.remove("dragEditorFrameTask")
@@ -560,16 +568,10 @@ class DirectGuiDesigner(ShowBase):
 
     def toggleElementVisibility(self, element=None):
         workOn = None
-        selectEditor = False
         if element is not None:
             workOn = element
-            if self.selectedElement is not None and element == self.selectedElement.element:
-                selectEditor = True
-                self.selectedElement = None
         elif self.selectedElement is not None:
-            selectEditor = True
             workOn = self.selectedElement.element
-            self.selectedElement = None
         else:
             return
 
@@ -577,6 +579,7 @@ class DirectGuiDesigner(ShowBase):
             workOn.show()
         else:
             workOn.hide()
+        base.messenger.send("refreshStructureTree")
 
     def __findFirstGUIElement(self, root):
         if hasattr(root, "getParent"):
@@ -597,9 +600,9 @@ class DirectGuiDesigner(ShowBase):
         else:
             parentElement = None
             if parent.getName() in self.elementDict.keys():
-                parentElement = self.elementDict[parent.getName()].element
+                parentElement = self.elementDict[parent.getName()]
             elif len(parent.getName().split("-")) > 1 and parent.getName().split("-")[1] in self.elementDict.keys():
-                parentElement = self.elementDict[parent.getName().split("-")[1]].element
+                parentElement = self.elementDict[parent.getName().split("-")[1]]
             else:
                 # check if we can find an element as parent of the current NP
                 # This happens for elements that have a canvas or other sub NPs
@@ -608,6 +611,18 @@ class DirectGuiDesigner(ShowBase):
 
     def toggleGrid(self, enable):
         if enable:
+            '''
+            width = self.visualEditor["canvasSize"][1] - self.visualEditor["canvasSize"][0]
+            height = self.visualEditor["canvasSize"][3] - self.visualEditor["canvasSize"][2]
+
+            print(width)
+            print(height)
+
+            gridSize = max(width, height)
+            self.grid.gridSize = gridSize
+            self.grid.setPos(width/2, 0, height/2)
+            self.grid.updateGrid()
+            '''
             self.grid.show()
             self.snapToGrid = True
         else:
@@ -630,11 +645,13 @@ class DirectGuiDesigner(ShowBase):
         DirectGuiDesignerExporterPy(self.elementDict, self.visualEditor)
 
     def load(self):
-        DirectGuiDesignerLoaderPy(self.visualEditor)
+        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler)
+        self.elementDict = projectLoader.get()
 
     def hideHelp(self, args):
         self.dlgHelp.destroy()
         self.dlgHelpShadow.destroy()
+        self.dlgHelp = None
 
     def __quit(self, selection):
         if selection == 1:
@@ -642,8 +659,10 @@ class DirectGuiDesigner(ShowBase):
         else:
             self.dlgQuit.destroy()
             self.dlgQuitShadow.destroy()
+            self.dlgQuit = None
 
     def quitApp(self):
+        if self.dlgQuit is not None: return
         self.dlgQuit = OkCancelDialog(
             text="Really Quit?",
             state=DGG.NORMAL,
@@ -660,6 +679,8 @@ class DirectGuiDesigner(ShowBase):
             frameSize=self.dlgQuit.bounds)
 
     def showHelp(self):
+        if self.dlgHelp is not None: return
+
         text="""~~~Direct GUI Visual Editor Help~~~
 
 LMB - Select an element / Press and drag to move element around

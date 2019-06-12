@@ -12,9 +12,10 @@ from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectCheckBox import DirectCheckBox
 
 class DirectGuiDesignerStructure():
-    def __init__(self, parent, posZ, height, visualEditor, elementDict):
+    def __init__(self, parent, posZ, height, visualEditor, elementDict, selectedElement):
         DirectLabel(
             text="Structure",
             text_scale=0.05,
@@ -56,10 +57,11 @@ class DirectGuiDesignerStructure():
         self.maxWidth = parent["frameSize"][1]-0.04
         self.structureFrame.reparentTo(parent)
         self.visualEditor = visualEditor
-        self.refreshStructureTree(elementDict)
+        self.refreshStructureTree(elementDict, selectedElement)
 
-    def refreshStructureTree(self, elementDict):
+    def refreshStructureTree(self, elementDict, selectedElement):
         self.elementDict = elementDict
+        self.selectedElement = selectedElement
         for element in self.structureFrame.getCanvas().getChildren():
             element.removeNode()
 
@@ -106,24 +108,36 @@ class DirectGuiDesignerStructure():
                 command=self.__selectElement,
                 extraArgs=[elementInfo],
                 parent=self.structureFrame.getCanvas())
+            if self.selectedElement is not None and self.selectedElement == elementInfo:
+                btn.setColorScale(1,1,0,1)
+
             btnX = DirectButton(
-                text="X",
-                text_align=TextNode.ALeft,
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 0.01, 0, z),
+                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 0.035, 0, z+0.01),
+                frameSize=(-0.5, 0.5, -0.5, 0.5),
+                frameColor=(0,0,0,0),
                 scale=0.05,
                 command=self.__removeElement,
                 extraArgs=[elementInfo],
+                image="icons/DeleteSmall.png",
+                image_scale=0.5,
                 parent=self.structureFrame.getCanvas())
-            btnV = DirectButton(
-                text="V",
-                text_align=TextNode.ALeft,
+            btnX.setTransparency(True)
+            btnV = DirectCheckBox(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + btnX.bounds[1]*btnX.getScale()[0] + 0.02, 0, z),
+                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 1*btnX.getScale()[0] + 0.04, 0, z+0.01),
+                frameSize=(-0.5, 0.5, -0.5, 0.5),
+                frameColor=(0,0,0,0),
                 scale=0.05,
                 command=self.__toggleElementVisibility,
                 extraArgs=[elementInfo],
+                image="icons/VisibilityOffSmall.png" if elementInfo.element.isHidden() else "icons/VisibilityOnSmall.png",
+                uncheckedImage="icons/VisibilityOffSmall.png",
+                checkedImage="icons/VisibilityOnSmall.png",
+                image_scale=0.5,
+                isChecked=not elementInfo.element.isHidden(),
                 parent=self.structureFrame.getCanvas())
+            btnV.setTransparency(True)
             self.maxWidth = max(self.maxWidth, btnV.getX() + (btnV.bounds[1] - btnV.bounds[0])*btnV.getScale().x + 0.04)
 
     def __selectElement(self, elementInfo, args=None):
@@ -134,6 +148,6 @@ class DirectGuiDesignerStructure():
         if elementInfo is not None:
             base.messenger.send("removeElement", [elementInfo.element])
 
-    def __toggleElementVisibility(self, elementInfo):
+    def __toggleElementVisibility(self, toggle, elementInfo):
         if elementInfo is not None:
             base.messenger.send("toggleElementVisibility", [elementInfo.element])

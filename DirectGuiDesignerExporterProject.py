@@ -10,6 +10,7 @@ import os
 import json
 
 from direct.gui import DirectGuiGlobals as DGG
+from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
 
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
@@ -24,16 +25,26 @@ class DirectGuiDesignerExporterProject:
     def save(self, doSave):
         if doSave:
             self.dlgOverwrite = None
+            self.dlgOverwriteShadow = None
             path = self.dlgPathSelect.getPath()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
             if os.path.exists(path):
                 self.dlgOverwrite = YesNoDialog(
                     text="File already Exist.\nOverwrite?",
-                    relief=1,
+                    relief=DGG.RIDGE,
+                    frameColor=(1,1,1,1),
                     frameSize=(-0.5,0.5,-0.3,0.2),
+                    sortOrder=1,
+                    button_relief=DGG.FLAT,
+                    button_frameColor=(0.8, 0.8, 0.8, 1),
                     command=self.__executeSave,
                     extraArgs=[path])
+                self.dlgOverwriteShadow = DirectFrame(
+                    pos=(0.025, 0, -0.025),
+                    sortOrder=0,
+                    frameColor=(0,0,0,0.5),
+                    frameSize=self.dlgOverwrite.bounds)
             else:
                 self.__executeSave(True, path)
         self.dlgPathSelect.destroy()
@@ -41,23 +52,27 @@ class DirectGuiDesignerExporterProject:
 
     def __executeSave(self, overwrite, path):
         if self.dlgOverwrite is not None: self.dlgOverwrite.destroy()
+        if self.dlgOverwriteShadow is not None: self.dlgOverwriteShadow.destroy()
         if not overwrite: return
 
-        jsonElements = []
+        jsonElements = {}
         for name, elementInfo in self.guiElementsDict.items():
-            jsonElements.append(self.__createJSONEntry(name, elementInfo))
+            jsonElements[name] = self.__createJSONEntry(elementInfo)
 
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)
 
-    def __createJSONEntry(self, name, elementInfo):
+    def __createJSONEntry(self, elementInfo):
         return {
-            name: {
                 "element":self.__writeElement(elementInfo),
                 "elementType":elementInfo.elementType,
-                "parentElement":elementInfo.parentElement,
+                "parentElement":self.__writeParent(elementInfo.parentElement),
                 "extraDefinitions":elementInfo.extraDefinitions,
-            }}
+            }
+
+    def __writeParent(self, parent):
+        if parent is None: return "root"
+        return parent.element.guiId
 
     def __writeElement(self, elementInfo):
         element = elementInfo.element
@@ -69,9 +84,27 @@ class DirectGuiDesignerExporterProject:
                     elementJson[option[DGG._OPT_DEFAULT]] = element[option[DGG._OPT_DEFAULT]]
             else:
                 funcName = "get{}{}".format(option[DGG._OPT_DEFAULT][0].upper(), option[DGG._OPT_DEFAULT][1:])
+                propName = "{}".format(option[DGG._OPT_DEFAULT])
                 print(funcName)
                 if hasattr(element, funcName):
-                    elementJson[option[0]] = str(getattr(element, funcName)())
+                    print("Call:", funcName)
+                    value = getattr(element, funcName)()
+                    if option[DGG._OPT_VALUE] != value:
+                        elementJson[option[0]] = str(value)
+                elif hasattr(element, propName):
+                    print("Property:", propName)
+                    if not callable(type(getattr(element, propName))):
+                        print("GOOD")
+                        # TODO: Check if we ever get here at al
+                        value = getattr(element, propName)
+                        if option[DGG._OPT_VALUE] != value:
+                            elementJson[option[0]] = str(value)
+                else:
+                    try:
+                        if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
+                            elementJson[option[DGG._OPT_DEFAULT]] = element[option[DGG._OPT_DEFAULT]]
+                    except:
+                        print("Can't write:", option[DGG._OPT_DEFAULT])
 
 
         print(elementJson)

@@ -16,9 +16,9 @@
    id="svg8"
    inkscape:version="0.92.4 (33fec40, 2019-01-16)"
    sodipodi:docname="New.svg"
-   inkscape:export-filename="/home/fireclaw/Schreibtisch/New.png"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96">
+   inkscape:export-filename="./New.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -29,8 +29,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="6.1798186"
-     inkscape:cx="7.0170862"
-     inkscape:cy="22.504098"
+     inkscape:cx="7.5834457"
+     inkscape:cy="26.064073"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -49,7 +49,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

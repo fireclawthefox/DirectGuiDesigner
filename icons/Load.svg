@@ -16,9 +16,9 @@
    id="svg837"
    inkscape:version="0.92.4 (33fec40, 2019-01-16)"
    sodipodi:docname="Load.svg"
-   inkscape:export-filename="/home/fireclaw/workspace/DirectGuiDesigner/icons/Load.png"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96">
+   inkscape:export-filename="./Load.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192">
   <defs
      id="defs831" />
   <sodipodi:namedview
@@ -29,8 +29,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="11.2"
-     inkscape:cx="15.500155"
-     inkscape:cy="25.783364"
+     inkscape:cx="18.937655"
+     inkscape:cy="26.229793"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -50,7 +50,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>

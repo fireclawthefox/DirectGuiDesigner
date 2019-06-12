@@ -16,9 +16,9 @@
    id="svg8"
    inkscape:version="0.92.4 (33fec40, 2019-01-16)"
    sodipodi:docname="Help.svg"
-   inkscape:export-filename="/home/fireclaw/workspace/DirectGuiDesigner/icons/Help.png"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96">
+   inkscape:export-filename="./Help.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -29,8 +29,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="5.6"
-     inkscape:cx="28.549581"
-     inkscape:cy="15.425297"
+     inkscape:cx="23.103153"
+     inkscape:cy="25.78244"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"

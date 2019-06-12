@@ -7,6 +7,8 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
 import os
+from direct.gui import DirectGuiGlobals as DGG
+from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
 
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
@@ -73,16 +75,26 @@ app.run()"""
     def save(self, doSave):
         if doSave:
             self.dlgOverwrite = None
+            self.dlgOverwriteShadow = None
             path = self.dlgPathSelect.getPath()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
             if os.path.exists(path):
                 self.dlgOverwrite = YesNoDialog(
                     text="File already Exist.\nOverwrite?",
-                    relief=1,
+                    relief=DGG.RIDGE,
+                    frameColor=(1,1,1,1),
                     frameSize=(-0.5,0.5,-0.3,0.2),
+                    sortOrder=1,
+                    button_relief=DGG.FLAT,
+                    button_frameColor=(0.8, 0.8, 0.8, 1),
                     command=self.__executeSave,
                     extraArgs=[path])
+                self.dlgOverwriteShadow = DirectFrame(
+                    pos=(0.025, 0, -0.025),
+                    sortOrder=0,
+                    frameColor=(0,0,0,0.5),
+                    frameSize=self.dlgOverwrite.bounds)
             else:
                 self.__executeSave(True, path)
         self.dlgPathSelect.destroy()
@@ -90,6 +102,7 @@ app.run()"""
 
     def __executeSave(self, overwrite, path):
         if self.dlgOverwrite is not None: self.dlgOverwrite.destroy()
+        if self.dlgOverwriteShadow is not None: self.dlgOverwriteShadow.destroy()
         if not overwrite: return
         with open(path, 'w') as outfile:
             outfile.write(self.content)
@@ -118,7 +131,7 @@ app.run()"""
     def __getDefaultProperties(self, elementInfo):
         pText = ""
         if elementInfo.parentElement is not None:
-            pText = "            parent=self.{},".format(elementInfo.parentElement.guiId.replace("-",""))
+            pText = "            parent=self.{},".format(elementInfo.parentElement.element.guiId.replace("-",""))
         else:
             pText = "            parent=rootParent,"
         element = elementInfo.element

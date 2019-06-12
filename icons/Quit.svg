@@ -16,9 +16,9 @@
    id="svg8"
    inkscape:version="0.92.4 (33fec40, 2019-01-16)"
    sodipodi:docname="Quit.svg"
-   inkscape:export-filename="/home/fireclaw/workspace/DirectGuiDesigner/icons/Quit.png"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96">
+   inkscape:export-filename="./Quit.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -29,8 +29,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="7.9195959"
-     inkscape:cx="-17.523983"
-     inkscape:cy="16.756397"
+     inkscape:cx="8.3611759"
+     inkscape:cy="21.554622"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"

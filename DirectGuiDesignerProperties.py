@@ -38,6 +38,7 @@ class DirectGuiDesignerProperties():
         "text_pos":False, # base3
         "text_fg":False, # base4
         "image":False, # text
+        "sortOrder":False, # int
 
         # Entry specific
         "initialText":False, # text
@@ -152,7 +153,7 @@ class DirectGuiDesignerProperties():
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
-        trueValues = ["parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale"]
+        trueValues = ["parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder"]
         for value in trueValues:
             self.propertyList[value] = True
 
@@ -224,6 +225,11 @@ class DirectGuiDesignerProperties():
             self.startPos.setZ(self.startPos.getZ() - 0.065)
             self.frameSize += 0.13
         if self.propertyList["frameColor"]:
+            '''if element["numStates"] > 1:
+                for state in range(element["numStates"]):
+                    self.__createBase4Input("Background Color {} (r/g/b/a)".format(state), self.startPos, propFrame, element, "frameColor")
+                    self.moveNext()
+            else:'''
             self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
             self.moveNext()
         if self.propertyList["canvasSize"]:
@@ -246,6 +252,9 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["image"]:
             self.__createImageProperty(self.startPos, propFrame, element)
+            self.moveNext()
+        if self.propertyList["sortOrder"]:
+            self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
             self.moveNext()
 
         # Entry specific
@@ -354,6 +363,16 @@ class DirectGuiDesignerProperties():
             pos=(0,0,z),
             parent=parent)
 
+    def __createPropertyHeader(self, description, z, parent):
+        DirectLabel(
+            text=description,
+            text_scale=0.05,
+            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
+            text_align=TextNode.ALeft,
+            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
+            frameColor=VBase4(0.85,0.85,0.85,1),
+            pos=(0,0,z),
+            parent=parent)
 
     def __getFormated(self, value):
         if type(value) is int:
@@ -425,15 +444,7 @@ class DirectGuiDesignerProperties():
                     valueD)
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = valueB = valueC = valueD = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC, valueD = self.__getValues(updateElement, updateAttribute)
@@ -522,15 +533,7 @@ class DirectGuiDesignerProperties():
                     valueC)
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = valueB = valueC = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC = self.__getValues(updateElement, updateAttribute)
@@ -605,15 +608,7 @@ class DirectGuiDesignerProperties():
                     valueB)
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = valueB = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             v = self.__getValues(updateElement, updateAttribute)
@@ -663,15 +658,7 @@ class DirectGuiDesignerProperties():
                 updateElement[updateAttribute] = value
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
@@ -708,15 +695,7 @@ class DirectGuiDesignerProperties():
                 updateElement[updateAttribute] = (value)
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
@@ -749,15 +728,7 @@ class DirectGuiDesignerProperties():
                 updateElement[updateAttribute] = (text)
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
         text = ""
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
@@ -787,15 +758,7 @@ class DirectGuiDesignerProperties():
                 updateElement[updateAttribute] = value
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
@@ -816,15 +779,7 @@ class DirectGuiDesignerProperties():
             updateElement["image"] = text
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text="Image",
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader("Image", z, parent)
         z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
         image = updateElement["image"]
         DirectEntry(
@@ -839,15 +794,7 @@ class DirectGuiDesignerProperties():
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        DirectLabel(
-            text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
-            parent=parent)
+        self.__createPropertyHeader(description, z, parent)
         z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
         menu = DirectOptionMenu(
             items=items,
@@ -860,6 +807,8 @@ class DirectGuiDesignerProperties():
         self.maxElementWidth = max(menu.bounds[1]*menu.getScale()[0], self.maxElementWidth)
 
     def __findAllChildren(self, root, path):
+        if "DirectGrid" in root.getName(): return
+        if self.tmpUpdateElementInfo.element.getName() in path: return
         if path != "root/":
             name = root.getName()
             if len(name.split("-")) > 1:
@@ -884,14 +833,23 @@ class DirectGuiDesignerProperties():
                 newParent = self.visualEditor.getCanvas().find("**/{}".format(selection))
             base.messenger.send("setParentOfElement", [updateElement, newParent])
             if not newParent.isEmpty():
-                updateElement.reparentTo(newParent)
+                try:
+                    updateElement.reparentTo(newParent)
+                except:
+                    print("Failed to reparent {} to {}!\nNOTE: Circular parenting is not allowed!".format(updateElement.getName(), newParent.getName()))
                 base.messenger.send("refreshStructureTree")
         self.parentList = ["root"]
         for guiID, elementInfo in self.elementDict.items():
             if elementInfo.element != updateElement:
-                self.parentList.append(elementInfo.element.getName())
+                if elementInfo.parentElement is not None:
+                    if elementInfo.parentElement.element != updateElement:
+                        self.parentList.append(elementInfo.element.getName())
+                else:
+                    self.parentList.append(elementInfo.element.getName())
 
+        self.tmpUpdateElementInfo = updateElementInfo
         self.__findAllChildren(self.visualEditor.getCanvas(), "root/")
+        self.updateElementInfo = None
 
         selectedElement = None
         if updateElement.getParent() == self.visualEditor.getCanvas():
@@ -906,8 +864,8 @@ class DirectGuiDesignerProperties():
 
         if selectedElement is None or selectedElement not in self.parentList:
             if updateElementInfo.parentElement is not None:
-                if "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.guiId) in self.parentList:
-                    selectedElement = "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.guiId)
+                if "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.element.guiId) in self.parentList:
+                    selectedElement = "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.element.guiId)
 
         self.__createOptionMenuProperty(
             "Parent", startPos, parent, updateElement,
