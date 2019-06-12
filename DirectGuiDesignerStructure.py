@@ -124,10 +124,6 @@ class DirectGuiDesignerStructure():
                 command=self.__toggleElementVisibility,
                 extraArgs=[elementInfo],
                 parent=self.structureFrame.getCanvas())
-            #print("W:",self.maxWidth)
-            #print("X:",btnV.getX())
-            #print("B:",btnV.bounds[1])
-            print("size:", (btnV.bounds[1] - btnV.bounds[0])*btnV.getScale().x)
             self.maxWidth = max(self.maxWidth, btnV.getX() + (btnV.bounds[1] - btnV.bounds[0])*btnV.getScale().x + 0.04)
 
     def __selectElement(self, elementInfo, args=None):

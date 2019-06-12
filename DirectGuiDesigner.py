@@ -83,7 +83,6 @@ class DirectGuiDesigner(ShowBase):
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
             horizontalScroll_resizeThumb=True,
-            #parent=base.a2dRightCenter
             parent=base.a2dLeftCenter)
         self.grid = DirectGrid(gridSize=4.0, gridSpacing=0.05,parent=self.visualEditor.getCanvas())
         self.grid.setP(90)
@@ -518,22 +517,16 @@ class DirectGuiDesigner(ShowBase):
     def dragStop(self, event):
         t = taskMgr.getTasksNamed("dragDropTask")[0]
         parent = t.elementInfo.element.getParent()
-        pos = t.elementInfo.element.getPos(parent)
-
-        if parent != self.visualEditor.getCanvas():
-            guiElement = self.__findFirstGUIElement(t.elementInfo.element)
-            print(parent)
-            print(guiElement)
-            print(guiElement.element.bounds)
+        pos = t.elementInfo.element.getPos(self.visualEditor.getCanvas())
 
         if pos.x < self.visualEditor["canvasSize"][0]:
-            t.elementInfo.element.setX(self.visualEditor["canvasSize"][0])
+            t.elementInfo.element.setX(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][0])
         if pos.x > self.visualEditor["canvasSize"][1]:
-            t.elementInfo.element.setX(self.visualEditor["canvasSize"][1])
+            t.elementInfo.element.setX(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][1])
         if pos.z < self.visualEditor["canvasSize"][2]:
-            t.elementInfo.element.setZ(self.visualEditor["canvasSize"][2])
+            t.elementInfo.element.setZ(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][2])
         if pos.z > self.visualEditor["canvasSize"][3]:
-            t.elementInfo.element.setZ(self.visualEditor["canvasSize"][3])
+            t.elementInfo.element.setZ(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][3])
         taskMgr.remove("dragDropTask")
         self.refreshProperties(t.elementInfo)
 

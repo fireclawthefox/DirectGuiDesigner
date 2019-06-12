@@ -8,6 +8,8 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import os
 import json
+
+from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectDialog import YesNoDialog
 
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
@@ -41,8 +43,6 @@ class DirectGuiDesignerExporterProject:
         if self.dlgOverwrite is not None: self.dlgOverwrite.destroy()
         if not overwrite: return
 
-        jsonContent = ""
-
         jsonElements = []
         for name, elementInfo in self.guiElementsDict.items():
             jsonElements.append(self.__createJSONEntry(name, elementInfo))
@@ -51,11 +51,29 @@ class DirectGuiDesignerExporterProject:
             json.dump(jsonElements, outfile, indent=2)
 
     def __createJSONEntry(self, name, elementInfo):
-        json.dumps({
+        return {
             name: {
-                "element":elementInfo.element.guiId,
+                "element":self.__writeElement(elementInfo),
                 "elementType":elementInfo.elementType,
                 "parentElement":elementInfo.parentElement,
-                "extraDefinitions":elementInfo.extraDefinitions
-            }})
+                "extraDefinitions":elementInfo.extraDefinitions,
+            }}
+
+    def __writeElement(self, elementInfo):
+        element = elementInfo.element
+        #print(element.options())
+        elementJson = {}
+        for option in element.options():
+            if not option[DGG._OPT_FUNCTION]:
+                if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
+                    elementJson[option[DGG._OPT_DEFAULT]] = element[option[DGG._OPT_DEFAULT]]
+            else:
+                funcName = "get{}{}".format(option[DGG._OPT_DEFAULT][0].upper(), option[DGG._OPT_DEFAULT][1:])
+                print(funcName)
+                if hasattr(element, funcName):
+                    elementJson[option[0]] = str(getattr(element, funcName)())
+
+
+        print(elementJson)
+        return elementJson
 
