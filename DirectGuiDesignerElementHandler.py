@@ -7,7 +7,8 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
-from direct.gui.DirectEntryScroll import DirectEntryScroll
+#from direct.gui.DirectEntryScroll import DirectEntryScroll
+from DirectEntryScroll import DirectEntryScroll
 from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.DirectCheckButton import DirectCheckButton
 #from direct.gui.DirectOptionMenu import DirectOptionMenu
@@ -27,10 +28,15 @@ from direct.gui.DirectDialog import RetryCancelDialog
 from panda3d.core import TextNode
 
 class ElementInfo:
+    # The actual GUI element
     element = None
+    # Name of the element type
     elementType = None
+    # The ElementInfo of the Parent of this element
     parentElement = None
-    extraDefinitions = []
+    # The command to be called by the element
+    command = None
+    extraArgs = None
 
     def __init__(self, element, elementType, parentElement = None):
         self.element = element
@@ -58,13 +64,13 @@ class DirectGuiDesignerElementHandler:
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectButton")
-        elementInfo.extraDefinitions = ["text"]
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectButton(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
@@ -73,12 +79,12 @@ class DirectGuiDesignerElementHandler:
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectEntry")
-        elementInfo.extraDefinitions = ["initialText"]
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectEntry(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["initialText"] = True
         self.propertiesFrame.propertyList["width"] = True
         self.propertiesFrame.propertyList["numLines"] = True
@@ -86,21 +92,31 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["obscured"] = True
         self.propertiesFrame.setupProperties("Entry Properties", element, elementDict)
 
-    def createDirectEntryScroll(self, parent=None):
-        entry = DirectEntry(
-            parent=self.visualEditor.getCanvas())
-        element = DirectEntryScroll(
-            entry=entry,
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
-        elementInfoB = ElementInfo(element, "DirectEntryScroll")
-        elementInfoA = ElementInfo(entry, "DirectEntry", element)
-        self.setupBind(elementInfoA, elementInfoB)
-        self.setupBind(elementInfoB)
-        return elementInfoA, elementInfoB
+    def createDirectEntryScroll(self, parent=None, createEntry=True):
+        if createEntry:
+            entry = DirectEntry(
+                parent=self.visualEditor.getCanvas())
+            element = DirectEntryScroll(
+                entry=entry,
+                parent=parent if parent is not None else self.visualEditor.getCanvas(),
+                scale=0.1)
+            elementInfoB = ElementInfo(element, "DirectEntryScroll")
+            elementInfoA = ElementInfo(entry, "DirectEntry", elementInfoB)
+            self.setupBind(elementInfoA, elementInfoB)
+            self.setupBind(elementInfoB)
+            return elementInfoA, elementInfoB
+        else:
+            element = DirectEntryScroll(
+                entry=None,
+                parent=parent if parent is not None else self.visualEditor.getCanvas(),
+                scale=0.1)
+            elementInfo = ElementInfo(element, "DirectEntryScroll")
+            self.setupBind(elementInfo)
+            return elementInfo
 
     def propertiesDirectEntryScroll(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        self.propertiesFrame.propertyList["clipSize"] = True
         self.propertiesFrame.setupProperties("Scrolled Entry Properties", element, elementDict)
 
     def createDirectCheckBox(self, parent=None):
@@ -116,6 +132,7 @@ class DirectGuiDesignerElementHandler:
 
     def propertiesDirectCheckBox(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
@@ -133,13 +150,14 @@ class DirectGuiDesignerElementHandler:
     def propertiesDirectCheckButton(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
         element = DirectOptionMenu(
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            items=["item1", "item2", "item3"],
+            items=["item1"],
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectOptionMenu")
         self.setupBind(elementInfo)
@@ -148,6 +166,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesDirectOptionMenu(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
@@ -163,6 +182,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesDirectRadioButton(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
@@ -178,6 +198,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesDirectSlider(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
@@ -190,6 +211,7 @@ class DirectGuiDesignerElementHandler:
 
     def propertiesDirectScrollBar(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
@@ -283,7 +305,6 @@ class DirectGuiDesignerElementHandler:
             state = DGG.NORMAL,
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectLabel")
-        elementInfo.extraDefinitions = ["text"]
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -321,6 +342,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesOkDialog(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
@@ -336,6 +358,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesOkCancelDialog(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
@@ -351,6 +374,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesYesNoDialog(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Yes No Dialog Properties", element, elementDict)
 
@@ -366,6 +390,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesYesNoCancelDialog(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
@@ -381,6 +406,7 @@ class DirectGuiDesignerElementHandler:
     def propertiesRetryCancelDialog(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
+        self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 

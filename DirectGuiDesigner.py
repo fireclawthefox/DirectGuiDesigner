@@ -32,7 +32,7 @@ from DirectGuiDesignerTooltip import Tooltip
 loadPrcFileData(
     "",
     """
-    win-size 1280 720
+    win-size 1920 1080
     textures-power-2 none
     show-frame-rate-meter #t
     """)
@@ -143,6 +143,7 @@ class DirectGuiDesigner(ShowBase):
         self.accept("control-o", self.load)
         self.accept("control-q", exit)
         self.accept("control-delete", self.removeElement)
+        self.accept("control-g", self.cb_grid.commandFunc, extraArgs=[None])
         self.accept("control-h", self.toggleElementVisibility)
         self.accept("f1", self.showHelp)
 
@@ -154,9 +155,15 @@ class DirectGuiDesigner(ShowBase):
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
 
+
+        self.accept("setCommand", self.setCommand)
+        self.accept("setExtraArgs", self.setExtraArgs)
+
         self.accept("dragStart", self.dragStart)
         self.accept("dragStop", self.dragStop)
         """
+
+        #TODO: Why does this break scaling of everything in the window if the size changes?
         self.accept('window-event', self.windowEventHandler)
 
     def windowEventHandler( self, window=None ):
@@ -253,7 +260,7 @@ class DirectGuiDesigner(ShowBase):
         btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1
-        btn = DirectCheckBox(
+        self.cb_grid = DirectCheckBox(
             parent=self.menuBar,
             frameSize=(-0.5,0.5,-0.5,0.5),
             frameColor=buttonColor,
@@ -267,9 +274,9 @@ class DirectGuiDesigner(ShowBase):
             image_scale=0.5,
             isChecked=not self.grid.isHidden(),
             command=self.toggleGrid)
-        btn.setTransparency(True)
-        btn.bind(DGG.ENTER, self.tt.show, ["Toggle Grid"])
-        btn.bind(DGG.EXIT, self.tt.hide)
+        self.cb_grid.setTransparency(True)
+        self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
+        self.cb_grid.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1 + 0.025
         btn = DirectButton(
             parent=self.menuBar,
@@ -594,6 +601,12 @@ class DirectGuiDesigner(ShowBase):
                 return None
         return None
 
+    def setCommand(self, elementInfo, command):
+        self.elementDict[elementInfo.element.guiId].command = command
+
+    def setExtraArgs(self, elementInfo, extraArgs):
+        self.elementDict[elementInfo.element.guiId].extraArgs = extraArgs
+
     def setParentOfElement(self, element, parent):
         if parent is self.visualEditor.getCanvas():
             self.elementDict[element.guiId].parentElement = None
@@ -697,6 +710,7 @@ Ctrl-O - Load Project File
 Ctrl-Q - Quit Application
 Ctrl-Del - Delete selected Element
 Ctrl-H - Toggle selected Element visibility
+Ctrl-G - Toggle grid and snap to grid
 
 F1 - Show this help Dialog
 

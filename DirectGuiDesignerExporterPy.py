@@ -14,6 +14,12 @@ from direct.gui.DirectDialog import YesNoDialog
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 
 class DirectGuiDesignerExporterPy:
+    functionMapping = {
+        "base":{"initialText":"get"},
+        "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg"}}
+
+    ignoreRepr = ["command"]
+
     def __init__(self, guiElementsDict, visualEditor):
         self.guiElementsDict = guiElementsDict
         importStatements = {
@@ -53,9 +59,12 @@ class DirectGuiDesignerExporterPy:
 {}
 from panda3d.core import (
     LPoint3f,
-    LVecBase3f
+    LVecBase3f,
+    LVecBase4f
 )
-from direct.showbase.ShowBase import ShowBase
+
+# Uncomment this line and the lines at the bottom to run this file directly
+#from direct.showbase.ShowBase import ShowBase
 
 class GUI:
     def __init__(self, rootParent=None):
@@ -65,9 +74,10 @@ class GUI:
         self.__createStructuredElements(visualEditor.getCanvas(), 0)
 
         self.content += """
-app = ShowBase()
-GUI()
-app.run()"""
+# Uncomment these lines and the showbase import line at the top to run this file directly
+#app = ShowBase()
+#GUI()
+#app.run()"""
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
             self.save, "Save Python File", "Save file path", "Save", "~/export.py")
@@ -122,58 +132,87 @@ app.run()"""
                 self.__createStructuredElements(child, level+1)
 
     def __createElement(self, elementInfo):
-        return self.createGuiElement(elementInfo)
-        #if hasattr(self, "create{}".format(elementInfo.elementType)):
-        #    return getattr(self, "create{}".format(elementInfo.elementType))(elementInfo)
-        #else:
-        #    print("Unsuported element")
-
-    def __getDefaultProperties(self, elementInfo):
-        pText = ""
-        if elementInfo.parentElement is not None:
-            pText = "            parent=self.{},".format(elementInfo.parentElement.element.guiId.replace("-",""))
-        else:
-            pText = "            parent=rootParent,"
-        element = elementInfo.element
-        return """{}
-            relief={},
-            borderWidth={},
-            frameSize=({},{},{},{}),
-            frameColor={},
-            pad={},
-            pos={},
-            hpr={},
-            scale={},""".format(
-            pText,
-            element["relief"],
-            element["borderWidth"],
-            element.bounds[0],
-            element.bounds[1],
-            element.bounds[2],
-            element.bounds[3],
-            element["frameColor"],
-            element["pad"],
-            element.getPos(),
-            element.getHpr(),
-            element.getScale()
-        )
-
-    def createGuiElement(self, elementInfo):
         elementCode = """
         self.{} = {}(
-{}""".format(
+{}{}{}        )""".format(
             elementInfo.element.guiId.replace("-",""),
             elementInfo.elementType,
-            self.__getDefaultProperties(elementInfo))
-        for definition in elementInfo.extraDefinitions:
-            definitionValue = elementInfo.element[definition]
-            if type(definitionValue) is str:
-                elementCode = "{}\n            {}=\"{}\",".format(
-                    elementCode, definition, definitionValue)
-            else:
-                elementCode = "{}\n            {}={},".format(
-                    elementCode, definition, definitionValue)
-        elementCode = "{}\n        )".format(elementCode)
+            self.__writeElementOptions(elementInfo),
+            " "*12 + "command={},\n".format(elementInfo.command) if elementInfo.command is not None else "",
+            " "*12 + "extraArgs=[{}],\n".format(elementInfo.extraArgs) if elementInfo.extraArgs is not None else "")
         return elementCode
 
+    def __getAllSubcomponents(self, componentName, component, componentPath):
+        if componentPath == "":
+            componentPath = componentName
+        else:
+            componentPath += "_" + componentName
+        self.componentsList[component] = componentPath
+        if not hasattr(component, "components"): return
+        for subcomponentName in component.components():
+            self.__getAllSubcomponents(subcomponentName, component.component(subcomponentName), componentPath)
 
+    def __writeElementOptions(self, elementInfo):
+        element = elementInfo.element
+        elementOptions = ""
+        indent = " "*12
+
+        self.componentsList = {element:""}
+        for subcomponentName in element.components():
+            self.__getAllSubcomponents(subcomponentName, element.component(subcomponentName), "")
+
+        print(self.componentsList)
+
+        for element, name in self.componentsList.items():
+
+            if name in self.ignoreRepr:
+                reprFunc = lambda x: x
+            else:
+                reprFunc = repr
+
+            for key in self.functionMapping.keys():
+                if key in name:
+                    for option, value in self.functionMapping[key].items():
+                        if callable(getattr(element, value)):
+                            elementOptions += indent + name + "_" + option + "=" + reprFunc(getattr(element, value)()) + ",\n"
+                        else:
+                            elementOptions += indent + name + "_" + option + "=" + reprFunc(getattr(element, value)) + ",\n"
+
+            if not hasattr(element, "options"): continue
+
+            for option in element.options():
+                if not option[DGG._OPT_FUNCTION]:
+                    if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
+                        elementOptions += indent + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_DEFAULT]]) + ",\n"
+                else:
+                    funcName = "get{}{}".format(option[DGG._OPT_DEFAULT][0].upper(), option[DGG._OPT_DEFAULT][1:])
+                    propName = "{}".format(option[DGG._OPT_DEFAULT])
+                    if hasattr(element, funcName):
+                        if funcName == "getColor":
+                            # Savety check. I currently only know of this function that isn't set by default
+                            if not element.hasColor(): continue
+                        value = getattr(element, funcName)()
+                        if option[DGG._OPT_VALUE] != value:
+                            elementOptions += indent + option[0] + "=" + reprFunc(value) + ",\n"
+                    elif hasattr(element, propName):
+                        if not callable(type(getattr(element, propName))):
+                            # TODO: Check if we ever get here at al
+                            value = getattr(element, propName)
+                            if option[DGG._OPT_VALUE] != value:
+                                elementOptions += indent + option[0] + "=" + reprFunc(value) + ",\n"
+                    elif option[DGG._OPT_DEFAULT] in self.functionMapping["base"]:
+                        funcName = self.functionMapping["base"][option[DGG._OPT_DEFAULT]]
+                        if hasattr(element, funcName):
+                            value = getattr(element, funcName)()
+                            if option[DGG._OPT_VALUE] != value:
+                                elementOptions += indent + option[0] + "=" + reprFunc(value) + ",\n"
+                        else:
+                            print("Can't call:", option[DGG._OPT_DEFAULT])
+                    else:
+                        try:
+                            if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
+                                elementOptions += indent + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_VALUE]]) + ",\n"
+                        except:
+                            print("Can't write:", option[DGG._OPT_DEFAULT])
+
+        return elementOptions

@@ -3,6 +3,7 @@
 
 # This file was created using the DirectGUI Designer
 
+from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectEntry import DirectEntry
@@ -19,6 +20,7 @@ class DirectGuiDesignerPathSelect:
             frameSize=(base.a2dLeft,base.a2dRight,base.a2dTop,base.a2dBottom),
             frameColor=(0, 0, 0, 0.45),
             pos=LPoint3f(0, 0, 0),
+            state=DGG.NORMAL
         )
         self.mainFrame = DirectFrame(
             relief=1,

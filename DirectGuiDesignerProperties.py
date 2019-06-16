@@ -37,8 +37,11 @@ class DirectGuiDesignerProperties():
         "text_scale":False, # base4
         "text_pos":False, # base3
         "text_fg":False, # base4
+        "text_bg":False, # base4
         "image":False, # text
         "sortOrder":False, # int
+
+        "command":False, # text
 
         # Entry specific
         "initialText":False, # text
@@ -46,6 +49,9 @@ class DirectGuiDesignerProperties():
         "numLines":False, # int
         "overflow":False, # bool
         "obscured":False, # bool
+
+        # Scrolled Entry specific
+        "clipSize":False, # base4
 
         # Sub Control specific
         "incButton_pos":False,
@@ -83,6 +89,7 @@ class DirectGuiDesignerProperties():
     }
     getAsPropDict = {
         "text_fg":"fg",
+        "text_bg":"bg",
         "text_pos":"pos",
     }
     subControlInitOpGetDict = {
@@ -158,11 +165,9 @@ class DirectGuiDesignerProperties():
             self.propertyList[value] = True
 
     def defaultTextPropertySelection(self):
-        self.propertyList["text"] = True
-        self.propertyList["text_align"] = True
-        self.propertyList["text_scale"] = True
-        self.propertyList["text_fg"] = True
-        self.propertyList["text_pos"] = True
+        for key in self.propertyList.keys():
+            if key.startswith("text"):
+                self.propertyList[key] = True
 
     def clearPropertySelection(self):
         for key in self.propertyList.keys():
@@ -209,6 +214,9 @@ class DirectGuiDesignerProperties():
         if self.propertyList["text_fg"]:
             self.__createBase4Input("Text Color (r/g/b/a)", self.startPos, propFrame, element, "text_fg")
             self.moveNext()
+        if self.propertyList["text_bg"]:
+            self.__createBase4Input("Text Background Color (r/g/b/a)", self.startPos, propFrame, element, "text_bg")
+            self.moveNext()
         if self.propertyList["text_pos"]:
             self.__createBase2Input("Text Position (X/Y)", self.startPos, propFrame, element, "text_pos")
             self.moveNext()
@@ -219,7 +227,7 @@ class DirectGuiDesignerProperties():
             self.__createBase2Input("Border Width", self.startPos, propFrame, element, "borderWidth")
             self.moveNext()
         if self.propertyList["frameSize"]:
-            self.__createBase4Input("Frame Size (L/R/T/B)", self.startPos, propFrame, element, "frameSize")
+            self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
             self.moveNext()
             self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, element)
             self.startPos.setZ(self.startPos.getZ() - 0.065)
@@ -233,7 +241,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
             self.moveNext()
         if self.propertyList["canvasSize"]:
-            self.__createBase4Input("Canvas Space (L/R/T/B)", self.startPos, propFrame, element, "canvasSize")
+            self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
             self.moveNext()
         if self.propertyList["pad"]:
             self.__createBase2Input("Padding", self.startPos, propFrame, element, "pad")
@@ -257,8 +265,14 @@ class DirectGuiDesignerProperties():
             self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
             self.moveNext()
 
+        if self.propertyList["command"]:
+            self.__createCommandProperty(self.startPos, propFrame, elementInfo)
+            self.moveNext()
+            self.__createCommandArgsProperty(self.startPos, propFrame, elementInfo)
+            self.moveNext()
+
         # Entry specific
-        for prop in ["initialText", "width"]:
+        for prop in ["initialText", "width", "numLines", "overflow", "obscured"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Entry Properties", self.startPos, propFrame)
                 self.startPos.setZ(self.startPos.getZ() - 0.07)
@@ -278,6 +292,17 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["obscured"]:
             self.__createBoolProperty("Obscured Text", self.startPos, propFrame, element, "obscured")
+            self.moveNext()
+
+        # Scrolled Entry specific
+        for prop in ["clipSize"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
+                self.startPos.setZ(self.startPos.getZ() - 0.07)
+                self.frameSize += 0.035
+                break
+        if self.propertyList["clipSize"]:
+            self.__createBase4Input("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize")
             self.moveNext()
 
         # Inc/DecButtons
@@ -300,7 +325,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("incButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "incButton_frameColor")
             self.moveNext()
         if self.propertyList["incButton_frameSize"]:
-            self.__createBase4Input("incButton Frame Size (L/R/T/B)", self.startPos, propFrame, element, "incButton_frameSize")
+            self.__createBase4Input("incButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "incButton_frameSize")
             self.moveNext()
             incBtn = element.incButton
             self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, incBtn)
@@ -326,7 +351,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("decButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "decButton_frameColor")
             self.moveNext()
         if self.propertyList["decButton_frameSize"]:
-            self.__createBase4Input("decButton Frame Size (L/R/T/B)", self.startPos, propFrame, element, "decButton_frameSize")
+            self.__createBase4Input("decButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "decButton_frameSize")
             self.moveNext()
             decBtn = element.decButton
             self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, decBtn)
@@ -737,6 +762,46 @@ class DirectGuiDesignerProperties():
             text = updateElement[updateAttribute]
         DirectEntry(
             initialText=text,
+            pos=(x+0.05, 0, z),
+            scale=0.05,
+            width=12,
+            overflow=True,
+            command=update,
+            parent=parent)
+
+    def __createCommandProperty(self, startPos, parent, updateElementInfo):
+        def update(text):
+            command = None
+            if text != "":
+                command = text
+            base.messenger.send("setCommand", [updateElementInfo, command])
+        x = startPos.getX()
+        z = startPos.getZ()-0.03
+        self.__createPropertyHeader("Command", z, parent)
+        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        cmd = "" if updateElementInfo.command is None else updateElementInfo.command
+        DirectEntry(
+            initialText=cmd,
+            pos=(x+0.05, 0, z),
+            scale=0.05,
+            width=12,
+            overflow=True,
+            command=update,
+            parent=parent)
+
+    def __createCommandArgsProperty(self, startPos, parent, updateElementInfo):
+        def update(text):
+            extraArgs = None
+            if text != "":
+                extraArgs = text
+            base.messenger.send("setExtraArgs", [updateElementInfo, extraArgs])
+        x = startPos.getX()
+        z = startPos.getZ()-0.03
+        self.__createPropertyHeader("Command Arguments", z, parent)
+        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        args = "" if updateElementInfo.extraArgs is None else updateElementInfo.extraArgs
+        DirectEntry(
+            initialText=args,
             pos=(x+0.05, 0, z),
             scale=0.05,
             width=12,
