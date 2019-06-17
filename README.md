@@ -14,7 +14,7 @@ Hit F1 to see the help screen
 
 ### Basic Editing
 1. Click on an element in the toolbox.<br />
--> this will place the element at (0,0,0) parented to the selected element or the root of nothing was selected.
+-> this will place the element at (0,0,0) parented to the selected element or the root if nothing was selected.
 2. Left click on the item you want to edit.
 3. Drag and Drop to position the element and use the properties panel to set all desired options.
 
