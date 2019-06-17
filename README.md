@@ -13,7 +13,7 @@ A Visual Editor for Panda3Ds Direct GUI
 Hit F1 to see the help screen
 
 ### Basic Editing
-1. Click on an element in the toolbox.
+1. Click on an element in the toolbox.<br />
 -> this will place the element at (0,0,0) parented to the selected element or the root of nothing was selected.
 2. Left click on the item you want to edit.
 3. Drag and Drop to position the element and use the properties panel to set all desired options.
@@ -31,7 +31,7 @@ To export as a python script that can directly be used in projects, either hit C
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
 
 ## Known Bugs and missing features
-DirectGui had heavy flickering and sometimes doesn't render correct
-Most of the element specific options aren't available in the properties editor yet
-There might be crashes when saving and loading GUIs with the more exotic GUI elements
-Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the expired python script
+- DirectGui had heavy flickering and sometimes doesn't render correct
+- Most of the element specific options aren't available in the properties editor yet
+- There might be crashes when saving and loading GUIs with the more exotic GUI elements
+- Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the expired python script
