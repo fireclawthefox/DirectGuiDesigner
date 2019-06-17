@@ -9,8 +9,23 @@ A Visual Editor for Panda3Ds Direct GUI
 - GUI structure viewer
 - Export to python script for easy integration
 
+## Screenshots
+
+![Editor Window after startup](/Screenshots/startup.png?raw=true "The Editor")
+![Editor in use, creating a LogIn screen](/Screenshots/simpleGUI.png?raw=true "A simple LogIn screen made in the app")
+![Export a created GUI](/Screenshots/export.png?raw=true "Export as python script")
+
+## Requirements
+Python 3.x
+Panda3D 1.10.x
+
 ## Manual
 Hit F1 to see the help screen
+
+### Startup
+To start the DirectGUI Designer, simply run the DirectGuiDesigner.py script
+
+<code>python DirectGuiDesigner.py</code>
 
 ### Basic Editing
 1. Click on an element in the toolbox.<br />
@@ -34,4 +49,4 @@ The python script will always contain a class called Gui which you can pass a No
 - DirectGui had heavy flickering and sometimes doesn't render correct
 - Most of the element specific options aren't available in the properties editor yet
 - There might be crashes when saving and loading GUIs with the more exotic GUI elements
-- Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the expired python script
+- Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the exported python script

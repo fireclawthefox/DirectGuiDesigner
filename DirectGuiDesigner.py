@@ -34,7 +34,8 @@ loadPrcFileData(
     """
     win-size 1920 1080
     textures-power-2 none
-    show-frame-rate-meter #t
+    #show-frame-rate-meter #t
+    window-title DirectGUI Designer
     """)
 
 class DirectGuiDesigner(ShowBase):
@@ -564,8 +565,12 @@ class DirectGuiDesigner(ShowBase):
         if not workOn.isEmpty():
             name = workOn.getName()
             if name in self.elementDict.keys():
-                del self.elementDict[name][0]
+                if self.elementDict[name].parentElement is not None and self.elementDict[name][0].parentElement.elementType == "DirectScrolledList":
+                    self.elementDict[name].parentElement.element.removeItem(workOn)
+                del self.elementDict[name]
             elif name.split("-")[1] in self.elementDict.keys():
+                if self.elementDict[name.split("-")[1]].parentElement is not None and self.elementDict[name.split("-")[1]].parentElement.elementType == "DirectScrolledList":
+                    self.elementDict[name.split("-")[1]].parentElement.element.removeItem(workOn)
                 del self.elementDict[name.split("-")[1]]
 
         workOn.destroy()
@@ -624,18 +629,6 @@ class DirectGuiDesigner(ShowBase):
 
     def toggleGrid(self, enable):
         if enable:
-            '''
-            width = self.visualEditor["canvasSize"][1] - self.visualEditor["canvasSize"][0]
-            height = self.visualEditor["canvasSize"][3] - self.visualEditor["canvasSize"][2]
-
-            print(width)
-            print(height)
-
-            gridSize = max(width, height)
-            self.grid.gridSize = gridSize
-            self.grid.setPos(width/2, 0, height/2)
-            self.grid.updateGrid()
-            '''
             self.grid.show()
             self.snapToGrid = True
         else:
