@@ -28,20 +28,26 @@ from direct.gui.DirectDialog import RetryCancelDialog
 from panda3d.core import TextNode
 
 class ElementInfo:
-    # The actual GUI element
-    element = None
-    # Name of the element type
-    elementType = None
-    # The ElementInfo of the Parent of this element
-    parentElement = None
-    # The command to be called by the element
-    command = None
-    extraArgs = None
-
-    def __init__(self, element, elementType, parentElement = None):
+    def __init__(self, element, elementType, parentElement = None, extraOptions = None, createAfter = None):
+        # The actual GUI element
         self.element = element
+        # Name of the element type
         self.elementType = elementType
+        # The ElementInfo of the Parent of this element
         self.parentElement = parentElement
+        # A dictionary of options and their values
+        if extraOptions is not None:
+            self.extraOptions = extraOptions
+        else:
+            self.extraOptions = {}
+        # The command to be called by the element
+        self.command = None
+        # Extra arguments to be passed to the command
+        self.extraArgs = None
+        if createAfter is not None:
+            self.createAfter = createAfter
+        else:
+            self.createAfter = []
 
 class DirectGuiDesignerElementHandler:
     def __init__(self, propertiesFrame, visualEditor):
@@ -100,8 +106,9 @@ class DirectGuiDesignerElementHandler:
                 entry=entry,
                 parent=parent if parent is not None else self.visualEditor.getCanvas(),
                 scale=0.1)
-            elementInfoB = ElementInfo(element, "DirectEntryScroll")
-            elementInfoA = ElementInfo(entry, "DirectEntry", elementInfoB)
+            elementInfoA = ElementInfo(entry, "DirectEntry")
+            elementInfoB = ElementInfo(element, "DirectEntryScroll", createAfter=[elementInfoA])
+            elementInfoB.extraOptions["entry"] = "self." + entry.guiId.replace("-","")
             self.setupBind(elementInfoA, elementInfoB)
             self.setupBind(elementInfoB)
             return elementInfoA, elementInfoB
@@ -136,6 +143,9 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["uncheckedImage"] = True
+        self.propertiesFrame.propertyList["checkedImage"] = True
+        self.propertiesFrame.propertyList["isChecked"] = True
         self.propertiesFrame.setupProperties("Checkbox Properties", element, elementDict)
 
     def createDirectCheckButton(self, parent=None):

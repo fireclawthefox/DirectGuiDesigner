@@ -83,17 +83,23 @@ class DirectGuiDesignerLoaderProject:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None, False)
             else:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None)
+
+            # load the extra definitions of the element info
             elementInfo.command = jsonElementInfo["command"]
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
+            elementInfo.extraOptions = jsonElementInfo["extraOptions"]
+
             #if parent is None:
             #    print("SET ROOT")
             #    parent = self.visualEditorInfo
+
             if elementInfo is None: return
             if type(elementInfo) is tuple:
                 if parent is not None and "DirectScrolledList" == parent.elementType:
                     parent.element.addItem(elementInfo[0].element)
                 elif parent is not None and "DirectEntryScroll" == parent.elementType:
                     parent.element.setEntry(elementInfo[0].element)
+                    parent.extraOptions["entry"] = "self." + elementInfo[0].element.guiId.replace("-","")
                 for entry in elementInfo:
                     entry.parentElement = parent
                     # TODO: Check how this works! ESP. Saving TOO
@@ -106,6 +112,7 @@ class DirectGuiDesignerLoaderProject:
                     parent.element.addItem(elementInfo.element)
                 elif parent is not None and "DirectEntryScroll" == parent.elementType:
                     parent.element.setEntry(elementInfo.element)
+                    parent.extraOptions["entry"] = "self." + elementInfo.element.guiId.replace("-","")
                 self.__setProperties(elementInfo, jsonElementInfo)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId

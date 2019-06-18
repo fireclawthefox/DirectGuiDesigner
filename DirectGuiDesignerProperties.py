@@ -6,7 +6,7 @@ Simplified BSD (BSD 2-Clause) License.
 See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
-from panda3d.core import VBase4, TextNode, Point3, TextProperties
+from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib
 
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectLabel import DirectLabel
@@ -40,6 +40,7 @@ class DirectGuiDesignerProperties():
         "text_bg":False, # base4
         "image":False, # text
         "sortOrder":False, # int
+        "enableTransparency":False, # bool
 
         "command":False, # text
 
@@ -52,6 +53,11 @@ class DirectGuiDesignerProperties():
 
         # Scrolled Entry specific
         "clipSize":False, # base4
+
+        # Checkbox specific
+        "uncheckedImage":False, # text
+        "checkedImage":False, # text
+        "isChecked":False, # bool
 
         # Sub Control specific
         "incButton_pos":False,
@@ -114,6 +120,11 @@ class DirectGuiDesignerProperties():
         "decButton_text":["decButton", "setText"],
     }
 
+    # Call a function instead of directly set the option
+    callFunc = {
+        "isChecked":["commandFunc",None]
+    }
+
     def __init__(self, parent, posZ, height, visualEditor):
         self.maxElementWidth = 0
         DirectLabel(
@@ -160,7 +171,7 @@ class DirectGuiDesignerProperties():
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
-        trueValues = ["parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder"]
+        trueValues = ["parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency"]
         for value in trueValues:
             self.propertyList[value] = True
 
@@ -240,6 +251,10 @@ class DirectGuiDesignerProperties():
             else:'''
             self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
             self.moveNext()
+        if self.propertyList["enableTransparency"]:
+            self.__createTransparencyProperty(self.startPos, propFrame, element)
+            self.moveNext()
+
         if self.propertyList["canvasSize"]:
             self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
             self.moveNext()
@@ -259,7 +274,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("Color (r/g/b/a)", self.startPos, propFrame, element, "color")
             self.moveNext()
         if self.propertyList["image"]:
-            self.__createImageProperty(self.startPos, propFrame, element)
+            self.__createImageProperty("Image", self.startPos, propFrame, element)
             self.moveNext()
         if self.propertyList["sortOrder"]:
             self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
@@ -303,6 +318,23 @@ class DirectGuiDesignerProperties():
                 break
         if self.propertyList["clipSize"]:
             self.__createBase4Input("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize")
+            self.moveNext()
+
+        # Checkbox specific
+        for prop in ["uncheckedImage","checkedImage","isChecked"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
+                self.startPos.setZ(self.startPos.getZ() - 0.07)
+                self.frameSize += 0.035
+                break
+        if self.propertyList["uncheckedImage"]:
+            self.__createImageProperty("Unchecked Image", self.startPos, propFrame, element, "uncheckedImage")
+            self.moveNext()
+        if self.propertyList["checkedImage"]:
+            self.__createImageProperty("Checked Image", self.startPos, propFrame, element, "checkedImage")
+            self.moveNext()
+        if self.propertyList["isChecked"]:
+            self.__createBoolProperty("Is checked", self.startPos, propFrame, element, "isChecked")
             self.moveNext()
 
         # Inc/DecButtons
@@ -811,6 +843,10 @@ class DirectGuiDesignerProperties():
 
     def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(value):
+            if updateAttribute in self.callFunc.keys():
+                if hasattr(updateElement, self.callFunc[updateAttribute][0]):
+                    getattr(updateElement, self.callFunc[updateAttribute][0])(self.callFunc[updateAttribute][1])
+                    return
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(value)
@@ -839,14 +875,39 @@ class DirectGuiDesignerProperties():
             command=update,
             parent=parent)
 
-    def __createImageProperty(self, startPos, parent, updateElement):
+    def __createTransparencyProperty(self, startPos, parent, updateElement):
+        transparencyAttribs = [
+            "M_none",
+            "M_alpha",
+            "M_premultiplied_alpha",
+            "M_multisample",
+            "M_multisample_mask",
+            "M_binary",
+            "M_dual"]
+
+        def update(selection):
+            updateElement.setTransparency(getattr(TransparencyAttrib, selection))
+
+        for attrib in transparencyAttribs:
+            if getattr(TransparencyAttrib, attrib) == updateElement.getTransparency():
+                selectedElement = attrib
+
+        self.__createOptionMenuProperty(
+            "Transparency", startPos, parent, updateElement,
+            transparencyAttribs, selectedElement, update)
+
+    def __createImageProperty(self, description, startPos, parent, updateElement, updateAttribute="image"):
         def update(text):
-            updateElement["image"] = text
+            try:
+                updateElement[updateAttribute] = text
+            except:
+                print("Couldn't load image: {}".format(text))
+                updateElement[updateAttribute] = None
         x = startPos.getX()
         z = startPos.getZ()-0.03
-        self.__createPropertyHeader("Image", z, parent)
+        self.__createPropertyHeader(description, z, parent)
         z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
-        image = updateElement["image"]
+        image = updateElement[updateAttribute]
         DirectEntry(
             initialText=image,
             pos=(x+0.05, 0, z),

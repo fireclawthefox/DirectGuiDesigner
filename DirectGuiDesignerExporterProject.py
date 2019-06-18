@@ -76,6 +76,7 @@ class DirectGuiDesignerExporterProject:
                 "parentElement":self.__writeParent(elementInfo.parentElement),
                 "command":elementInfo.command,
                 "extraArgs":elementInfo.extraArgs,
+                "extraOptions":elementInfo.extraOptions,
             }
 
     def __writeParent(self, parent):
@@ -94,7 +95,7 @@ class DirectGuiDesignerExporterProject:
 
     def __writeElement(self, elementInfo):
         element = elementInfo.element
-        #print(element.options())
+        print(element.options())
         elementJson = {}
 
         self.componentsList = {element:""}
@@ -108,14 +109,15 @@ class DirectGuiDesignerExporterProject:
                 reprFunc = lambda x: x
             else:
                 reprFunc = repr
-
+            if name != "":
+                name += "_"
             for key in self.functionMapping.keys():
                 if key in name:
                     for option, value in self.functionMapping[key].items():
                         if callable(getattr(element, value)):
-                            elementJson[name + "_" + option] = reprFunc(getattr(element, value)())
+                            elementJson[name + option] = reprFunc(getattr(element, value)())
                         else:
-                            elementJson[name + "_" + option] = reprFunc(getattr(element, value))
+                            elementJson[name + option] = reprFunc(getattr(element, value))
 
             if not hasattr(element, "options"): continue
 
@@ -128,7 +130,7 @@ class DirectGuiDesignerExporterProject:
                     print(element[option[DGG._OPT_DEFAULT]])
                     if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
                         print("DIFFERS")
-                        elementJson[option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_DEFAULT]])
+                        elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_DEFAULT]])
                     print("NORMAL END")
                 else:
                     print("FUNCTION")
@@ -144,7 +146,7 @@ class DirectGuiDesignerExporterProject:
                         print(option[DGG._OPT_DEFAULT])
                         print(value)
                         if option[DGG._OPT_VALUE] != value:
-                            elementJson[option[0]] = reprFunc(value)
+                            elementJson[name + option[0]] = reprFunc(value)
                     elif hasattr(element, propName):
                         print("Property:", propName)
                         if not callable(type(getattr(element, propName))):
@@ -155,7 +157,7 @@ class DirectGuiDesignerExporterProject:
                             print(option[DGG._OPT_DEFAULT])
                             print(value)
                             if option[DGG._OPT_VALUE] != value:
-                                elementJson[option[0]] = reprFunc(value)
+                                elementJson[name + option[0]] = reprFunc(value)
                     elif option[DGG._OPT_DEFAULT] in self.functionMapping["base"]:
                         funcName = self.functionMapping["base"][option[DGG._OPT_DEFAULT]]
                         if hasattr(element, funcName):
@@ -164,7 +166,7 @@ class DirectGuiDesignerExporterProject:
                             print(option[DGG._OPT_DEFAULT])
                             print(value)
                             if option[DGG._OPT_VALUE] != value:
-                                elementJson[option[0]] = reprFunc(value)
+                                elementJson[name + option[0]] = reprFunc(value)
                         else:
                             print("Can't call:", option[DGG._OPT_DEFAULT])
                     else:
@@ -173,7 +175,7 @@ class DirectGuiDesignerExporterProject:
                                 print("VALUES:")
                                 print(option[DGG._OPT_DEFAULT])
                                 print(element[option[DGG._OPT_DEFAULT]])
-                                elementJson[option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_VALUE]])
+                                elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_VALUE]])
                         except:
                             print("Can't write:", option[DGG._OPT_DEFAULT])
                     print("FUNCTION END")

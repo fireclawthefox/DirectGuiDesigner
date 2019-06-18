@@ -3,7 +3,7 @@
 
 from direct.showbase.ShowBase import ShowBase
 
-from panda3d.core import VBase4, TextNode, Point3, Vec3, loadPrcFileData, WindowProperties
+from panda3d.core import VBase4, TextNode, Point3, Vec3, loadPrcFileData, WindowProperties, TransparencyAttrib
 
 from direct.gui import DirectGuiGlobals as DGG
 
@@ -43,7 +43,7 @@ class DirectGuiDesigner(ShowBase):
         ShowBase.__init__(self)
 
         wp = WindowProperties()
-        wp.setIconFilename("/icons/DirectGuiDesigner.ico")
+        wp.setIconFilename("icons/DirectGuiDesigner.ico")
         base.win.requestProperties(wp)
 
         self.selectedElement = None
@@ -197,7 +197,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.new,
             image="icons/New.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Create New GUI (Ctrl-N)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1
@@ -212,7 +212,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.save,
             image="icons/Save.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Save GUI as gui Project (Ctrl-S)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1
@@ -227,7 +227,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.export,
             image="icons/Export.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Export GUI as python script (Ctrl-E)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1
@@ -242,7 +242,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.load,
             image="icons/Load.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Load GUI project (Ctrl-O)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1 + 0.025
@@ -257,7 +257,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.removeElement,
             image="icons/Delete.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1
@@ -275,7 +275,7 @@ class DirectGuiDesigner(ShowBase):
             image_scale=0.5,
             isChecked=not self.grid.isHidden(),
             command=self.toggleGrid)
-        self.cb_grid.setTransparency(True)
+        self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
         self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
         self.cb_grid.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1 + 0.025
@@ -290,7 +290,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.quitApp,
             image="icons/Quit.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Quit Direct GUI Designer (Ctrl-Q)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 1*0.1 + 0.025
@@ -305,7 +305,7 @@ class DirectGuiDesigner(ShowBase):
             command=self.showHelp,
             image="icons/Help.png",
             image_scale=0.5)
-        btn.setTransparency(True)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Show a help Dialog (F1)"])
         btn.bind(DGG.EXIT, self.tt.hide)
 

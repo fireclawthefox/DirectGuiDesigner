@@ -6,7 +6,7 @@ Simplified BSD (BSD 2-Clause) License.
 See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
-from panda3d.core import VBase4, TextNode, Point3
+from panda3d.core import VBase4, TextNode, Point3, TransparencyAttrib
 
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectLabel import DirectLabel
@@ -122,7 +122,7 @@ class DirectGuiDesignerStructure():
                 image="icons/DeleteSmall.png",
                 image_scale=0.5,
                 parent=self.structureFrame.getCanvas())
-            btnX.setTransparency(True)
+            btnX.setTransparency(TransparencyAttrib.M_multisample)
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
                 pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 1*btnX.getScale()[0] + 0.04, 0, z+0.01),
@@ -137,7 +137,7 @@ class DirectGuiDesignerStructure():
                 image_scale=0.5,
                 isChecked=not elementInfo.element.isHidden(),
                 parent=self.structureFrame.getCanvas())
-            btnV.setTransparency(True)
+            btnV.setTransparency(TransparencyAttrib.M_multisample)
             self.maxWidth = max(self.maxWidth, btnV.getX() + (btnV.bounds[1] - btnV.bounds[0])*btnV.getScale().x + 0.04)
 
     def __selectElement(self, elementInfo, args=None):
