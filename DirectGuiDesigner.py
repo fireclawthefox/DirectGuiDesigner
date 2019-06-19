@@ -156,7 +156,7 @@ class DirectGuiDesigner(ShowBase):
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
 
-
+        self.accept("setName", self.setName)
         self.accept("setCommand", self.setCommand)
         self.accept("setExtraArgs", self.setExtraArgs)
 
@@ -436,7 +436,8 @@ class DirectGuiDesigner(ShowBase):
                 if self.selectedElement is not None and self.selectedElement.elementType == "DirectScrolledList":
                     self.selectedElement.element.addItem(elementInfo[0].element)
                 for entry in elementInfo:
-                    entry.parentElement = self.selectedElement
+                    if self.selectedElement is not None and entry.parentElement is None:
+                        entry.parentElement = self.selectedElement
                     self.elementDict[entry.element.guiId] = entry
             else:
                 if self.selectedElement is not None:
@@ -605,6 +606,24 @@ class DirectGuiDesigner(ShowBase):
             else:
                 return None
         return None
+
+    def setName(self, elementInfo, name):
+        guiId = elementInfo.element.guiId
+        e = self.elementDict[guiId]
+        e.elementName = name
+        print("SET NAME:", self.elementDict[guiId].elementType)
+        if e.elementType == "DirectEntry":
+            print("Parent Element Now:", e.parentElement)
+            if e.parentElement is not None:
+                print("ELEMENT:", e.parentElement.elementType)
+            if (e.parentElement is not None
+            and e.parentElement.elementType == "DirectEntryScroll"):
+                parentID = e.parentElement.element.guiId
+
+                #WARUM FUNKTIONIERT DAS HIER NOCH NICHT?
+                print(self.elementDict[parentID].extraOptions["entry"])
+                print("SET TO:", name)
+                self.elementDict[parentID].extraOptions["entry"] = name
 
     def setCommand(self, elementInfo, command):
         self.elementDict[elementInfo.element.guiId].command = command

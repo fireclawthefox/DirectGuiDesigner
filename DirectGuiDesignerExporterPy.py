@@ -20,7 +20,12 @@ class DirectGuiDesignerExporterPy:
 
     ignoreRepr = ["command"]
 
+    # list of control names starting with the following will be ignored
     ignoreControls = ["indicator", "item"]
+    # list of control names staritng with the following will always be included
+    explIncludeControls = ["itemFrame"]
+
+    explIncludeOptions = ["forceHeight", "numItemsVisible"]
 
     def __init__(self, guiElementsDict, visualEditor):
         self.guiElementsDict = guiElementsDict
@@ -28,6 +33,7 @@ class DirectGuiDesignerExporterPy:
         self.createdParents = ["root"]
         self.postponedElements = {}
         self.visualEditor = visualEditor
+        self.preSetupCalling = []
 
         importStatements = {
             "DirectButton":"from direct.gui.DirectButton import DirectButton",
@@ -78,6 +84,10 @@ class GUI:
         """.format(self.content)
 
         self.__createStructuredElements("root", visualEditor.getCanvas())
+
+        self.content += "\n"
+        for line in self.preSetupCalling:
+            self.content += line + "\n"
 
         self.content += """
 # Uncomment these lines and the showbase import line at the top to run this file directly
@@ -137,19 +147,19 @@ app.run()"""
                 postponed = False
                 if len(elementInfo.createAfter) > 0:
                     for afterElementInfo in elementInfo.createAfter:
-                        if afterElementInfo.element.guiId not in self.createdParents:
-                            self.postponedElements[elementInfo.element.guiId] = elementInfo
+                        if afterElementInfo.elementName not in self.createdParents:
+                            self.postponedElements[elementInfo.elementName] = elementInfo
                             postponed = True
                 if not postponed:
                     self.content += self.__createElement(elementInfo)
-                    self.createdParents.append(elementInfo.element.guiId)
+                    self.createdParents.append(elementInfo.elementName)
 
         if hasattr(root, "getChildren") and not ignoreChildren:
             for child in root.getChildren():
                 self.__createStructuredElements(child.getName(), child)
 
-        if elementInfo is not None and elementInfo.element.guiId in self.postponedElements.keys():
-            del self.postponedElements[elementInfo.element.guiId]
+        if elementInfo is not None and elementInfo.elementName in self.postponedElements.keys():
+            del self.postponedElements[elementInfo.elementName]
 
         # check if we can create postponed elements
         for postponedElementInfoName, postponedElementInfo in self.postponedElements.copy().items():
@@ -158,7 +168,7 @@ app.run()"""
             hasAll = True
             if len(postponedElementInfo.createAfter) > 0:
                 for afterElementInfo in postponedElementInfo.createAfter:
-                    if afterElementInfo.element.guiId not in self.createdParents:
+                    if afterElementInfo.elementName not in self.createdParents:
                         hasAll = False
 
             if hasAll:
@@ -170,19 +180,27 @@ app.run()"""
             extraOptions += " "*12 + "{}={},\n".format(optionName, optionValue)
         elementCode = """
         self.{} = {}(
-{}{}{}{}        )""".format(
-            elementInfo.element.guiId.replace("-",""),
+{}{}{}{}        )\n""".format(
+            elementInfo.elementName,
             elementInfo.elementType,
             self.__writeElementOptions(elementInfo),
             " "*12 + "command={},\n".format(elementInfo.command) if elementInfo.command is not None else "",
             " "*12 + "extraArgs=[{}],\n".format(elementInfo.extraArgs) if elementInfo.extraArgs is not None else "",
             extraOptions,
             )
+
+        if elementInfo.elementType == "DirectScrolledListItem":
+            self.preSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo.parentElement.elementName ,elementInfo.elementName))
+
         return elementCode
 
     def __getAllSubcomponents(self, componentName, component, componentPath):
-        for item in self.ignoreControls:
-            if componentName.startswith(item): return
+        add = False
+        for incl in self.explIncludeControls:
+            if componentName.startswith(incl): add = True
+        if not add:
+            for item in self.ignoreControls:
+                if componentName.startswith(item): return
         if componentPath == "":
             componentPath = componentName
         else:
@@ -225,8 +243,9 @@ app.run()"""
             if not hasattr(element, "options"): continue
 
             for option in element.options():
+                print("OPTION:", option)
                 if not option[DGG._OPT_FUNCTION]:
-                    if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
+                    if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]] or option[DGG._OPT_DEFAULT] in self.explIncludeOptions:
                         elementOptions += indent + name + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_DEFAULT]]) + ",\n"
                 else:
                     funcName = "get{}{}".format(option[DGG._OPT_DEFAULT][0].upper(), option[DGG._OPT_DEFAULT][1:])

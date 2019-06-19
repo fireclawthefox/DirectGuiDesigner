@@ -28,20 +28,29 @@ from direct.gui.DirectDialog import RetryCancelDialog
 from panda3d.core import TextNode
 
 class ElementInfo:
-    def __init__(self, element, elementType, parentElement = None, extraOptions = None, createAfter = None):
+    def __init__(self, element, elementType, elementName = None, parentElement = None, extraOptions = None, createAfter = None):
         # The actual GUI element
         self.element = element
+
         # Name of the element type
         self.elementType = elementType
+        if elementName is not None:
+            self.elementName = elementName
+        else:
+            self.elementName = element.guiId.replace("-","")
+
         # The ElementInfo of the Parent of this element
         self.parentElement = parentElement
+
         # A dictionary of options and their values
         if extraOptions is not None:
             self.extraOptions = extraOptions
         else:
             self.extraOptions = {}
+
         # The command to be called by the element
         self.command = None
+
         # Extra arguments to be passed to the command
         self.extraArgs = None
         if createAfter is not None:
@@ -108,7 +117,9 @@ class DirectGuiDesignerElementHandler:
                 scale=0.1)
             elementInfoA = ElementInfo(entry, "DirectEntry")
             elementInfoB = ElementInfo(element, "DirectEntryScroll", createAfter=[elementInfoA])
-            elementInfoB.extraOptions["entry"] = "self." + entry.guiId.replace("-","")
+            elementInfoB.extraOptions["entry"] = "self." + elementInfoA.elementName
+            elementInfoA.parentElement = elementInfoB
+            print("PARENT ELEMENT SET TO:", elementInfoA.parentElement)
             self.setupBind(elementInfoA, elementInfoB)
             self.setupBind(elementInfoB)
             return elementInfoA, elementInfoB
@@ -294,11 +305,13 @@ class DirectGuiDesignerElementHandler:
             return None
         element = DirectScrolledListItem(
             text="scrolled list item",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
+            parent=parent,
             command=base.messenger.send,
             extraArgs=["select_list_item_changed"],
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectScrolledListItem")
+        elementInfo.command = "base.messenger.send"
+        elementInfo.extraArgs = "'select_list_item_changed'"
         self.setupBind(elementInfo)
         return elementInfo
 

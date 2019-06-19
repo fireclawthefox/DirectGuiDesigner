@@ -21,6 +21,7 @@ from direct.gui.DirectCheckButton import DirectCheckButton
 class DirectGuiDesignerProperties():
 
     propertyList = {
+        "name":False, # text
         "parent":False, # option menu
         "relief":False, # option menu
         "borderWidth":False, # base2
@@ -171,7 +172,7 @@ class DirectGuiDesignerProperties():
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
-        trueValues = ["parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency"]
+        trueValues = ["name", "parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency"]
         for value in trueValues:
             self.propertyList[value] = True
 
@@ -210,6 +211,9 @@ class DirectGuiDesignerProperties():
         self.__createInbetweenHeader("General Properties", self.startPos, propFrame)
         self.startPos.setZ(self.startPos.getZ() - 0.07)
         self.frameSize += 0.07
+        if self.propertyList["name"]:
+            self.__createNameProperty(self.startPos, propFrame, elementInfo)
+            self.moveNext()
         if self.propertyList["parent"]:
             self.__createParentProperty(self.startPos, propFrame, elementInfo)
             self.moveNext()
@@ -769,6 +773,27 @@ class DirectGuiDesignerProperties():
             overflow=True,
             command=update,
             parent=parent)
+
+    def __createNameProperty(self, startPos, parent, updateElementInfo):
+        def update(text):
+            name = updateElementInfo.element.guiId.replace("-", "")
+            if text != "":
+                name = text
+            base.messenger.send("setName", [updateElementInfo, name])
+        x = startPos.getX()
+        z = startPos.getZ()-0.03
+        self.__createPropertyHeader("Name", z, parent)
+        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        text = updateElementInfo.elementName
+        DirectEntry(
+            initialText=text,
+            pos=(x+0.05, 0, z),
+            scale=0.05,
+            width=12,
+            overflow=True,
+            command=update,
+            parent=parent)
+
 
     def __createTextProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):

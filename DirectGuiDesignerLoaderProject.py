@@ -20,13 +20,13 @@ import importlib.util
 
 
 class DirectGuiDesignerLoaderProject:
-    extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
     funcMap = {"initialText":"set"}
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
 
     def __init__(self, visualEditorInfo, elementHandler):
+        self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
         self.elementDict = {}
         self.elementHandler = elementHandler
@@ -99,7 +99,7 @@ class DirectGuiDesignerLoaderProject:
                     parent.element.addItem(elementInfo[0].element)
                 elif parent is not None and "DirectEntryScroll" == parent.elementType:
                     parent.element.setEntry(elementInfo[0].element)
-                    parent.extraOptions["entry"] = "self." + elementInfo[0].element.guiId.replace("-","")
+                    parent.extraOptions["entry"] = "self." + elementInfo[0].elementName
                 for entry in elementInfo:
                     entry.parentElement = parent
                     # TODO: Check how this works! ESP. Saving TOO
@@ -112,7 +112,7 @@ class DirectGuiDesignerLoaderProject:
                     parent.element.addItem(elementInfo.element)
                 elif parent is not None and "DirectEntryScroll" == parent.elementType:
                     parent.element.setEntry(elementInfo.element)
-                    parent.extraOptions["entry"] = "self." + elementInfo.element.guiId.replace("-","")
+                    parent.extraOptions["entry"] = "self." + elementInfo.elementName
                 self.__setProperties(elementInfo, jsonElementInfo)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId
