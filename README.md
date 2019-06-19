@@ -16,8 +16,8 @@ A Visual Editor for Panda3Ds Direct GUI
 ![Export a created GUI](/Screenshots/export.png?raw=true "Export as python script")
 
 ## Requirements
-Python 3.x
-Panda3D 1.10.x
+- Python 3.x
+- Panda3D 1.10.x
 
 ## Manual
 Hit F1 to see the help screen
