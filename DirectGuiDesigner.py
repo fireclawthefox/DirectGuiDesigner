@@ -382,6 +382,7 @@ class DirectGuiDesigner(ShowBase):
             and e.parentElement.elementType == "DirectEntryScroll"):
                 parentID = e.parentElement.element.guiId
                 self.elementDict[parentID].extraOptions["entry"] = name
+        base.messenger.send("refreshStructureTree")
 
     def setCommand(self, elementInfo, command):
         self.elementDict[elementInfo.element.guiId].command = command
