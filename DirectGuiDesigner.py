@@ -3,15 +3,12 @@
 
 from direct.showbase.ShowBase import ShowBase
 
-from panda3d.core import VBase4, TextNode, Point3, Vec3, loadPrcFileData, WindowProperties, TransparencyAttrib
+from panda3d.core import Point3, Vec3, loadPrcFileData, WindowProperties
 
 from direct.gui import DirectGuiGlobals as DGG
 
-from direct.gui.DirectLabel import DirectLabel
-from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
-from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.DirectDialog import OkDialog
 from direct.gui.DirectDialog import OkCancelDialog
 
@@ -20,6 +17,8 @@ from direct.directtools.DirectUtil import ROUND_TO
 
 from DirectGuiDesignerElementHandler import DirectGuiDesignerElementHandler
 from DirectGuiDesignerElementHandler import ElementInfo
+from DirectGuiDesignerMenuBar import DirectGuiDesignerMenuBar
+from DirectGuiDesignerToolbox import DirectGuiDesignerToolbox
 from DirectGuiDesignerProperties import DirectGuiDesignerProperties
 from DirectGuiDesignerStructure import DirectGuiDesignerStructure
 from DirectGuiDesignerExporterPy import DirectGuiDesignerExporterPy
@@ -90,6 +89,9 @@ class DirectGuiDesigner(ShowBase):
             horizontalScroll_decButton_frameColor=color,
             horizontalScroll_resizeThumb=True,
             parent=base.a2dLeftCenter)
+
+        self.visualEditorInfo = ElementInfo(self.visualEditor, "Editor")
+
         self.grid = DirectGrid(gridSize=50.0, gridSpacing=0.05,parent=self.visualEditor.getCanvas())
         self.grid.setP(90)
         self.grid.snapMarker.hide()
@@ -97,19 +99,9 @@ class DirectGuiDesigner(ShowBase):
         self.snapToGrid = not self.grid.isHidden()
         self.gridSpacing = 0.05
 
-        #... this doesn't work at all:
-        #self.visualEditor.bind(DGG.B1PRESS, self.selectElement, [self.visualEditor, "Editor"])
-        #self.visualEditor.guiItem.bind(DGG.B1PRESS, self.selectElement, [self.visualEditor, "Editor"])
+        self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.grid)
 
-        self.menuBar = DirectFrame(
-            frameColor=(0.25, 0.25, 0.25, 1),
-            frameSize=(0,self.screenWidth*(0.75),
-                -0.05,0.05),
-            pos=(self.screenWidth*(0.25), 0, -0.05),
-            parent=base.a2dTopLeft)
-        self.__setupMenuBar()
-
-        # 1/4 wide editor properties and toolbox frame
+        # 1/4 wide toolbox, properties and structure frame
         self.toolsFrame = DirectFrame(
             frameColor=(0.25, 0.25, 0.25, 1),
             frameSize=(-self.screenWidth/8, self.screenWidth/8, base.a2dBottom, base.a2dTop),
@@ -120,10 +112,10 @@ class DirectGuiDesigner(ShowBase):
 
         self.nextToolFrameY = base.a2dTop
 
-        self.__setupToolboxFrame()
+        self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
+        self.nextToolFrameY -= self.toolFrameHeight-0.02
 
         self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor)
-        self.visualEditorInfo = ElementInfo(self.visualEditor, "Editor")
         self.propertiesEditor(self.visualEditorInfo)
         self.nextToolFrameY -= self.toolFrameHeight-0.02
 
@@ -142,19 +134,27 @@ class DirectGuiDesigner(ShowBase):
         self.accept("control-s", self.save)
         self.accept("control-e", self.export)
         self.accept("control-o", self.load)
-        self.accept("control-q", exit)
+        self.accept("control-q", self.quitApp)
         self.accept("control-delete", self.removeElement)
-        self.accept("control-g", self.cb_grid.commandFunc, extraArgs=[None])
+        self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
         self.accept("control-h", self.toggleElementVisibility)
         self.accept("f1", self.showHelp)
 
         self.accept("arrow-left", print, extraArgs=["Test"])
 
+        self.accept("createControl", self.__createControl)
+        self.accept("newProject", self.new)
+        self.accept("saveProject", self.save)
+        self.accept("exportProject", self.export)
+        self.accept("loadProject", self.load)
         self.accept("refreshStructureTree", self.__refreshStructureTree)
         self.accept("selectElement", self.selectElement)
         self.accept("removeElement", self.removeElement)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
+        self.accept("toggleGrid", self.toggleGrid)
+        self.accept("showHelp", self.showHelp)
+        self.accept("quitApp", self.quitApp)
 
         self.accept("setName", self.setName)
         self.accept("setCommand", self.setCommand)
@@ -162,6 +162,8 @@ class DirectGuiDesigner(ShowBase):
 
         self.accept("dragStart", self.dragStart)
         self.accept("dragStop", self.dragStop)
+
+        #base.exitFunc = self.quitApp
         """
 
         #TODO: Why does this break scaling of everything in the window if the size changes?
@@ -179,250 +181,8 @@ class DirectGuiDesigner(ShowBase):
         self.propertiesFrame.propertyList["canvasSize"] = True
         self.propertiesFrame.setupProperties("Editor Properties", elementInfo, self.elementDict)
 
-    def __setupMenuBar(self):
-        x = self.menuBar.bounds[0]+(0.5*0.1)
-        buttonColor = (
-            (0.8, 0.8, 0.8, 1), # Normal
-            (0.9, 0.9, 1, 1), # Click
-            (0.8, 0.8, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)) # Disabled
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            text_scale=0.33,
-            relief=DGG.FLAT,
-            command=self.new,
-            image="icons/New.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Create New GUI (Ctrl-N)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            text_scale=0.33,
-            relief=DGG.FLAT,
-            command=self.save,
-            image="icons/Save.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Save GUI as gui Project (Ctrl-S)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            text_scale=0.33,
-            relief=DGG.FLAT,
-            command=self.export,
-            image="icons/Export.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Export GUI as python script (Ctrl-E)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            relief=DGG.FLAT,
-            text_scale=0.33,
-            command=self.load,
-            image="icons/Load.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Load GUI project (Ctrl-O)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1 + 0.025
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            relief=DGG.FLAT,
-            text_scale=0.33,
-            command=self.removeElement,
-            image="icons/Delete.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1
-        self.cb_grid = DirectCheckBox(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            relief=DGG.FLAT,
-            text_scale=0.33,
-            image="icons/GridOff.png" if self.grid.isHidden() else "icons/GridOn.png",
-            uncheckedImage="icons/GridOff.png",
-            checkedImage="icons/GridOn.png",
-            image_scale=0.5,
-            isChecked=not self.grid.isHidden(),
-            command=self.toggleGrid)
-        self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
-        self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
-        self.cb_grid.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1 + 0.025
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            relief=DGG.FLAT,
-            text_scale=0.33,
-            command=self.quitApp,
-            image="icons/Quit.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Quit Direct GUI Designer (Ctrl-Q)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-        x += 1*0.1 + 0.025
-        btn = DirectButton(
-            parent=self.menuBar,
-            frameSize=(-0.5,0.5,-0.5,0.5),
-            frameColor=buttonColor,
-            pos=(x, 0, 0),
-            scale=0.1,
-            relief=DGG.FLAT,
-            text_scale=0.33,
-            command=self.showHelp,
-            image="icons/Help.png",
-            image_scale=0.5)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Show a help Dialog (F1)"])
-        btn.bind(DGG.EXIT, self.tt.hide)
-
     def __refreshStructureTree(self):
         self.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
-
-    def __setupToolboxFrame(self):
-        self.toolboxHeader = DirectLabel(
-            text="Toolbox",
-            text_scale=0.05,
-            text_pos=(self.toolsFrame["frameSize"][0], -0.015),
-            text_align=TextNode.ALeft,
-            text_fg=(1,1,1,1),
-            frameSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1], 0.03, -0.03),
-            frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,self.nextToolFrameY-0.03),)
-        self.toolboxHeader.reparentTo(self.toolsFrame)
-        self.nextToolFrameY -= 0.06
-        color = (
-            (0.8, 0.8, 0.8, 1), # Normal
-            (0.9, 0.9, 1, 1), # Click
-            (0.8, 0.8, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)) # Disabled
-        self.toolboxFrame = DirectScrolledFrame(
-            # make the frame fit into our background frame
-            frameSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1], -(self.toolFrameHeight-0.08), 0),
-            # make the canvas as big as the frame
-            canvasSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1]-0.04, -1, 0.0),
-            # set the frames color to transparent
-            frameColor=VBase4(1, 1, 1, 1),
-            scrollBarWidth=0.04,
-            verticalScroll_scrollSize=0.04,
-            verticalScroll_thumb_relief=DGG.FLAT,
-            verticalScroll_incButton_relief=DGG.FLAT,
-            verticalScroll_decButton_relief=DGG.FLAT,
-            verticalScroll_thumb_frameColor=color,
-            verticalScroll_incButton_frameColor=color,
-            verticalScroll_decButton_frameColor=color,
-            horizontalScroll_thumb_relief=DGG.FLAT,
-            horizontalScroll_incButton_relief=DGG.FLAT,
-            horizontalScroll_decButton_relief=DGG.FLAT,
-            horizontalScroll_thumb_frameColor=color,
-            horizontalScroll_incButton_frameColor=color,
-            horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,self.nextToolFrameY),)
-        self.nextToolFrameY -= self.toolFrameHeight-0.08
-        self.toolboxFrame.reparentTo(self.toolsFrame)
-        self.toolboxEntries = [
-            ["~Interactive Elements~"],
-            ["Button", "DirectButton"],
-            ["Entry", "DirectEntry"],
-            ["Scrolled Entry", "DirectEntryScroll"],
-            ["Check Box", "DirectCheckBox"],
-            ["Check Button", "DirectCheckButton"],
-            ["Option Menu", "DirectOptionMenu"],
-            ["Radio Button", "DirectRadioButton"],
-            ["Slider", "DirectSlider"],
-            ["Scroll Bar", "DirectScrollBar"],
-            ["Scrolled List Item", "DirectScrolledListItem"],
-
-            ["~Display Elements~"],
-            ["Label", "DirectLabel"],
-            ["Wait Bar", "DirectWaitBar"],
-
-            ["~Container~"],
-            ["Frame", "DirectFrame"],
-            ["Scrolled Frame", "DirectScrolledFrame"],
-            ["Scrolled List", "DirectScrolledList"],
-
-            ["~Dialogs~"],
-            ["OK Dialog", "OkDialog"],
-            ["OK Cancel Dialog", "OkCancelDialog"],
-            ["Yes No Dialog", "YesNoDialog"],
-            ["Yes No Cancel Dialog", "YesNoCancelDialog"],
-            ["Retry Cancel Dialog", "RetryCancelDialog"],
-        ]
-        idx = 1
-        for entry in self.toolboxEntries:
-            if len(entry) == 2:
-                item = self.__makeToolboxListItem(entry[0], entry[1], idx)
-                item.reparentTo(self.toolboxFrame.getCanvas())
-            else:
-                item = self.__makeToolboxCenteredListItem(entry[0], idx)
-                item.reparentTo(self.toolboxFrame.getCanvas())
-            idx += 1
-        self.toolboxFrame["canvasSize"] = (
-            self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1]-0.04,
-            -(len(self.toolboxEntries)*0.08), 0)
-        self.toolboxFrame.setCanvasSize()
-
-    def __makeToolboxListItem(self, itemName, element, index):
-        item = DirectButton(
-            text=itemName,
-            frameSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1]-0.04, -0.04, 0.04),
-            frameColor=(VBase4(1,1,1,1), #normal
-                VBase4(0.9,0.9,0.9,1), #click
-                VBase4(0.8,0.8,0.8,1), #hover
-                VBase4(0.5,0.5,0.5,1)), #disabled
-            text_align=TextNode.ALeft,
-            text_scale=0.05,
-            text_pos=(self.toolsFrame["frameSize"][0], -0.015),
-            pos=(0, 0, -(0.08 * index)+0.04),
-            relief=DGG.FLAT,
-            command=self.__createControl,
-            extraArgs=[element])
-        return item
-
-    def __makeToolboxCenteredListItem(self, itemName, index):
-        item = DirectFrame(
-            text=itemName,
-            frameSize=VBase4(self.toolsFrame["frameSize"][0]-0.02, self.toolsFrame["frameSize"][1]-0.02, -0.04, 0.04),
-            frameColor=VBase4(0.85,0.85,0.85,1),
-            text_align=TextNode.ACenter,
-            text_scale=0.05,
-            text_pos=(0, -0.015),
-            pos=(-0.02, 0, -(0.08 * index)+0.04))
-        return item
 
     def __createControl(self, element):
         funcName = "create{}".format(element)
@@ -575,6 +335,12 @@ class DirectGuiDesigner(ShowBase):
                 del self.elementDict[name.split("-")[1]]
 
         workOn.destroy()
+
+        # cleanup
+        for key, value in self.elementDict.copy().items():
+            if value is None or value.element.isEmpty():
+                del self.elementDict[key]
+
         if selectEditor:
             self.selectElement(self.visualEditorInfo)
         base.messenger.send("refreshStructureTree")
@@ -611,18 +377,10 @@ class DirectGuiDesigner(ShowBase):
         guiId = elementInfo.element.guiId
         e = self.elementDict[guiId]
         e.elementName = name
-        print("SET NAME:", self.elementDict[guiId].elementType)
         if e.elementType == "DirectEntry":
-            print("Parent Element Now:", e.parentElement)
-            if e.parentElement is not None:
-                print("ELEMENT:", e.parentElement.elementType)
             if (e.parentElement is not None
             and e.parentElement.elementType == "DirectEntryScroll"):
                 parentID = e.parentElement.element.guiId
-
-                #WARUM FUNKTIONIERT DAS HIER NOCH NICHT?
-                print(self.elementDict[parentID].extraOptions["entry"])
-                print("SET TO:", name)
                 self.elementDict[parentID].extraOptions["entry"] = name
 
     def setCommand(self, elementInfo, command):
@@ -654,7 +412,6 @@ class DirectGuiDesigner(ShowBase):
             self.grid.hide()
             self.snapToGrid = False
 
-
     def new(self):
         for name, elementInfo in list(self.elementDict.items()):
             self.removeElement(elementInfo.element)
@@ -662,9 +419,7 @@ class DirectGuiDesigner(ShowBase):
         self.elementDict = {}
 
     def save(self):
-        #print("Not implemented yet")
         DirectGuiDesignerExporterProject(self.elementDict, self.visualEditor)
-        pass
 
     def export(self):
         DirectGuiDesignerExporterPy(self.elementDict, self.visualEditor)

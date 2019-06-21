@@ -44,6 +44,7 @@ To export as a python script that can directly be used in projects, either hit C
 
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
+**NOTE:** In the current development version, the exported GUI script will instantiate showbase and run the GUI by default.
 
 ## Known Bugs and missing features
 - DirectGui has heavy flickering and sometimes doesn't render gui controls correct
@@ -51,4 +52,3 @@ The python script will always contain a class called Gui which you can pass a No
 - Most of the element specific options aren't available in the properties editor yet
 - There might be crashes when saving and loading GUIs with the more exotic GUI elements
 - Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the exported python script
-- Removing elements with sub elements makes app unstable (DEV NOTE: need to clean elementDict from removed sub elements)
