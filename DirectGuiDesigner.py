@@ -50,14 +50,19 @@ class DirectGuiDesigner(ShowBase):
         # Key = guiID; Value = [element, properties]
         self.elementDict = {}
 
+        self.dlgHelp = None
+        self.dlgQuit = None
+
+        # Delay initial setup by 0.5s to let the window set it's final
+        # size and we'll be able to use the screen corner/edge variables
+        taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
+
+    def setupGui(self):
         self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
         self.leftEdge = -(self.screenWidth * (2.0 / 3.0))
         self.rightEdge = self.screenWidth * (1.0 / 3.0)
 
         self.tt = Tooltip()
-
-        self.dlgHelp = None
-        self.dlgQuit = None
 
         # 3/4 wide editor content frame
         color = (

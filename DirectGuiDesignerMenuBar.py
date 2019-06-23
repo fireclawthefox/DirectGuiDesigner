@@ -66,7 +66,7 @@ class DirectGuiDesignerMenuBar:
             text_scale=0.33,
             relief=DGG.FLAT,
             command=base.messenger.send,
-            extraArgs=["saveProject"],
+            extraArgs=["exportProject"],
             image="icons/Export.png",
             image_scale=0.5)
         btn.setTransparency(TransparencyAttrib.M_multisample)

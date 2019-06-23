@@ -24,6 +24,7 @@ class DirectGuiDesignerLoaderProject:
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
+    setAsOption = ["frameSize"]
 
     def __init__(self, visualEditorInfo, elementHandler):
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
@@ -153,7 +154,9 @@ class DirectGuiDesignerLoaderProject:
                     elementInfo.element.component(component)[components[1]] = eval(value)
                 else:
                     funcName = "set{}{}".format(name[0].upper(), name[1:])
-                    if hasattr(elementInfo.element, funcName):
+                    if name in self.setAsOption:
+                        elementInfo.element[name] = eval(value)
+                    elif hasattr(elementInfo.element, funcName):
                         getattr(elementInfo.element, funcName)(eval(value))
                     else:
                         elementInfo.element[name] = eval(value)

@@ -243,8 +243,10 @@ app.run()"""
             if not hasattr(element, "options"): continue
 
             for option in element.options():
-                print("OPTION:", option)
-                if not option[DGG._OPT_FUNCTION]:
+                if option[DGG._OPT_DEFAULT] == "parent":
+                    continue
+
+                elif not option[DGG._OPT_FUNCTION]:
                     if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]] or option[DGG._OPT_DEFAULT] in self.explIncludeOptions:
                         elementOptions += indent + name + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_DEFAULT]]) + ",\n"
                 else:
@@ -277,5 +279,15 @@ app.run()"""
                                 elementOptions += indent + name + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_VALUE]]) + ",\n"
                         except:
                             print("Can't write:", option[DGG._OPT_DEFAULT])
+
+            if elementInfo.parentElement is not None and name == "":
+                if elementInfo.parentElement.elementType == "DirectScrollFrame":
+                    # use the canvas as parent
+                    elementOptions += indent + "parent=self." + elementInfo.parentElement.elementName + ".getCanvas(),\n"
+                else:
+                    elementOptions += indent + "parent=self." + elementInfo.parentElement.elementName + ",\n"
+            elif name == "":
+                # use the parent passed to the class
+                elementOptions += indent + "parent=rootParent,\n"
 
         return elementOptions
