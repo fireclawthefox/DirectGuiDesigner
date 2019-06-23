@@ -21,7 +21,7 @@ class DirectGuiDesignerExporterPy:
     ignoreRepr = ["command"]
 
     # list of control names starting with the following will be ignored
-    ignoreControls = ["indicator", "item"]
+    ignoreControls = ["indicator", "item", "cancelframe", "popupMarker", "popupMenu"]
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 

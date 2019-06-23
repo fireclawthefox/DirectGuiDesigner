@@ -173,6 +173,12 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["boxBorder"] = True
+        self.propertiesFrame.propertyList["boxPlacement"] = True
+        self.propertiesFrame.propertyList["boxImage"] = True
+        self.propertiesFrame.propertyList["boxImageScale"] = True
+        self.propertiesFrame.propertyList["boxImageColor"] = True
+        self.propertiesFrame.propertyList["boxRelief"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
@@ -189,6 +195,11 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["popupMarkerBorder"] = True
+        self.propertiesFrame.propertyList["popupMarker_pos"] = True
+        self.propertiesFrame.propertyList["popupMenuLocation"] = True
+        self.propertiesFrame.propertyList["highlightColor"] = True
+        self.propertiesFrame.propertyList["highlightScale"] = True
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
     def createDirectRadioButton(self, parent=None):

@@ -7,6 +7,10 @@ from direct.gui import DirectGuiGlobals as DGG
 #import DirectGuiGlobalsExtra as DGG #<- TODO: Why doesn't this work as expected
 DGG.MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
 DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
+DGG.LEFT = "left"
+DGG.RIGHT = "right"
+DGG.ABOVE = "above"
+DGG.BELOW = "below"
 from direct.gui.DirectButton import *
 from direct.gui.DirectLabel import *
 from direct.gui.DirectFrame import *
@@ -32,7 +36,7 @@ class DirectOptionMenu(DirectButton):
             # The initial position of the popup marker
             ('popupMarker_pos', None, None),
             # The position of the popup menu
-            # possible positions: left, right, top, bottom
+            # possible positions: left, above, right, below
             ('popupMenuLocation', None, None),
             # Background color to use to highlight popup menu items
             ('highlightColor', (.5, .5, .5, 1), None),
@@ -222,11 +226,11 @@ class DirectOptionMenu(DirectButton):
         b = self.getBounds()
         fb = self.popupMenu.getBounds()
 
-        if self['popupMenuLocation'] == "right" or self['popupMenuLocation'] == None:
+        if self['popupMenuLocation'] == DGG.RIGHT or self['popupMenuLocation'] == None:
             # This is the default to not break existing applications
             # Position menu at midpoint of button
             xPos = (b[1] - b[0])/2.0 - fb[0]
-        elif self['popupMenuLocation'] == "left":
+        elif self['popupMenuLocation'] == DGG.LEFT:
             # Position to the left
             xPos = -fb[1] + (b[1] - b[0])/2.0
         else:
@@ -234,11 +238,11 @@ class DirectOptionMenu(DirectButton):
             xPos = b[0]
         self.popupMenu.setX(self, xPos)
 
-        if self['popupMenuLocation'] == "top":
+        if self['popupMenuLocation'] == DGG.ABOVE:
             # Try to set height to line up selected item with button
             self.popupMenu.setZ(
                 self, self.maxZ - fb[2])
-        elif self['popupMenuLocation'] == "bottom":
+        elif self['popupMenuLocation'] == DGG.BELOW:
             # Try to set height to line up selected item with button
             self.popupMenu.setZ(
                 self, self.minZ)

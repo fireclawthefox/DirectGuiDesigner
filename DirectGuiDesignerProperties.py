@@ -9,6 +9,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib
 
 from direct.gui import DirectGuiGlobals as DGG
+DGG.BELOW = "below"
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
@@ -71,6 +72,21 @@ class DirectGuiDesignerProperties():
         "decButton_scale":False,
         "decButton_frameColor":False,
         "decButton_frameSize":False,
+
+        # CheckButton specific
+        "boxBorder":False,
+        "boxPlacement":False,
+        "boxImage":False,
+        "boxImageScale":False,
+        "boxImageColor":False,
+        "boxRelief":False,
+
+        # OptionMenu specific
+        "popupMarkerBorder":False,
+        "popupMarker_pos":False,
+        "popupMenuLocation":False,
+        "highlightColor":False,
+        "highlightScale":False,
     }
 
     initOpDict = {
@@ -208,6 +224,10 @@ class DirectGuiDesignerProperties():
         self.frameSize = 0.06
 
         element = elementInfo.element
+
+        #
+        # General Properties
+        #
         self.__createInbetweenHeader("General Properties", self.startPos, propFrame)
         self.startPos.setZ(self.startPos.getZ() - 0.07)
         self.frameSize += 0.07
@@ -236,7 +256,7 @@ class DirectGuiDesignerProperties():
             self.__createBase2Input("Text Position (X/Y)", self.startPos, propFrame, element, "text_pos")
             self.moveNext()
         if self.propertyList["relief"]:
-            self.__createReliefProperty(self.startPos, propFrame, element)
+            self.__createReliefProperty("Relief", self.startPos, propFrame, element)
             self.moveNext()
         if self.propertyList["borderWidth"]:
             self.__createBase2Input("Border Width", self.startPos, propFrame, element, "borderWidth")
@@ -248,17 +268,11 @@ class DirectGuiDesignerProperties():
             self.startPos.setZ(self.startPos.getZ() - 0.065)
             self.frameSize += 0.13
         if self.propertyList["frameColor"]:
-            '''if element["numStates"] > 1:
-                for state in range(element["numStates"]):
-                    self.__createBase4Input("Background Color {} (r/g/b/a)".format(state), self.startPos, propFrame, element, "frameColor")
-                    self.moveNext()
-            else:'''
             self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
             self.moveNext()
         if self.propertyList["enableTransparency"]:
             self.__createTransparencyProperty(self.startPos, propFrame, element)
             self.moveNext()
-
         if self.propertyList["canvasSize"]:
             self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
             self.moveNext()
@@ -283,14 +297,15 @@ class DirectGuiDesignerProperties():
         if self.propertyList["sortOrder"]:
             self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
             self.moveNext()
-
         if self.propertyList["command"]:
             self.__createCommandProperty(self.startPos, propFrame, elementInfo)
             self.moveNext()
             self.__createCommandArgsProperty(self.startPos, propFrame, elementInfo)
             self.moveNext()
 
+        #
         # Entry specific
+        #
         for prop in ["initialText", "width", "numLines", "overflow", "obscured"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Entry Properties", self.startPos, propFrame)
@@ -313,7 +328,9 @@ class DirectGuiDesignerProperties():
             self.__createBoolProperty("Obscured Text", self.startPos, propFrame, element, "obscured")
             self.moveNext()
 
+        #
         # Scrolled Entry specific
+        #
         for prop in ["clipSize"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
@@ -324,7 +341,9 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize")
             self.moveNext()
 
+        #
         # Checkbox specific
+        #
         for prop in ["uncheckedImage","checkedImage","isChecked"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
@@ -341,7 +360,9 @@ class DirectGuiDesignerProperties():
             self.__createBoolProperty("Is checked", self.startPos, propFrame, element, "isChecked")
             self.moveNext()
 
+        #
         # Inc/DecButtons
+        #
         for key in self.propertyList.keys():
             if key.startswith("incButton") and self.propertyList[key]:
                 self.__createInbetweenHeader("Inc Button Properties", self.startPos, propFrame)
@@ -394,6 +415,58 @@ class DirectGuiDesignerProperties():
             self.startPos.setZ(self.startPos.getZ() - 0.065)
             self.frameSize += 0.065
 
+        #
+        # CheckButton specific
+        #
+        for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
+                self.startPos.setZ(self.startPos.getZ() - 0.07)
+                self.frameSize += 0.035
+                break
+        if self.propertyList["boxBorder"]:
+            self.__createFloatInput("Box Border Width", self.startPos, propFrame, element, "boxBorder")
+            self.moveNext()
+        if self.propertyList["boxPlacement"]:
+            # boxPlacement maps left, above, right, below
+            self.__createBoxPlacementProperty("Box Placement", self.startPos, propFrame, element, "boxPlacement")
+        if self.propertyList["boxImage"]:
+            self.__createImageProperty("Box Image", self.startPos, propFrame, element, "boxImage")
+            self.moveNext()
+        if self.propertyList["boxImageScale"]:
+            self.__createFloatInput("Box Image scale (X/Y/Z)", self.startPos, propFrame, element, "boxImageScale")
+            self.moveNext()
+        if self.propertyList["boxImageColor"]:
+            self.__createBase4Input("Box Image Color (r/g/b/a)", self.startPos, propFrame, element, "boxImageColor")
+            self.moveNext()
+        if self.propertyList["boxRelief"]:
+            self.__createReliefProperty("Box Relief", self.startPos, propFrame, element, "boxRelief")
+            self.moveNext()
+
+        #
+        # OptionMenu specific
+        #
+        for prop in ["popupMarkerBorder","popupMarker_pos","popupMenuLocation","highlightColor","highlightScale"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
+                self.startPos.setZ(self.startPos.getZ() - 0.07)
+                self.frameSize += 0.035
+                break
+        if self.propertyList["popupMarkerBorder"]:
+            self.__createBase2Input("Popup Marker Border", self.startPos, propFrame, element, "popupMarkerBorder")
+            self.moveNext()
+        if self.propertyList["popupMarker_pos"]:
+            self.__createBase3Input("Popup Marker Position (X/Y/Z)", self.startPos, propFrame, element, "popupMarker_pos")
+            self.moveNext()
+        if self.propertyList["popupMenuLocation"]:
+            self.__createBoxPlacementProperty("Popup Menu Location", self.startPos, propFrame, element, "popupMenuLocation")
+            self.moveNext()
+        if self.propertyList["highlightColor"]:
+            self.__createBase4Input("Highlight Color", self.startPos, propFrame, element, "highlightColor")
+            self.moveNext()
+        if self.propertyList["highlightScale"]:
+            self.__createBase2Input("Highlight Scale", self.startPos, propFrame, element, "highlightScale")
+            self.moveNext()
 
         propFrame["frameSize"] = (
             self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-0.04,
@@ -509,7 +582,7 @@ class DirectGuiDesignerProperties():
         valueA = valueB = valueC = valueD = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC, valueD = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute][0]
             valueB = updateElement[updateAttribute][1]
             valueC = updateElement[updateAttribute][2]
@@ -598,7 +671,7 @@ class DirectGuiDesignerProperties():
         valueA = valueB = valueC = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute][0]
             valueB = updateElement[updateAttribute][1]
             valueC = updateElement[updateAttribute][2]
@@ -723,7 +796,7 @@ class DirectGuiDesignerProperties():
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA)
@@ -760,7 +833,7 @@ class DirectGuiDesignerProperties():
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA)
@@ -815,7 +888,7 @@ class DirectGuiDesignerProperties():
         text = ""
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             text = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             text = updateElement[updateAttribute]
         DirectEntry(
             initialText=text,
@@ -888,7 +961,7 @@ class DirectGuiDesignerProperties():
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
-        else:
+        elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute]
         z -= (0.06)
         DirectCheckButton(
@@ -951,7 +1024,7 @@ class DirectGuiDesignerProperties():
             items=items,
             pos=(x+0.05, 0, z+0.0125),
             scale=0.05,
-            popupMenuLocation="bottom",
+            popupMenuLocation=DGG.BELOW,
             initialitem=selectedElement,
             command=command,
             parent=parent)
@@ -1022,16 +1095,16 @@ class DirectGuiDesignerProperties():
             "Parent", startPos, parent, updateElement,
             self.parentList, selectedElement, update)
 
-    def __createReliefProperty(self, startPos, parent, updateElement):
+    def __createReliefProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
         def update(selection):
-            updateElement["relief"] = DGG.FrameStyleDict[selection]
+            updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
         selectedElement = None
         for key, value in DGG.FrameStyleDict.items():
-            if value == updateElement["relief"]:
+            if value == updateElement[updateAttribute]:
                 selectedElement = key
                 break
         self.__createOptionMenuProperty(
-            "Relief", startPos, parent, updateElement,
+            description, startPos, parent, updateElement,
             list(DGG.FrameStyleDict.keys()), selectedElement, update)
 
     def __createTextAlignProperty(self, startPos, parent, updateElement):
@@ -1057,6 +1130,15 @@ class DirectGuiDesignerProperties():
         self.__createOptionMenuProperty(
             "Text Align", startPos, parent, updateElement,
             list(alignments.keys()), selectedElement, update)
+
+    def __createBoxPlacementProperty(self, description, startPos, parent, updateElement, updateAttribute):
+        placements = ["left", "above", "right", "below"]
+        def update(selection):
+            updateElement[updateAttribute] = selection
+        selectedElement = updateElement[updateAttribute]
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            placements, selectedElement, update)
 
     def __createResetFramesize(self, description, startPos, parent, updateElement):
         x = startPos.getX()
