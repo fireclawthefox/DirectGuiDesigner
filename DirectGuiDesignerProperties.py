@@ -973,7 +973,7 @@ class DirectGuiDesignerProperties():
         z = startPos.getZ()-0.03
         self.__createPropertyHeader("Name", z, parent)
         z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
-        text = updateElementInfo.elementName
+        text = updateElementInfo.name
         DirectEntry(
             initialText=text,
             pos=(x+0.05, 0, z),
@@ -1113,9 +1113,9 @@ class DirectGuiDesignerProperties():
         nextZ = 0.13
         for keys, radioButton in self.elementDict.items():
             #if radioButton == updateElement: continue
-            if radioButton.elementType != "DirectRadioButton": continue
+            if radioButton.type != "DirectRadioButton": continue
             DirectCheckButton(
-                text=radioButton.elementName,
+                text=radioButton.name,
                 pos=(0, 0, innerZ-0.035),
                 indicatorValue=radioButton.element in updateElement["others"],
                 boxPlacement="right",
@@ -1224,8 +1224,8 @@ class DirectGuiDesignerProperties():
         self.parentList = ["root"]
         for guiID, elementInfo in self.elementDict.items():
             if elementInfo.element != updateElement:
-                if elementInfo.parentElement is not None:
-                    if elementInfo.parentElement.element != updateElement:
+                if elementInfo.parent is not None:
+                    if elementInfo.parent.element != updateElement:
                         self.parentList.append(elementInfo.element.getName())
                 else:
                     self.parentList.append(elementInfo.element.getName())
@@ -1246,9 +1246,9 @@ class DirectGuiDesignerProperties():
                 selectedElement = str(updateElement.getParent()).replace(canvas, "root")
 
         if selectedElement is None or selectedElement not in self.parentList:
-            if updateElementInfo.parentElement is not None:
-                if "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.element.guiId) in self.parentList:
-                    selectedElement = "{}-{}".format(updateElementInfo.elementType, updateElementInfo.parentElement.element.guiId)
+            if updateElementInfo.parent is not None:
+                if "{}-{}".format(updateElementInfo.type, updateElementInfo.parent.element.guiId) in self.parentList:
+                    selectedElement = "{}-{}".format(updateElementInfo.type, updateElementInfo.parent.element.guiId)
 
         self.__createOptionMenuProperty(
             "Parent", startPos, parent, updateElement,

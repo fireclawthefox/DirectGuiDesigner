@@ -67,7 +67,7 @@ class DirectGuiDesignerExporterProject:
             try:
                 jsonElements[name] = self.__createJSONEntry(elementInfo)
             except Exception as e:
-                print("error while writing {}:".format(elementInfo.elementName))
+                print("error while writing {}:".format(elementInfo.name))
                 print(e)
 
         with open(path, 'w') as outfile:
@@ -76,8 +76,8 @@ class DirectGuiDesignerExporterProject:
     def __createJSONEntry(self, elementInfo):
         return {
                 "element":self.__writeElement(elementInfo),
-                "elementType":elementInfo.elementType,
-                "parentElement":self.__writeParent(elementInfo.parentElement),
+                "type":elementInfo.type,
+                "parent":self.__writeParent(elementInfo.parent),
                 "command":elementInfo.command,
                 "extraArgs":elementInfo.extraArgs,
                 "extraOptions":elementInfo.extraOptions,
@@ -185,11 +185,11 @@ class DirectGuiDesignerExporterProject:
                     print("FUNCTION END")
 
             # special options for specific elements
-            if elementInfo.elementType == "DirectRadioButton":
+            if elementInfo.type == "DirectRadioButton":
                 elementNameDict = {}
                 others = []
                 for key, value in self.guiElementsDict.items():
-                    elementNameDict[value.element] = value.elementName
+                    elementNameDict[value.element] = value.name
                 for otherElement in elementInfo.element["others"]:
                     if otherElement in elementNameDict:
                         others.append("{}".format(elementNameDict[otherElement]))

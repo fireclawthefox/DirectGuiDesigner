@@ -51,13 +51,13 @@ class DirectGuiDesignerLoaderProject:
                 fileContent = json.load(infile)
             self.createdParents = ["root"]
             self.postponedElements = {}
-            for elementName, elementInfo in fileContent.items():
-                self.__createElement(elementName, elementInfo)
+            for name, elementInfo in fileContent.items():
+                self.__createElement(name, elementInfo)
 
             for elementInfo, option in self.radiobuttonOthersDict.items():
                 elementList = []
                 for elementId, info in self.elementDict.items():
-                    if info.elementName in option:
+                    if info.name in option:
                         elementList.append(info.element)
                 print(elementList)
                 elementInfo.element["others"] = elementList
@@ -66,7 +66,7 @@ class DirectGuiDesignerLoaderProject:
         del self.dlgPathSelect
 
     def __createElement(self, name, info):
-        if info["parentElement"] not in self.createdParents:
+        if info["parent"] not in self.createdParents:
             self.postponedElements[name] = info
             return
 
@@ -80,13 +80,13 @@ class DirectGuiDesignerLoaderProject:
         # check if we can create postponed elements
         for elementName, elementInfo in self.postponedElements.copy().items():
             if elementName in self.createdParents: continue
-            if elementInfo["parentElement"] in self.createdParents:
+            if elementInfo["parent"] in self.createdParents:
                 self.__createElement(elementName, elementInfo)
 
     def __createControl(self, jsonElementName, jsonElementInfo):
-        funcName = "create{}".format(jsonElementInfo["elementType"])
+        funcName = "create{}".format(jsonElementInfo["type"])
         if hasattr(self.elementHandler, funcName):
-            parentName = jsonElementInfo["parentElement"]
+            parentName = jsonElementInfo["parent"]
             parent = None
             if parentName in self.parentMap.keys():
                 parent = self.elementDict[self.parentMap[parentName]]
@@ -99,28 +99,28 @@ class DirectGuiDesignerLoaderProject:
             elementInfo.command = jsonElementInfo["command"]
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
             elementInfo.extraOptions = jsonElementInfo["extraOptions"]
-            elementInfo.elementName = jsonElementName
+            elementInfo.name = jsonElementName
 
             if elementInfo is None: return
             if type(elementInfo) is tuple:
-                if parent is not None and "DirectScrolledList" == parent.elementType:
+                if parent is not None and "DirectScrolledList" == parent.type:
                     parent.element.addItem(elementInfo[0].element)
-                elif parent is not None and "DirectEntryScroll" == parent.elementType:
+                elif parent is not None and "DirectEntryScroll" == parent.type:
                     parent.element.setEntry(elementInfo[0].element)
-                    parent.extraOptions["entry"] = "self." + elementInfo[0].elementName
+                    parent.extraOptions["entry"] = "self." + elementInfo[0].name
                 for entry in elementInfo:
-                    entry.parentElement = parent
+                    entry.parent = parent
                     # TODO: Check how this works! ESP. Saving TOO
                     self.__setProperties(entry, jsonElementInfo)
                     self.elementDict[entry.element.guiId] = entry
                     self.parentMap[jsonElementName] = entry.element.guiId
             else:
-                elementInfo.parentElement = parent
-                if parent is not None and "DirectScrolledList" == parent.elementType:
+                elementInfo.parent = parent
+                if parent is not None and "DirectScrolledList" == parent.type:
                     parent.element.addItem(elementInfo.element)
-                elif parent is not None and "DirectEntryScroll" == parent.elementType:
+                elif parent is not None and "DirectEntryScroll" == parent.type:
                     parent.element.setEntry(elementInfo.element)
-                    parent.extraOptions["entry"] = "self." + elementInfo.elementName
+                    parent.extraOptions["entry"] = "self." + elementInfo.name
                 self.__setProperties(elementInfo, jsonElementInfo)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId

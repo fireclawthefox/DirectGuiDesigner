@@ -28,19 +28,19 @@ from direct.gui.DirectDialog import RetryCancelDialog
 from panda3d.core import TextNode
 
 class ElementInfo:
-    def __init__(self, element, elementType, elementName = None, parentElement = None, extraOptions = None, createAfter = None):
+    def __init__(self, element, elementType, name = None, parent = None, extraOptions = None, createAfter = None):
         # The actual GUI element
         self.element = element
 
         # Name of the element type
-        self.elementType = elementType
-        if elementName is not None:
-            self.elementName = elementName
+        self.type = elementType
+        if name is not None:
+            self.name = name
         else:
-            self.elementName = element.guiId.replace("-","")
+            self.name = element.guiId.replace("-","")
 
         # The ElementInfo of the Parent of this element
-        self.parentElement = parentElement
+        self.parent = parent
 
         # A dictionary of options and their values
         if extraOptions is not None:
@@ -117,9 +117,9 @@ class DirectGuiDesignerElementHandler:
                 scale=0.1)
             elementInfoA = ElementInfo(entry, "DirectEntry")
             elementInfoB = ElementInfo(element, "DirectEntryScroll", createAfter=[elementInfoA])
-            elementInfoB.extraOptions["entry"] = "self." + elementInfoA.elementName
-            elementInfoA.parentElement = elementInfoB
-            print("PARENT ELEMENT SET TO:", elementInfoA.parentElement)
+            elementInfoB.extraOptions["entry"] = "self." + elementInfoA.name
+            elementInfoA.parent = elementInfoB
+            print("PARENT ELEMENT SET TO:", elementInfoA.parent)
             self.setupBind(elementInfoA, elementInfoB)
             self.setupBind(elementInfoB)
             return elementInfoA, elementInfoB

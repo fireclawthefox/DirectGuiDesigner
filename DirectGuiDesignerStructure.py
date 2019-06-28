@@ -100,7 +100,7 @@ class DirectGuiDesignerStructure():
 
         if elementInfo is not None:
             btn = DirectButton(
-                text=elementInfo.elementName,
+                text=elementInfo.name,
                 text_align=TextNode.ALeft,
                 relief=DGG.FLAT,
                 pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel, 0, z),

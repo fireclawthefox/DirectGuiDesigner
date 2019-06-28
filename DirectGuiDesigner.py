@@ -198,16 +198,16 @@ class DirectGuiDesigner(ShowBase):
             elementInfo = getattr(self.elementHandler, funcName)(parent)
             if elementInfo is None: return
             if type(elementInfo) is tuple:
-                if self.selectedElement is not None and self.selectedElement.elementType == "DirectScrolledList":
+                if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
                     self.selectedElement.element.addItem(elementInfo[0].element)
                 for entry in elementInfo:
-                    if self.selectedElement is not None and entry.parentElement is None:
-                        entry.parentElement = self.selectedElement
+                    if self.selectedElement is not None and entry.parent is None:
+                        entry.parent = self.selectedElement
                     self.elementDict[entry.element.guiId] = entry
             else:
                 if self.selectedElement is not None:
-                    elementInfo.parentElement = self.selectedElement
-                    if self.selectedElement.elementType == "DirectScrolledList":
+                    elementInfo.parent = self.selectedElement
+                    if self.selectedElement.type == "DirectScrolledList":
                         self.selectedElement.element.addItem(elementInfo.element)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
             base.messenger.send("refreshStructureTree")
@@ -259,8 +259,8 @@ class DirectGuiDesigner(ShowBase):
 
     def refreshProperties(self, elementInfo):
         self.propertiesFrame.clear()
-        propFuncName = "properties{}".format(elementInfo.elementType)
-        if elementInfo.elementType == "Editor":
+        propFuncName = "properties{}".format(elementInfo.type)
+        if elementInfo.type == "Editor":
             getattr(self, propFuncName)(elementInfo)
         if hasattr(self.elementHandler, propFuncName):
             getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict)
@@ -331,12 +331,12 @@ class DirectGuiDesigner(ShowBase):
         if not workOn.isEmpty():
             name = workOn.getName()
             if name in self.elementDict.keys():
-                if self.elementDict[name].parentElement is not None and self.elementDict[name][0].parentElement.elementType == "DirectScrolledList":
-                    self.elementDict[name].parentElement.element.removeItem(workOn)
+                if self.elementDict[name].parent is not None and self.elementDict[name][0].parent.type == "DirectScrolledList":
+                    self.elementDict[name].parent.element.removeItem(workOn)
                 del self.elementDict[name]
             elif name.split("-")[1] in self.elementDict.keys():
-                if self.elementDict[name.split("-")[1]].parentElement is not None and self.elementDict[name.split("-")[1]].parentElement.elementType == "DirectScrolledList":
-                    self.elementDict[name.split("-")[1]].parentElement.element.removeItem(workOn)
+                if self.elementDict[name.split("-")[1]].parent is not None and self.elementDict[name.split("-")[1]].parent.type == "DirectScrolledList":
+                    self.elementDict[name.split("-")[1]].parent.element.removeItem(workOn)
                 del self.elementDict[name.split("-")[1]]
 
         workOn.destroy()
@@ -381,11 +381,11 @@ class DirectGuiDesigner(ShowBase):
     def setName(self, elementInfo, name):
         guiId = elementInfo.element.guiId
         e = self.elementDict[guiId]
-        e.elementName = name
-        if e.elementType == "DirectEntry":
-            if (e.parentElement is not None
-            and e.parentElement.elementType == "DirectEntryScroll"):
-                parentID = e.parentElement.element.guiId
+        e.name = name
+        if e.type == "DirectEntry":
+            if (e.parent is not None
+            and e.parent.type == "DirectEntryScroll"):
+                parentID = e.parent.element.guiId
                 self.elementDict[parentID].extraOptions["entry"] = name
         base.messenger.send("refreshStructureTree")
 
@@ -397,7 +397,7 @@ class DirectGuiDesigner(ShowBase):
 
     def setParentOfElement(self, element, parent):
         if parent is self.visualEditor.getCanvas():
-            self.elementDict[element.guiId].parentElement = None
+            self.elementDict[element.guiId].parent = None
         else:
             parentElement = None
             if parent.getName() in self.elementDict.keys():
@@ -408,7 +408,7 @@ class DirectGuiDesigner(ShowBase):
                 # check if we can find an element as parent of the current NP
                 # This happens for elements that have a canvas or other sub NPs
                 parentElement = self.__findFirstGUIElement(parent)
-            self.elementDict[element.guiId].parentElement = parentElement
+            self.elementDict[element.guiId].parent = parentElement
 
     def toggleGrid(self, enable):
         if enable:

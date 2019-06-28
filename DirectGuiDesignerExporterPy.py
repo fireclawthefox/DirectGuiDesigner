@@ -66,9 +66,9 @@ class DirectGuiDesignerExporterPy:
 """
         usedImports = []
         for name, elementInfo in self.guiElementsDict.items():
-            if elementInfo.elementType not in usedImports:
-                self.content = "{}\n{}".format(self.content, importStatements[elementInfo.elementType])
-                usedImports.append(elementInfo.elementType)
+            if elementInfo.type not in usedImports:
+                self.content = "{}\n{}".format(self.content, importStatements[elementInfo.type])
+                usedImports.append(elementInfo.type)
         self.content = """
 {}
 from panda3d.core import (
@@ -153,19 +153,19 @@ app.run()"""
                 postponed = False
                 if len(elementInfo.createAfter) > 0:
                     for afterElementInfo in elementInfo.createAfter:
-                        if afterElementInfo.elementName not in self.createdParents:
-                            self.postponedElements[elementInfo.elementName] = elementInfo
+                        if afterElementInfo.name not in self.createdParents:
+                            self.postponedElements[elementInfo.name] = elementInfo
                             postponed = True
                 if not postponed:
                     self.content += self.__createElement(elementInfo)
-                    self.createdParents.append(elementInfo.elementName)
+                    self.createdParents.append(elementInfo.name)
 
         if hasattr(root, "getChildren") and not ignoreChildren:
             for child in root.getChildren():
                 self.__createStructuredElements(child.getName(), child)
 
-        if elementInfo is not None and elementInfo.elementName in self.postponedElements.keys():
-            del self.postponedElements[elementInfo.elementName]
+        if elementInfo is not None and elementInfo.name in self.postponedElements.keys():
+            del self.postponedElements[elementInfo.name]
 
         # check if we can create postponed elements
         for postponedElementInfoName, postponedElementInfo in self.postponedElements.copy().items():
@@ -174,7 +174,7 @@ app.run()"""
             hasAll = True
             if len(postponedElementInfo.createAfter) > 0:
                 for afterElementInfo in postponedElementInfo.createAfter:
-                    if afterElementInfo.elementName not in self.createdParents:
+                    if afterElementInfo.name not in self.createdParents:
                         hasAll = False
 
             if hasAll:
@@ -187,16 +187,16 @@ app.run()"""
         elementCode = """
         self.{} = {}(
 {}{}{}{}        )\n""".format(
-            elementInfo.elementName,
-            elementInfo.elementType,
+            elementInfo.name,
+            elementInfo.type,
             self.__writeElementOptions(elementInfo),
             " "*12 + "command={},\n".format(elementInfo.command) if elementInfo.command is not None else "",
             " "*12 + "extraArgs=[{}],\n".format(elementInfo.extraArgs) if elementInfo.extraArgs is not None else "",
             extraOptions,
             )
 
-        if elementInfo.elementType == "DirectScrolledListItem":
-            self.preSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo.parentElement.elementName ,elementInfo.elementName))
+        if elementInfo.type == "DirectScrolledListItem":
+            self.preSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo.parent.name ,elementInfo.name))
 
         return elementCode
 
@@ -225,7 +225,7 @@ app.run()"""
         for subcomponentName in element.components():
             self.__getAllSubcomponents(subcomponentName, element.component(subcomponentName), "")
 
-        if elementInfo.elementType == "DirectOptionMenu":
+        if elementInfo.type == "DirectOptionMenu":
             elementOptions += indent + "items=['item1'],\n"
 
         for element, name in self.componentsList.items():
@@ -256,11 +256,11 @@ app.run()"""
                     elementNameDict = {}
                     others = []
                     for key, value in self.guiElementsDict.items():
-                        elementNameDict[value.element] = value.elementName
+                        elementNameDict[value.element] = value.name
                     for otherElement in option[DGG._OPT_VALUE]:
                         if otherElement in elementNameDict:
                             others.append("self.{}".format(elementNameDict[otherElement]))
-                    self.radiobuttonDict["self.{}".format(elementInfo.elementName)] = others
+                    self.radiobuttonDict["self.{}".format(elementInfo.name)] = others
                     continue
 
                 elif not option[DGG._OPT_FUNCTION]:
@@ -297,12 +297,12 @@ app.run()"""
                         except:
                             print("Can't write:", option[DGG._OPT_DEFAULT])
 
-            if elementInfo.parentElement is not None and name == "":
-                if elementInfo.parentElement.elementType == "DirectScrollFrame":
+            if elementInfo.parent is not None and name == "":
+                if elementInfo.parent.type == "DirectScrollFrame":
                     # use the canvas as parent
-                    elementOptions += indent + "parent=self." + elementInfo.parentElement.elementName + ".getCanvas(),\n"
+                    elementOptions += indent + "parent=self." + elementInfo.parent.name + ".getCanvas(),\n"
                 else:
-                    elementOptions += indent + "parent=self." + elementInfo.parentElement.elementName + ",\n"
+                    elementOptions += indent + "parent=self." + elementInfo.parent.name + ",\n"
             elif name == "":
                 # use the parent passed to the class
                 elementOptions += indent + "parent=rootParent,\n"

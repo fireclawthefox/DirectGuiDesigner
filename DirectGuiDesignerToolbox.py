@@ -94,10 +94,10 @@ class DirectGuiDesignerToolbox:
             -(len(self.toolboxEntries)*0.08), 0)
         self.toolboxFrame.setCanvasSize()
 
-    def __createControl(self, elementName):
-        base.messenger.send("createControl", [elementName])
+    def __createControl(self, name):
+        base.messenger.send("createControl", [name])
 
-    def __makeToolboxListItem(self, displayName, elementName, index):
+    def __makeToolboxListItem(self, displayName, name, index):
         item = DirectButton(
             text=displayName,
             frameSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1]-0.04, -0.04, 0.04),
@@ -111,7 +111,7 @@ class DirectGuiDesignerToolbox:
             pos=(0, 0, -(0.08 * index)+0.04),
             relief=DGG.FLAT,
             command=self.__createControl,
-            extraArgs=[elementName])
+            extraArgs=[name])
         return item
 
     def __makeToolboxCenteredListItem(self, displayName, index):
