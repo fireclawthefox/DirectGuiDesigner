@@ -208,6 +208,10 @@ class DirectGuiDesignerElementHandler:
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
             scale=0.1)
         elementInfo = ElementInfo(element, "DirectRadioButton")
+
+        elementInfo.extraOptions["variable"] = []
+        elementInfo.extraOptions["value"] = []
+
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -216,6 +220,14 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["boxBorder"] = True
+        self.propertiesFrame.propertyList["boxPlacement"] = True
+        self.propertiesFrame.propertyList["boxImage"] = True
+        self.propertiesFrame.propertyList["boxImageScale"] = True
+        self.propertiesFrame.propertyList["boxImageColor"] = True
+        self.propertiesFrame.propertyList["boxRelief"] = True
+        self.propertiesFrame.propertyList["others"] = True
+        self.propertiesFrame.propertyList["indicatorValue"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
     def createDirectSlider(self, parent=None):
@@ -232,6 +244,18 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+
+        self.propertiesFrame.propertyList["SB-range"] = True
+        self.propertiesFrame.propertyList["value"] = True
+        self.propertiesFrame.propertyList["scrollSize"] = True
+        self.propertiesFrame.propertyList["pageSize"] = True
+        self.propertiesFrame.propertyList["orientation"] = True
+
+        self.propertiesFrame.propertyList["thumb_pos"] = True
+        self.propertiesFrame.propertyList["thumb_hpr"] = True
+        self.propertiesFrame.propertyList["thumb_scale"] = True
+        self.propertiesFrame.propertyList["thumb_frameColor"] = True
+        self.propertiesFrame.propertyList["thumb_frameSize"] = True
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
@@ -247,6 +271,32 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["SB-range"] = True
+        self.propertiesFrame.propertyList["value"] = True
+        self.propertiesFrame.propertyList["scrollSize"] = True
+        self.propertiesFrame.propertyList["pageSize"] = True
+        self.propertiesFrame.propertyList["orientation"] = True
+        self.propertiesFrame.propertyList["manageButtons"] = True
+        self.propertiesFrame.propertyList["resizeThumb"] = True
+
+        self.propertiesFrame.propertyList["incButton_pos"] = True
+        self.propertiesFrame.propertyList["incButton_hpr"] = True
+        self.propertiesFrame.propertyList["incButton_scale"] = True
+        self.propertiesFrame.propertyList["incButton_frameColor"] = True
+        self.propertiesFrame.propertyList["incButton_frameSize"] = True
+
+        self.propertiesFrame.propertyList["decButton_pos"] = True
+        self.propertiesFrame.propertyList["decButton_hpr"] = True
+        self.propertiesFrame.propertyList["decButton_scale"] = True
+        self.propertiesFrame.propertyList["decButton_frameColor"] = True
+        self.propertiesFrame.propertyList["decButton_frameSize"] = True
+
+        self.propertiesFrame.propertyList["thumb_pos"] = True
+        self.propertiesFrame.propertyList["thumb_hpr"] = True
+        self.propertiesFrame.propertyList["thumb_scale"] = True
+        self.propertiesFrame.propertyList["thumb_frameColor"] = True
+        self.propertiesFrame.propertyList["thumb_frameSize"] = True
+
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
     def createDirectScrolledList(self, parent=None):
@@ -362,6 +412,12 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["range"] = True
+        self.propertiesFrame.propertyList["value"] = True
+        self.propertiesFrame.propertyList["barBorderWidth"] = True
+        self.propertiesFrame.propertyList["barColor"] = True
+        self.propertiesFrame.propertyList["barTexture"] = True
+        self.propertiesFrame.propertyList["barRelief"] = True
         self.propertiesFrame.setupProperties("Wait Bar Properties", element, elementDict)
 
     def createOkDialog(self, parent=None):
@@ -449,8 +505,7 @@ class DirectGuiDesignerElementHandler:
             frameColor=(1,1,1,1),
             frameSize=(-1,1,-1,1),
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            state = DGG.NORMAL,
-            scale=1)
+            state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectFrame")
         self.setupBind(elementInfo)
         return elementInfo
@@ -465,8 +520,7 @@ class DirectGuiDesignerElementHandler:
             frameSize=(-1,1,-1,1),
             canvasSize=(-2,2,-2,2),
             parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            state = DGG.NORMAL,
-            scale=0.1)
+            state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectScrolledFrame")
         self.setupBind(elementInfo)
         return elementInfo

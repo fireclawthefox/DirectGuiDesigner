@@ -72,6 +72,11 @@ class DirectGuiDesignerProperties():
         "decButton_scale":False,
         "decButton_frameColor":False,
         "decButton_frameSize":False,
+        "thumb_pos":False,
+        "thumb_hpr":False,
+        "thumb_scale":False,
+        "thumb_frameColor":False,
+        "thumb_frameSize":False,
 
         # CheckButton specific
         "boxBorder":False,
@@ -81,12 +86,33 @@ class DirectGuiDesignerProperties():
         "boxImageColor":False,
         "boxRelief":False,
 
+        # RadioButton specific
+        "others":False,
+        "indicatorValue":False,
+
         # OptionMenu specific
         "popupMarkerBorder":False,
         "popupMarker_pos":False,
         "popupMenuLocation":False,
         "highlightColor":False,
         "highlightScale":False,
+
+        # ScrollBar specific
+        "SB-range":False,
+        "value":False,
+        "scrollSize":False,
+        "pageSize":False,
+        "orientation":False,
+        "manageButtons":False,
+        "resizeThumb":False,
+
+        # WaitBar specific
+        "range":False,
+        "value":False,
+        "barBorderWidth":False,
+        "barColor":False,
+        "barTexture":False,
+        "barRelief":False,
     }
 
     initOpDict = {
@@ -125,6 +151,11 @@ class DirectGuiDesignerProperties():
         "decButton_hpr":["decButton", "getHpr"],
         "decButton_scale":["decButton", "getScale"],
         "decButton_frameSize":["decButton", "getBounds"],
+
+        "thumb_pos":["thumb", "getPos"],
+        "thumb_hpr":["thumb", "getHpr"],
+        "thumb_scale":["thumb", "getScale"],
+        "thumb_frameSize":["thumb", "getBounds"],
     }
     subControlInitOpDict = {
         "incButton_pos":["incButton", "setPos"],
@@ -134,7 +165,11 @@ class DirectGuiDesignerProperties():
         "decButton_pos":["decButton", "setPos"],
         "decButton_hpr":["decButton", "setHpr"],
         "decButton_scale":["decButton", "setScale"],
-        "decButton_text":["decButton", "setText"],
+        "decButton_text":["thumb", "setText"],
+        "thumb_pos":["thumb", "setPos"],
+        "thumb_hpr":["thumb", "setHpr"],
+        "thumb_scale":["thumb", "setScale"],
+        "thumb_text":["thumb", "setText"],
     }
 
     # Call a function instead of directly set the option
@@ -229,8 +264,7 @@ class DirectGuiDesignerProperties():
         # General Properties
         #
         self.__createInbetweenHeader("General Properties", self.startPos, propFrame)
-        self.startPos.setZ(self.startPos.getZ() - 0.07)
-        self.frameSize += 0.07
+        self.frameSize += 0.035
         if self.propertyList["name"]:
             self.__createNameProperty(self.startPos, propFrame, elementInfo)
             self.moveNext()
@@ -309,8 +343,6 @@ class DirectGuiDesignerProperties():
         for prop in ["initialText", "width", "numLines", "overflow", "obscured"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Entry Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["initialText"]:
             self.__createTextProperty("Initial Text", self.startPos, propFrame, element, "initialText")
@@ -334,8 +366,6 @@ class DirectGuiDesignerProperties():
         for prop in ["clipSize"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["clipSize"]:
             self.__createBase4Input("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize")
@@ -347,8 +377,6 @@ class DirectGuiDesignerProperties():
         for prop in ["uncheckedImage","checkedImage","isChecked"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["uncheckedImage"]:
             self.__createImageProperty("Unchecked Image", self.startPos, propFrame, element, "uncheckedImage")
@@ -366,8 +394,6 @@ class DirectGuiDesignerProperties():
         for key in self.propertyList.keys():
             if key.startswith("incButton") and self.propertyList[key]:
                 self.__createInbetweenHeader("Inc Button Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["incButton_pos"]:
             self.__createBase3Input("incButton Position (X/Y/Z)", self.startPos, propFrame, element, "incButton_pos")
@@ -387,13 +413,11 @@ class DirectGuiDesignerProperties():
             incBtn = element.incButton
             self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, incBtn)
             self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.065
+            self.frameSize += 0.13
 
         for key in self.propertyList.keys():
             if key.startswith("decButton") and self.propertyList[key]:
                 self.__createInbetweenHeader("Dec Button Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["decButton_pos"]:
             self.__createBase3Input("decButton Position (X/Y/Z)", self.startPos, propFrame, element, "decButton_pos")
@@ -413,7 +437,31 @@ class DirectGuiDesignerProperties():
             decBtn = element.decButton
             self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, decBtn)
             self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.065
+            self.frameSize += 0.13
+
+        for key in self.propertyList.keys():
+            if key.startswith("thumb") and self.propertyList[key]:
+                self.__createInbetweenHeader("Thumb Properties", self.startPos, propFrame)
+                break
+        if self.propertyList["thumb_pos"]:
+            self.__createBase3Input("thumb Position (X/Y/Z)", self.startPos, propFrame, element, "thumb_pos")
+            self.moveNext()
+        if self.propertyList["thumb_hpr"]:
+            self.__createBase3Input("thumb Rotation (H/P/R)", self.startPos, propFrame, element, "thumb_hpr")
+            self.moveNext()
+        if self.propertyList["thumb_scale"]:
+            self.__createBase3Input("thumb Scale", self.startPos, propFrame, element, "thumb_scale")
+            self.moveNext()
+        if self.propertyList["thumb_frameColor"]:
+            self.__createBase4Input("thumb Background Color (r/g/b/a)", self.startPos, propFrame, element, "thumb_frameColor")
+            self.moveNext()
+        if self.propertyList["thumb_frameSize"]:
+            self.__createBase4Input("thumb Frame Size (L/R/B/T)", self.startPos, propFrame, element, "thumb_frameSize")
+            self.moveNext()
+            decBtn = element.thumb
+            self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, decBtn)
+            self.startPos.setZ(self.startPos.getZ() - 0.065)
+            self.frameSize += 0.13
 
         #
         # CheckButton specific
@@ -421,8 +469,6 @@ class DirectGuiDesignerProperties():
         for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["boxBorder"]:
             self.__createFloatInput("Box Border Width", self.startPos, propFrame, element, "boxBorder")
@@ -430,6 +476,7 @@ class DirectGuiDesignerProperties():
         if self.propertyList["boxPlacement"]:
             # boxPlacement maps left, above, right, below
             self.__createBoxPlacementProperty("Box Placement", self.startPos, propFrame, element, "boxPlacement")
+            self.moveNext()
         if self.propertyList["boxImage"]:
             self.__createImageProperty("Box Image", self.startPos, propFrame, element, "boxImage")
             self.moveNext()
@@ -444,13 +491,24 @@ class DirectGuiDesignerProperties():
             self.moveNext()
 
         #
+        # RadioButton specific
+        #
+        for prop in ["others", "indicatorValue"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Radio Button Properties", self.startPos, propFrame)
+                break
+        if self.propertyList["others"]:
+            self.__createOthersSelectorProperty(self.startPos, propFrame, element)
+        if self.propertyList["indicatorValue"]:
+            self.__createBoolProperty("Is selected", self.startPos, propFrame, element, "indicatorValue")
+            self.moveNext()
+
+        #
         # OptionMenu specific
         #
         for prop in ["popupMarkerBorder","popupMarker_pos","popupMenuLocation","highlightColor","highlightScale"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
-                self.startPos.setZ(self.startPos.getZ() - 0.07)
-                self.frameSize += 0.035
                 break
         if self.propertyList["popupMarkerBorder"]:
             self.__createBase2Input("Popup Marker Border", self.startPos, propFrame, element, "popupMarkerBorder")
@@ -468,13 +526,69 @@ class DirectGuiDesignerProperties():
             self.__createBase2Input("Highlight Scale", self.startPos, propFrame, element, "highlightScale")
             self.moveNext()
 
+        #
+        # ScrollBar/Silder specific
+        #
+        for prop in ["SB-range","scrollSize","pageSize","orientation","manageButtons", "resizeThumb"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("ScrollBar/Slider Properties", self.startPos, propFrame)
+                break
+        if self.propertyList["SB-range"]:
+            self.__createBase2Input("Bar Color", self.startPos, propFrame, element, "range")
+            self.moveNext()
+        if self.propertyList["scrollSize"]:
+            self.__createFloatInput("Scroll Size", self.startPos, propFrame, element, "scrollSize")
+            self.moveNext()
+        if self.propertyList["pageSize"]:
+            self.__createFloatInput("Page Size", self.startPos, propFrame, element, "pageSize")
+            self.moveNext()
+        if self.propertyList["orientation"]:
+            self.__createOrientationProperty("Orientation", self.startPos, propFrame, element, "orientation")
+            self.moveNext()
+        if self.propertyList["manageButtons"]:
+            self.__createBoolProperty("Manage Buttons", self.startPos, propFrame, element, "manageButtons")
+            self.moveNext()
+        if self.propertyList["resizeThumb"]:
+            self.__createBoolProperty("Resize Thumb", self.startPos, propFrame, element, "resizeThumb")
+            self.moveNext()
+
+        #
+        # WaitBar specific
+        #
+        for prop in ["range","barBorderWidth","barColor","barTexture", "barRelief"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("WaitBar Properties", self.startPos, propFrame)
+                break
+        if self.propertyList["range"]:
+            self.__createFloatInput("Bar Range", self.startPos, propFrame, element, "range")
+            self.moveNext()
+        if self.propertyList["barBorderWidth"]:
+            self.__createBase2Input("Bar Border Width", self.startPos, propFrame, element, "barBorderWidth")
+            self.moveNext()
+        if self.propertyList["barColor"]:
+            self.__createBase4Input("Bar Color", self.startPos, propFrame, element, "barColor")
+            self.moveNext()
+        if self.propertyList["barTexture"]:
+            self.__createImageProperty("Bar Texture", self.startPos, propFrame, element, "barTexture")
+            self.moveNext()
+        if self.propertyList["barRelief"]:
+            self.__createReliefProperty("Bar Relief", self.startPos, propFrame, element, "barRelief")
+            self.moveNext()
+
+        #
+        # Bar and Slider Generic props
+        #
+        if self.propertyList["value"]:
+            self.__createFloatInput("Value", self.startPos, propFrame, element, "value")
+            self.moveNext()
+
         propFrame["frameSize"] = (
             self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-0.04,
             -self.frameSize, 0.0)
 
         self.propertiesFrame["canvasSize"] = (
             self.propertiesFrame["frameSize"][0], max(self.propertiesFrame["frameSize"][1]-0.04, self.maxElementWidth),
-            propFrame.bounds[2], 0)
+            propFrame.bounds[2]-0.04, 0)
         self.propertiesFrame.setCanvasSize()
 
         self.curPropFrame = propFrame
@@ -496,6 +610,8 @@ class DirectGuiDesignerProperties():
             frameColor=VBase4(0.85,0.85,0.85,1),
             pos=(0,0,z),
             parent=parent)
+        self.startPos.setZ(self.startPos.getZ() - 0.07)
+        self.frameSize += 0.035
 
     def __createPropertyHeader(self, description, z, parent):
         DirectLabel(
@@ -973,6 +1089,49 @@ class DirectGuiDesignerProperties():
             command=update,
             parent=parent)
 
+    def __createOthersSelectorProperty(self, startPos, parent, updateElement):
+        def update(selected, selection):
+            print(selected, selection)
+            if selected:
+                updateElement["others"].append(selection.element)
+            else:
+                updateElement["others"].remove(selection.element)
+        x = startPos.getX()
+        z = startPos.getZ()-0.03
+        self.__createPropertyHeader("Others", z, parent)
+        z -= (0.06)
+
+        selectionFrame = DirectScrolledFrame(
+            pos=(x,0,z),
+            frameColor=(1,1,1,1),
+            frameSize=(0,parent["frameSize"][1]*2+0.04,-0.2,0),
+            canvasSize=(0,parent["frameSize"][1]*2+0.04,-0.2,0),
+            scrollBarWidth=0.04,
+            parent=parent,
+        )
+        innerZ = 0
+        nextZ = 0.13
+        for keys, radioButton in self.elementDict.items():
+            #if radioButton == updateElement: continue
+            if radioButton.elementType != "DirectRadioButton": continue
+            DirectCheckButton(
+                text=radioButton.elementName,
+                pos=(0, 0, innerZ-0.035),
+                indicatorValue=radioButton.element in updateElement["others"],
+                boxPlacement="right",
+                scale=0.05,
+                text_align=TextNode.ALeft,
+                command=update,
+                extraArgs=[radioButton],
+                parent=selectionFrame.getCanvas())
+            innerZ -= 0.07
+        selectionFrame["canvasSize"] = (
+            0,parent["frameSize"][1]*0.2-0.04,
+            innerZ, 0)
+        selectionFrame.setCanvasSize()
+        self.startPos.setZ(self.startPos.getZ() - 0.3)
+        self.frameSize += 0.3
+
     def __createTransparencyProperty(self, startPos, parent, updateElement):
         transparencyAttribs = [
             "M_none",
@@ -1106,6 +1265,19 @@ class DirectGuiDesignerProperties():
         self.__createOptionMenuProperty(
             description, startPos, parent, updateElement,
             list(DGG.FrameStyleDict.keys()), selectedElement, update)
+
+    def __createOrientationProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
+        orientationDict = {'horizontal': DGG.HORIZONTAL, 'vertical': DGG.VERTICAL, 'vertical_inverted': DGG.VERTICAL_INVERTED}
+        def update(selection):
+            updateElement[updateAttribute] = orientationDict[selection]
+        selectedElement = None
+        for key, value in orientationDict.items():
+            if value == updateElement[updateAttribute]:
+                selectedElement = key
+                break
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            list(orientationDict.keys()), selectedElement, update)
 
     def __createTextAlignProperty(self, startPos, parent, updateElement):
         alignments = {

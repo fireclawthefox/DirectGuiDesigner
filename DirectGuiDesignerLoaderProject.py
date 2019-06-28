@@ -24,11 +24,13 @@ class DirectGuiDesignerLoaderProject:
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
-    setAsOption = ["frameSize"]
+    setAsOption = ["frameSize", "barColor", "barRelief", "range", "value"]
+    ignoreMap = ["state"]
 
     def __init__(self, visualEditorInfo, elementHandler):
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
+        self.radiobuttonOthersDict = {}
         self.elementDict = {}
         self.elementHandler = elementHandler
         self.visualEditorInfo = visualEditorInfo
@@ -51,6 +53,14 @@ class DirectGuiDesignerLoaderProject:
             self.postponedElements = {}
             for elementName, elementInfo in fileContent.items():
                 self.__createElement(elementName, elementInfo)
+
+            for elementInfo, option in self.radiobuttonOthersDict.items():
+                elementList = []
+                for elementId, info in self.elementDict.items():
+                    if info.elementName in option:
+                        elementList.append(info.element)
+                print(elementList)
+                elementInfo.element["others"] = elementList
 
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect
@@ -89,10 +99,7 @@ class DirectGuiDesignerLoaderProject:
             elementInfo.command = jsonElementInfo["command"]
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
             elementInfo.extraOptions = jsonElementInfo["extraOptions"]
-
-            #if parent is None:
-            #    print("SET ROOT")
-            #    parent = self.visualEditorInfo
+            elementInfo.elementName = jsonElementName
 
             if elementInfo is None: return
             if type(elementInfo) is tuple:
@@ -122,6 +129,9 @@ class DirectGuiDesignerLoaderProject:
     def __setProperties(self, elementInfo, jsonElementInfo):
         tempOptionDict = {}
         for name, value in jsonElementInfo["element"].items():
+            if name == "others":
+                self.radiobuttonOthersDict[elementInfo] = value
+                continue
             if name in self.prioList:
                 tempOptionDict[name] = value
             else:
@@ -135,7 +145,9 @@ class DirectGuiDesignerLoaderProject:
 
     def __setProp(self, elementInfo, name, value):
         try:
+            print(elementInfo.element.options())
             options = self.extraOptions + elementInfo.element.options()
+            if name in self.ignoreMap: return
             if name in options:
                 if name in self.funcMap.keys():
                     funcName = self.funcMap[name]
@@ -160,6 +172,7 @@ class DirectGuiDesignerLoaderProject:
                         getattr(elementInfo.element, funcName)(eval(value))
                     else:
                         elementInfo.element[name] = eval(value)
-        except:
+        except Exception as e:
             print("Couldn't set Property with Name '{}' to {}".format(name, value))
+            print(e)
 

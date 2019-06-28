@@ -64,7 +64,11 @@ class DirectGuiDesignerExporterProject:
 
         jsonElements = {}
         for name, elementInfo in self.guiElementsDict.items():
-            jsonElements[name] = self.__createJSONEntry(elementInfo)
+            try:
+                jsonElements[name] = self.__createJSONEntry(elementInfo)
+            except Exception as e:
+                print("error while writing {}:".format(elementInfo.elementName))
+                print(e)
 
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)
@@ -179,6 +183,17 @@ class DirectGuiDesignerExporterProject:
                         except:
                             print("Can't write:", option[DGG._OPT_DEFAULT])
                     print("FUNCTION END")
+
+            # special options for specific elements
+            if elementInfo.elementType == "DirectRadioButton":
+                elementNameDict = {}
+                others = []
+                for key, value in self.guiElementsDict.items():
+                    elementNameDict[value.element] = value.elementName
+                for otherElement in elementInfo.element["others"]:
+                    if otherElement in elementNameDict:
+                        others.append("{}".format(elementNameDict[otherElement]))
+                elementJson["others"] = others
 
         #print(elementJson)
         return elementJson

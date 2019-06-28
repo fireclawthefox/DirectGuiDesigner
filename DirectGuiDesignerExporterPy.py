@@ -34,6 +34,7 @@ class DirectGuiDesignerExporterPy:
         self.postponedElements = {}
         self.visualEditor = visualEditor
         self.preSetupCalling = []
+        self.radiobuttonDict = {}
 
         importStatements = {
             "DirectButton":"from direct.gui.DirectButton import DirectButton",
@@ -89,6 +90,11 @@ class GUI:
         for line in self.preSetupCalling:
             self.content += line + "\n"
 
+        for radioButton, others in self.radiobuttonDict.items():
+            self.content += " "*8 + "{}.setOthers([".format(radioButton)
+            for other in others:
+                self.content += other + ","
+            self.content += "])\n"
         self.content += """
 # Uncomment these lines and the showbase import line at the top to run this file directly
 app = ShowBase()
@@ -244,6 +250,17 @@ app.run()"""
 
             for option in element.options():
                 if option[DGG._OPT_DEFAULT] == "parent":
+                    continue
+
+                if option[DGG._OPT_DEFAULT] == "others":
+                    elementNameDict = {}
+                    others = []
+                    for key, value in self.guiElementsDict.items():
+                        elementNameDict[value.element] = value.elementName
+                    for otherElement in option[DGG._OPT_VALUE]:
+                        if otherElement in elementNameDict:
+                            others.append("self.{}".format(elementNameDict[otherElement]))
+                    self.radiobuttonDict["self.{}".format(elementInfo.elementName)] = others
                     continue
 
                 elif not option[DGG._OPT_FUNCTION]:
