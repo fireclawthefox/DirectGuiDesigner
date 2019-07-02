@@ -7,6 +7,7 @@ A Visual Editor for Panda3Ds Direct GUI
 - Properties editor for most common element options
 - Place elements freely or with a guidance grid
 - GUI structure viewer
+- Save and load projects as json files
 - Export to python script for easy integration
 
 ## Screenshots
@@ -49,6 +50,4 @@ The python script will always contain a class called Gui which you can pass a No
 ## Known Bugs and missing features
 - DirectGui has heavy flickering and sometimes doesn't render gui controls correct
     -> As a workaround until this is fixed, scale the window or select/deselct elements in the editor to make it refresh the elements
-- Most of the element specific options aren't available in the properties editor yet
-- There might be crashes when saving and loading GUIs with the more exotic GUI elements
-- Some elements (esp. those with sub controls) will not export correct yet, those need manual editing in the exported python script
+- Some element specific options aren't available in the properties editor yet
