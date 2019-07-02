@@ -16,7 +16,7 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectButton import DirectButton
 #from direct.gui.DirectOptionMenu import DirectOptionMenu
-from DirectOptionMenu import DirectOptionMenu
+from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectCheckButton import DirectCheckButton
 
 class DirectGuiDesignerProperties():
