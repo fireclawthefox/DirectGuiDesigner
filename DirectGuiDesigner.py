@@ -43,7 +43,7 @@ class DirectGuiDesigner(ShowBase):
         ShowBase.__init__(self)
 
         wp = WindowProperties()
-        wp.setIconFilename("icons/DirectGuiDesigner.ico")
+        wp.setIconFilename("icons/DirectGuiDesigner64.png")
         base.win.requestProperties(wp)
 
         self.selectedElement = None
