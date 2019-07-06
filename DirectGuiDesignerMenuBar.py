@@ -157,3 +157,8 @@ class DirectGuiDesignerMenuBar:
 
     def toggleGrid(self, selection):
         base.messenger.send("toggleGrid", [selection])
+
+    def resizeFrame(self):
+        self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
+        self.menuBar["frameSize"] = (0,self.screenWidth*(0.75),-0.05,0.05)
+        self.menuBar.setPos(self.screenWidth*(0.25), 0, -0.05)

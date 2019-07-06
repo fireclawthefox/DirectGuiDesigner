@@ -33,6 +33,7 @@ loadPrcFileData(
     """
     win-size 1920 1080
     textures-power-2 none
+    fullscreen #f
     #show-frame-rate-meter #t
     window-title DirectGUI Designer
     """)
@@ -169,16 +170,34 @@ class DirectGuiDesigner(ShowBase):
         self.accept("dragStop", self.dragStop)
 
         #base.exitFunc = self.quitApp
-        """
 
-        #TODO: Why does this break scaling of everything in the window if the size changes?
         self.accept('window-event', self.windowEventHandler)
 
-    def windowEventHandler( self, window=None ):
+    def windowEventHandler(self, window=None):
+        # call showBase windowEvent which would otherwise get overridden and breaking the app
+        self.windowEvent(window)
+
+        if window != self.win:
+            # This event isn't about our window.
+            return
+
         if window is not None: # window is none if panda3d is not started
-            wp=window.getProperties()
-            newsize=[wp.getXSize(),wp.getYSize()]
-            print(newsize)"""
+            self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
+            self.toolsFrame["frameSize"] = (-self.screenWidth/8, self.screenWidth/8, base.a2dBottom, base.a2dTop)
+            self.toolsFrame.setPos(self.screenWidth/8,0,0)
+
+            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-0.1)
+            self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
+
+            self.menuBar.resizeFrame()
+
+            self.toolFrameHeight = (abs(base.a2dBottom) + abs(base.a2dTop)) / 3
+            self.nextToolFrameY = base.a2dTop
+            self.toolboxFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
+            self.nextToolFrameY -= self.toolFrameHeight-0.02
+            self.propertiesFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
+            self.nextToolFrameY -= self.toolFrameHeight-0.02
+            self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
 
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.clearPropertySelection()

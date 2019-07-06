@@ -16,7 +16,8 @@ from direct.gui.DirectCheckBox import DirectCheckBox
 
 class DirectGuiDesignerStructure():
     def __init__(self, parent, posZ, height, visualEditor, elementDict, selectedElement):
-        DirectLabel(
+        self.parent = parent
+        self.lblHeader = DirectLabel(
             text="Structure",
             text_scale=0.05,
             text_pos=(parent["frameSize"][0], -0.015),
@@ -58,6 +59,14 @@ class DirectGuiDesignerStructure():
         self.structureFrame.reparentTo(parent)
         self.visualEditor = visualEditor
         self.refreshStructureTree(elementDict, selectedElement)
+
+    def resizeFrame(self, posZ, height):
+        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], 0.03, -0.03)
+        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], -0.015)
+        self.lblHeader.setPos(0,0,posZ-0.03)
+        posZ -= 0.06
+        self.structureFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -(height-0.08), 0)
+        self.structureFrame.setPos(0,0,posZ)
 
     def refreshStructureTree(self, elementDict, selectedElement):
         self.elementDict = elementDict

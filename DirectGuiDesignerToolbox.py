@@ -11,8 +11,9 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
 class DirectGuiDesignerToolbox:
     def __init__(self, parent, posZ, height):
+        self.parent = parent
         self.toolsFrame = parent
-        self.toolboxHeader = DirectLabel(
+        self.lblHeader = DirectLabel(
             text="Toolbox",
             text_scale=0.05,
             text_pos=(parent["frameSize"][0], -0.015),
@@ -20,8 +21,8 @@ class DirectGuiDesignerToolbox:
             text_fg=(1,1,1,1),
             frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], 0.03, -0.03),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-0.03),)
-        self.toolboxHeader.reparentTo(parent)
+            pos=(0,0,posZ-0.03),
+            parent=parent,)
         posZ -= 0.06
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
@@ -93,6 +94,14 @@ class DirectGuiDesignerToolbox:
             parent["frameSize"][0], parent["frameSize"][1]-0.04,
             -(len(self.toolboxEntries)*0.08), 0)
         self.toolboxFrame.setCanvasSize()
+
+    def resizeFrame(self, posZ, height):
+        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], 0.03, -0.03)
+        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], -0.015)
+        self.lblHeader.setPos(0,0,posZ-0.03)
+        posZ -= 0.06
+        self.toolboxFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -(height-0.08), 0)
+        self.toolboxFrame.setPos(0,0,posZ)
 
     def __createControl(self, name):
         base.messenger.send("createControl", [name])

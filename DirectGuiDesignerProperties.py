@@ -178,8 +178,9 @@ class DirectGuiDesignerProperties():
     }
 
     def __init__(self, parent, posZ, height, visualEditor):
+        self.parent = parent
         self.maxElementWidth = 0
-        DirectLabel(
+        self.lblHeader = DirectLabel(
             text="Properties",
             text_scale=0.05,
             text_pos=(parent["frameSize"][0], -0.015),
@@ -220,6 +221,14 @@ class DirectGuiDesignerProperties():
         self.propertiesFrame.reparentTo(parent)
 
         self.visualEditor = visualEditor
+
+    def resizeFrame(self, posZ, height):
+        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], 0.03, -0.03)
+        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], -0.015)
+        self.lblHeader.setPos(0,0,posZ-0.03)
+        posZ -= 0.06
+        self.propertiesFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -(height-0.08), 0)
+        self.propertiesFrame.setPos(0,0,posZ)
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
