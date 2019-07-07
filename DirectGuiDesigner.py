@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
 from direct.showbase.ShowBase import ShowBase
 
 from panda3d.core import Point3, Vec3, loadPrcFileData, WindowProperties
@@ -460,7 +462,7 @@ class DirectGuiDesigner(ShowBase):
 
     def __quit(self, selection):
         if selection == 1:
-            quit()
+            sys.exit()
         else:
             self.dlgQuit.destroy()
             self.dlgQuitShadow.destroy()
