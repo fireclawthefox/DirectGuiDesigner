@@ -670,22 +670,22 @@ class DirectGuiDesignerProperties():
             try:
                 valueA = float(a.get(True))
             except:
-                print("ERROR: NAN", valueA)
+                logging.exception("ERROR: NAN", valueA)
             valueB = 0.0
             try:
                 valueB = float(b.get(True))
             except:
-                print("ERROR: NAN", valueB)
+                logging.exception("ERROR: NAN", valueB)
             valueC = 0.0
             try:
                 valueC = float(c.get(True))
             except:
-                print("ERROR: NAN", valueC)
+                logging.exception("ERROR: NAN", valueC)
             valueD = 0.0
             try:
                 valueD = float(d.get(True))
             except:
-                print("ERROR: NAN", valueD)
+                logging.exception("ERROR: NAN", valueD)
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(
@@ -777,17 +777,17 @@ class DirectGuiDesignerProperties():
             try:
                 valueA = float(a.get(True))
             except:
-                print("ERROR: NAN", valueA)
+                logging.exception("ERROR: NAN", valueA)
             valueB = 0.0
             try:
                 valueB = float(b.get(True))
             except:
-                print("ERROR: NAN", valueB)
+                logging.exception("ERROR: NAN", valueB)
             valueC = 0.0
             try:
                 valueC = float(c.get(True))
             except:
-                print("ERROR: NAN", valueC)
+                logging.exception("ERROR: NAN", valueC)
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(
@@ -863,12 +863,12 @@ class DirectGuiDesignerProperties():
             try:
                 valueA = float(a.get(True))
             except:
-                print("ERROR: NAN", valueA)
+                logging.exception("ERROR: NAN", valueA)
             valueB = 0.0
             try:
                 valueB = float(b.get(True))
             except:
-                print("ERROR: NAN", valueB)
+                logging.exception("ERROR: NAN", valueB)
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(
@@ -935,7 +935,7 @@ class DirectGuiDesignerProperties():
             try:
                 value = float(text)
             except:
-                print("ERROR: NAN", value)
+                logging.exception("ERROR: NAN", value)
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(value)
@@ -976,7 +976,7 @@ class DirectGuiDesignerProperties():
             try:
                 value = int(text)
             except:
-                print("ERROR: NAN", value)
+                logging.exception("ERROR: NAN", value)
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(value)
@@ -1156,7 +1156,6 @@ class DirectGuiDesignerProperties():
 
     def __createOthersSelectorProperty(self, startPos, parent, updateElement):
         def update(selected, selection):
-            print(selected, selection)
             if selected:
                 updateElement["others"].append(selection.element)
             else:
@@ -1224,7 +1223,7 @@ class DirectGuiDesignerProperties():
             try:
                 updateElement[updateAttribute] = text
             except:
-                print("Couldn't load image: {}".format(text))
+                logging.exception("Couldn't load image: {}".format(text))
                 updateElement[updateAttribute] = None
         x = startPos.getX()
         z = startPos.getZ()
@@ -1289,7 +1288,7 @@ class DirectGuiDesignerProperties():
                 try:
                     updateElement.reparentTo(newParent)
                 except:
-                    print("Failed to reparent {} to {}!\nNOTE: Circular parenting is not allowed!".format(updateElement.getName(), newParent.getName()))
+                    logging.exception("Failed to reparent {} to {}!\nNOTE: Circular parenting is not allowed!".format(updateElement.getName(), newParent.getName()))
                 base.messenger.send("refreshStructureTree")
         self.parentList = ["root"]
         for guiID, elementInfo in self.elementDict.items():

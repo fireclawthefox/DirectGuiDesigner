@@ -91,7 +91,6 @@ class Tooltip():
             if xRight > self.xEdgeStartShift:
                 # shift to the left
                 xShift = self.xEdgeStartShift - xRight
-                print("SHIFT LEFT:", xShift)
             elif xLeft < -self.xEdgeStartShift:
                 # shift to the right
                 xShift = -(self.xEdgeStartShift + xLeft)

@@ -7,6 +7,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
 import os
+import logging
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
@@ -289,13 +290,13 @@ app.run()"""
                             if option[DGG._OPT_VALUE] != value:
                                 elementOptions += indent + name + option[0] + "=" + reprFunc(value) + ",\n"
                         else:
-                            print("Can't call:", option[DGG._OPT_DEFAULT])
+                            logging.error("Can't call: " + option[DGG._OPT_DEFAULT])
                     else:
                         try:
                             if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
                                 elementOptions += indent + name + option[DGG._OPT_DEFAULT] + "=" + reprFunc(element[option[DGG._OPT_VALUE]]) + ",\n"
                         except:
-                            print("Can't write:", option[DGG._OPT_DEFAULT])
+                            logging.error("Can't write: " + option[DGG._OPT_DEFAULT])
 
             if elementInfo.parent is not None and name == "":
                 if elementInfo.parent.type == "DirectScrollFrame":

@@ -100,7 +100,6 @@ class DirectGuiDesignerExporterProject:
 
     def __writeElement(self, elementInfo):
         element = elementInfo.element
-        print(element.options())
         elementJson = {}
 
         self.componentsList = {element:""}

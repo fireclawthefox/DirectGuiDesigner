@@ -8,6 +8,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import os
 import json
+import logging
 from direct.gui import DirectGuiGlobals as DGG
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 
@@ -59,7 +60,6 @@ class DirectGuiDesignerLoaderProject:
                 for elementId, info in self.elementDict.items():
                     if info.name in option:
                         elementList.append(info.element)
-                print(elementList)
                 elementInfo.element["others"] = elementList
 
         self.dlgPathSelect.destroy()
@@ -145,7 +145,6 @@ class DirectGuiDesignerLoaderProject:
 
     def __setProp(self, elementInfo, name, value):
         try:
-            print(elementInfo.element.options())
             options = self.extraOptions + elementInfo.element.options()
             if name in self.ignoreMap: return
             if name in options:
@@ -173,6 +172,5 @@ class DirectGuiDesignerLoaderProject:
                     else:
                         elementInfo.element[name] = eval(value)
         except Exception as e:
-            print("Couldn't set Property with Name '{}' to {}".format(name, value))
-            print(e)
+            logging.exception("Couldn't set Property with Name '{}' to {}".format(name, value))
 
