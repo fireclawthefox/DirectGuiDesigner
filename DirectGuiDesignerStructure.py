@@ -19,15 +19,15 @@ class DirectGuiDesignerStructure():
         self.parent = parent
         self.lblHeader = DirectLabel(
             text="Structure",
-            text_scale=0.05,
+            text_scale=16,
             text_pos=(parent["frameSize"][0], -0.015),
             text_align=TextNode.ALeft,
             text_fg=(1,1,1,1),
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], 0.03, -0.03),
+            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-0.03),
-            parent=parent)
-        posZ -= 0.06
+            pos=(0,0,posZ-20),
+            parent=parent,)
+        posZ -= 30
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
             (0.9, 0.9, 1, 1), # Click
@@ -35,13 +35,13 @@ class DirectGuiDesignerStructure():
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.structureFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -(height-0.08), 0),
+            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], height+30, 0),
             # make the canvas as big as the frame
-            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-0.04, -1, 0.0),
+            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
             # set the frames color to transparent
             frameColor=VBase4(1, 1, 1, 1),
-            scrollBarWidth=0.04,
-            verticalScroll_scrollSize=0.04,
+            scrollBarWidth=20,
+            verticalScroll_scrollSize=20,
             verticalScroll_thumb_relief=DGG.FLAT,
             verticalScroll_incButton_relief=DGG.FLAT,
             verticalScroll_decButton_relief=DGG.FLAT,
@@ -55,17 +55,17 @@ class DirectGuiDesignerStructure():
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
             pos=(0,0,posZ),)
-        self.maxWidth = parent["frameSize"][1]-0.04
+        self.maxWidth = parent["frameSize"][1]-20
         self.structureFrame.reparentTo(parent)
         self.visualEditor = visualEditor
         self.refreshStructureTree(elementDict, selectedElement)
 
     def resizeFrame(self, posZ, height):
-        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], 0.03, -0.03)
-        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], -0.015)
-        self.lblHeader.setPos(0,0,posZ-0.03)
-        posZ -= 0.06
-        self.structureFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -(height-0.08), 0)
+        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
+        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
+        self.lblHeader.setPos(0,0,posZ-20)
+        posZ -= 30
+        self.structureFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
         self.structureFrame.setPos(0,0,posZ)
 
     def refreshStructureTree(self, elementDict, selectedElement):
@@ -74,12 +74,13 @@ class DirectGuiDesignerStructure():
         for element in self.structureFrame.getCanvas().getChildren():
             element.removeNode()
 
+        self.maxWidth = self.parent["frameSize"][1]-20
         self.itemCounter = 0
         self.__fillStructureTree(self.visualEditor.getCanvas(), 0, 0)
 
         self.structureFrame["canvasSize"] = (
             self.structureFrame["frameSize"][0], self.maxWidth,
-            -(self.itemCounter*0.052), 0)
+            self.itemCounter*-16, 0)
         self.structureFrame.setCanvasSize()
 
     def __fillStructureTree(self, root, level, z):
@@ -89,7 +90,7 @@ class DirectGuiDesignerStructure():
             self.__makeStructureFrameTreeItem(root, level, z)
         if hasattr(root, "getChildren"):
             for child in root.getChildren():
-                z=-0.05*self.itemCounter
+                z=-16*self.itemCounter
                 self.__fillStructureTree(child, level+1, z)
 
     def __makeStructureFrameTreeItem(self, elementNP, parentsLevel, z):
@@ -99,55 +100,60 @@ class DirectGuiDesignerStructure():
         elif len(elementNP.getName().split("-")) > 1 and elementNP.getName().split("-")[1] in self.elementDict.keys():
             elementInfo = self.elementDict[elementNP.getName().split("-")[1]]
         else:
-            DirectLabel(
+            lbl = DirectLabel(
                 text=elementNP.getName(),
                 text_align=TextNode.ALeft,
+                frameColor=(0,0,0,0),
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel, 0, z),
-                scale=0.05,
+                pos=(self.structureFrame["frameSize"][0] + 20*parentsLevel, 0, z),
+                scale=16,
                 parent=self.structureFrame.getCanvas())
+            self.maxWidth = max(self.maxWidth, lbl.getX() + lbl.getWidth()*lbl.getScale()[0])
 
         if elementInfo is not None:
             btn = DirectButton(
+                frameColor=(VBase4(1,1,1,1), #normal
+                    VBase4(0.9,0.9,0.9,1), #click
+                    VBase4(0.8,0.8,0.8,1), #hover
+                    VBase4(0.5,0.5,0.5,1)), #disabled
                 text=elementInfo.name,
                 text_align=TextNode.ALeft,
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel, 0, z),
-                scale=0.05,
+                pos=(self.structureFrame["frameSize"][0] + 20*parentsLevel, 0, z),
+                scale=16,
                 command=self.__selectElement,
                 extraArgs=[elementInfo],
                 parent=self.structureFrame.getCanvas())
             if self.selectedElement is not None and self.selectedElement == elementInfo:
                 btn.setColorScale(1,1,0,1)
 
+            margin = 5
             btnX = DirectButton(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 0.035, 0, z+0.01),
-                frameSize=(-0.5, 0.5, -0.5, 0.5),
+                pos=(self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0], 0, z),
+                frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
-                scale=0.05,
                 command=self.__removeElement,
                 extraArgs=[elementInfo],
                 image="icons/DeleteSmall.png",
-                image_scale=0.5,
+                image_scale=8,
                 parent=self.structureFrame.getCanvas())
             btnX.setTransparency(TransparencyAttrib.M_multisample)
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 0.05*parentsLevel + btn.bounds[1]*btn.getScale()[0] + 1*btnX.getScale()[0] + 0.04, 0, z+0.01),
-                frameSize=(-0.5, 0.5, -0.5, 0.5),
+                pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z),
+                frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
-                scale=0.05,
                 command=self.__toggleElementVisibility,
                 extraArgs=[elementInfo],
                 image="icons/VisibilityOffSmall.png" if elementInfo.element.isHidden() else "icons/VisibilityOnSmall.png",
                 uncheckedImage="icons/VisibilityOffSmall.png",
                 checkedImage="icons/VisibilityOnSmall.png",
-                image_scale=0.5,
+                image_scale=8,
                 isChecked=not elementInfo.element.isHidden(),
                 parent=self.structureFrame.getCanvas())
             btnV.setTransparency(TransparencyAttrib.M_multisample)
-            self.maxWidth = max(self.maxWidth, btnV.getX() + (btnV.bounds[1] - btnV.bounds[0])*btnV.getScale().x + 0.04)
+            self.maxWidth = max(self.maxWidth, btnV.getX() + 8)
 
     def __selectElement(self, elementInfo, args=None):
         if elementInfo is not None:

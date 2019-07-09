@@ -121,7 +121,6 @@ class DirectGuiDesignerElementHandler:
             elementInfoB = ElementInfo(element, "DirectEntryScroll", createAfter=[elementInfoA])
             elementInfoB.extraOptions["entry"] = "self." + elementInfoA.name
             elementInfoA.parent = elementInfoB
-            print("PARENT ELEMENT SET TO:", elementInfoA.parent)
             self.setupBind(elementInfoA, elementInfoB)
             self.setupBind(elementInfoB)
             return elementInfoA, elementInfoB
@@ -344,27 +343,9 @@ class DirectGuiDesignerElementHandler:
                 self.propertiesFrame.propertyList[key] = True
         self.propertiesFrame.setupProperties("Scrolled List Properties", element, elementDict)
 
-    def directScrolledListItemInfoDialog_close(self, args):
-        self.directScrolledListItemInfoDialog.destroy()
-        directScrolledListItemInfoDialog = None
-        self.directScrolledListItemInfoDialogShadow.destroy()
-        self.directScrolledListItemInfoDialogShadow = None
-
     def createDirectScrolledListItem(self, parent=None):
         if parent is None or parent.getName().split("-")[0] != "DirectScrolledList":
-            self.directScrolledListItemInfoDialog = OkDialog(
-                text="Scrolled List Items must be added to Scrolled Lists.\nPlease select a scrolled list first!",
-                state=DGG.NORMAL,
-                relief=DGG.FLAT,
-                frameColor=(1,1,1,1),
-                button_relief=1,
-                button_frameColor=(0.8, 0.8, 0.8, 1),
-                command=self.directScrolledListItemInfoDialog_close)
-            self.directScrolledListItemInfoDialogShadow = DirectFrame(
-                pos=(0.025, 0, -0.025),
-                sortOrder=0,
-                frameColor=(0,0,0,0.5),
-                frameSize=self.directScrolledListItemInfoDialog.bounds)
+            base.messenger.send("showWarning", ["Scrolled List Items must be added to Scrolled Lists.\nPlease select a scrolled list first!"])
             return None
         element = DirectScrolledListItem(
             text="scrolled list item",

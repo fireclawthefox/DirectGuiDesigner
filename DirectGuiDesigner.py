@@ -36,8 +36,9 @@ loadPrcFileData(
     win-size 1920 1080
     textures-power-2 none
     fullscreen #f
-    #show-frame-rate-meter #t
+    show-frame-rate-meter #t
     window-title DirectGUI Designer
+    want-pstats #t
     """)
 
 class DirectGuiDesigner(ShowBase):
@@ -54,7 +55,13 @@ class DirectGuiDesigner(ShowBase):
         self.elementDict = {}
 
         self.dlgHelp = None
+        self.dlgHelpShadow = None
+
         self.dlgQuit = None
+        self.dlgQuitShadow = None
+
+        self.dlgWarning = None
+        self.dlgWarningShadow = None
 
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
@@ -62,6 +69,8 @@ class DirectGuiDesigner(ShowBase):
 
     def setupGui(self):
         self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
+        self.screenWidthPx = base.getSize()[0]
+        self.screenHeightPx = base.getSize()[1]
         self.leftEdge = -(self.screenWidth * (2.0 / 3.0))
         self.rightEdge = self.screenWidth * (1.0 / 3.0)
 
@@ -73,10 +82,12 @@ class DirectGuiDesigner(ShowBase):
             (0.9, 0.9, 1, 1), # Click
             (0.8, 0.8, 1, 1), # Hover
             (0.5, 0.5, 0.5, 1)) # Disabled
+        # respect menu bar
+        topMargin=48 / self.screenHeightPx * 2
         self.visualEditor = DirectScrolledFrame(
             frameColor=(0, 0, 0, 0),
             frameSize=(0,self.screenWidth*(0.75),
-                base.a2dBottom,base.a2dTop-0.1),
+                base.a2dBottom,base.a2dTop-topMargin),
             pos=(self.screenWidth*(0.25), 0, 0),
             canvasSize=(-2, 2, -2, 2),
             scrollBarWidth=0.04,
@@ -112,20 +123,20 @@ class DirectGuiDesigner(ShowBase):
         # 1/4 wide toolbox, properties and structure frame
         self.toolsFrame = DirectFrame(
             frameColor=(0.25, 0.25, 0.25, 1),
-            frameSize=(-self.screenWidth/8, self.screenWidth/8, base.a2dBottom, base.a2dTop),
-            pos=(self.screenWidth/8,0,0))
-        self.toolsFrame.reparentTo(base.a2dLeftCenter)
+            frameSize=(0, self.screenWidthPx/4, -self.screenHeightPx, 0),
+            pos=(self.screenWidth/8,0,0),
+            parent=base.pixel2d)
 
-        self.toolFrameHeight = (abs(base.a2dBottom) + abs(base.a2dTop)) / 3
+        self.toolFrameHeight = -self.screenHeightPx / 3
 
-        self.nextToolFrameY = base.a2dTop
+        self.nextToolFrameY = 0
 
         self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
-        self.nextToolFrameY -= self.toolFrameHeight-0.02
+        self.nextToolFrameY += self.toolFrameHeight
 
         self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor)
         self.propertiesEditor(self.visualEditorInfo)
-        self.nextToolFrameY -= self.toolFrameHeight-0.02
+        self.nextToolFrameY += self.toolFrameHeight
 
         self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.elementDict, self.selectedElement)
 
@@ -171,8 +182,11 @@ class DirectGuiDesigner(ShowBase):
         self.accept("dragStart", self.dragStart)
         self.accept("dragStop", self.dragStop)
 
+        self.accept("showWarning", self.showWarning)
+
         #base.exitFunc = self.quitApp
 
+        self.screenSize = base.getSize()
         self.accept('window-event', self.windowEventHandler)
 
     def windowEventHandler(self, window=None):
@@ -184,22 +198,36 @@ class DirectGuiDesigner(ShowBase):
             return
 
         if window is not None: # window is none if panda3d is not started
+            if self.screenSize == base.getSize():
+                return
+            self.screenSize = base.getSize()
             self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
-            self.toolsFrame["frameSize"] = (-self.screenWidth/8, self.screenWidth/8, base.a2dBottom, base.a2dTop)
-            self.toolsFrame.setPos(self.screenWidth/8,0,0)
+            self.screenWidthPx = base.getSize()[0]
+            self.screenHeightPx = base.getSize()[1]
+            self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, 0)
+            self.toolsFrame.setPos(0,0,0)
 
-            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-0.1)
+            topMargin=48 / self.screenHeightPx * 2
+            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-topMargin)
             self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
 
             self.menuBar.resizeFrame()
 
-            self.toolFrameHeight = (abs(base.a2dBottom) + abs(base.a2dTop)) / 3
-            self.nextToolFrameY = base.a2dTop
+            self.toolFrameHeight = -self.screenHeightPx / 3
+            self.nextToolFrameY = 0
             self.toolboxFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
-            self.nextToolFrameY -= self.toolFrameHeight-0.02
+            self.nextToolFrameY += self.toolFrameHeight
             self.propertiesFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
-            self.nextToolFrameY -= self.toolFrameHeight-0.02
+            self.nextToolFrameY += self.toolFrameHeight
             self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
+
+
+            if self.dlgHelp is not None:
+                self.dlgHelp.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
+                self.dlgHelpShadow.setPos(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10)
+            if self.dlgQuit is not None:
+                self.dlgQuit.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
+                self.dlgQuitShadow["frameSize"] = (0, base.getSize()[0], -base.getSize()[1], 0)
 
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.clearPropertySelection()
@@ -243,7 +271,7 @@ class DirectGuiDesigner(ShowBase):
         if self.selectedElement is not None:
             self.selectedElement.element.clearColorScale()
         if elementInfo is None:
-            print("Element can't be selected")
+            base.messenger.send("showWarning", ["Element can't be selected"])
             return
         self.refreshProperties(elementInfo)
         if elementInfo.element is self.visualEditor:
@@ -334,7 +362,6 @@ class DirectGuiDesigner(ShowBase):
         self.refreshProperties(t.elementInfo)
 
     def removeElement(self, element=None):
-        #TODO: If element was added to a scrolledList this scrolled list needs to remove the element with removeItem prior to deletion
         workOn = None
         selectEditor = False
         if element is not None:
@@ -455,11 +482,6 @@ class DirectGuiDesigner(ShowBase):
         projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler)
         self.elementDict = projectLoader.get()
 
-    def hideHelp(self, args):
-        self.dlgHelp.destroy()
-        self.dlgHelpShadow.destroy()
-        self.dlgHelp = None
-
     def __quit(self, selection):
         if selection == 1:
             sys.exit()
@@ -467,6 +489,7 @@ class DirectGuiDesigner(ShowBase):
             self.dlgQuit.destroy()
             self.dlgQuitShadow.destroy()
             self.dlgQuit = None
+            self.dlgQuitShadow = None
 
     def quitApp(self):
         if self.dlgQuit is not None: return
@@ -475,15 +498,20 @@ class DirectGuiDesigner(ShowBase):
             state=DGG.NORMAL,
             relief=DGG.RIDGE,
             frameColor=(1,1,1,1),
+            scale=300,
+            pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
             sortOrder=1,
             button_relief=DGG.FLAT,
             button_frameColor=(0.8, 0.8, 0.8, 1),
-            command=self.__quit)
+            command=self.__quit,
+            parent=base.pixel2d)
         self.dlgQuitShadow = DirectFrame(
+            state=DGG.NORMAL,
             pos=(0.025, 0, -0.025),
             sortOrder=0,
             frameColor=(0,0,0,0.5),
-            frameSize=self.dlgQuit.bounds)
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
+            parent=base.pixel2d)
 
     def showHelp(self):
         if self.dlgHelp is not None: return
@@ -517,14 +545,54 @@ LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button
             relief=DGG.RIDGE,
             frameColor=(1,1,1,1),
             sortOrder=1,
+            scale=300,
+            pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
             button_relief=DGG.FLAT,
             button_frameColor=(0.8, 0.8, 0.8, 1),
-            command=self.hideHelp)
+            command=self.hideHelp,
+            parent=base.pixel2d)
         self.dlgHelpShadow = DirectFrame(
-            pos=(0.025, 0, -0.025),
+            pos=(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10),
             sortOrder=0,
             frameColor=(0,0,0,0.5),
-            frameSize=self.dlgHelp.bounds)
+            frameSize=(self.dlgHelp.bounds[0]*300, self.dlgHelp.bounds[1]*300,
+                       self.dlgHelp.bounds[2]*300, self.dlgHelp.bounds[3]*300),
+            parent=base.pixel2d)
+
+    def hideHelp(self, args):
+        self.dlgHelp.destroy()
+        self.dlgHelpShadow.destroy()
+        self.dlgHelp = None
+        self.dlgHelpShadow = None
+
+    def showWarning(self, text):
+        if self.dlgWarning is not None: return
+        text = "WARNING!\n\n" + text
+        self.dlgWarning = OkDialog(
+            text=text,
+            state=DGG.NORMAL,
+            relief=DGG.RIDGE,
+            frameColor=(1,1,1,1),
+            sortOrder=1,
+            scale=300,
+            pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
+            button_relief=DGG.FLAT,
+            button_frameColor=(0.8, 0.8, 0.8, 1),
+            command=self.hideWarning,
+            parent=base.pixel2d)
+        self.dlgWarningShadow = DirectFrame(
+            state=DGG.NORMAL,
+            pos=(0,0,0),
+            sortOrder=0,
+            frameColor=(0.25,0,0,0.5),
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
+            parent=base.pixel2d)
+
+    def hideWarning(self, args):
+        self.dlgWarning.destroy()
+        self.dlgWarningShadow.destroy()
+        self.dlgWarning = None
+        self.dlgWarningShadow = None
 
 designer=DirectGuiDesigner()
 designer.run()

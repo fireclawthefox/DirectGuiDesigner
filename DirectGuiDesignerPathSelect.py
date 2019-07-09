@@ -17,78 +17,91 @@ class DirectGuiDesignerPathSelect:
     def __init__(self, command, headerText, actionText, affirmText, filePath):
         self.darkenFrame = DirectFrame(
             relief=1,
-            frameSize=(base.a2dLeft,base.a2dRight,base.a2dTop,base.a2dBottom),
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             frameColor=(0, 0, 0, 0.45),
-            pos=LPoint3f(0, 0, 0),
-            state=DGG.NORMAL
+            state=DGG.NORMAL,
+            parent=base.pixel2d,
         )
         self.mainFrame = DirectFrame(
             relief=1,
-            frameSize=(-0.75,0.75,-0.4,0.4),
+            frameSize=(-300,300,-150,150),
             frameColor=(1, 1, 1, 1),
-            pos=LPoint3f(0, 0, 0),
+            pos=LPoint3f(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
+            parent=base.pixel2d,
         )
-        self.pathEntry = DirectEntry(
-            parent=self.mainFrame,
-            borderWidth=(0.1, 0.1),
-            frameColor=(0.8, 0.8, 0.8, 1),
-            pad=(0.2, 0.2),
-            pos=LPoint3f(-0.7, 0, 0.02),
-            scale=0.05,
-            width=28,
-            overflow=True,
-            command=command,
-            extraArgs=[1],
-            initialText=filePath
-        )
-        DirectButton(
-            parent=self.mainFrame,
-            relief=1,
-            frameColor=(0.8, 0.8, 0.8, 1),
-            pos=LPoint3f(0.575, 0, -0.35),
-            scale=LVecBase3f(0.1, 0.1, 0.1),
-            text = "Cancel",
-            text_scale=0.75,
-            command=command,
-            extraArgs=[0]
-        )
+
+        # Header
         headerFrame = DirectFrame(
             parent=self.mainFrame,
             relief=1,
-            frameSize=(-0.75,0.75,-0.05,0.05),
+            frameSize=(-300,300,-20,20),
             frameColor=(0.25, 0.25, 0.25, 1.0),
-            pos=LPoint3f(0, 0, 0.35),
+            pos=LPoint3f(0, 0, 130),
             scale=LVecBase3f(1, 0.1, 1),
         )
         DirectLabel(
             parent=headerFrame,
             frameColor=(0.8, 0.8, 0.8, 0.0),
-            pos=LPoint3f(-0.7, 0, -0.02),
-            scale=LVecBase3f(0.07, 0.1, 0.07),
+            pos=LPoint3f(-295, 0, -5),
             text = headerText,
             text_align=0,
             text_fg=(1,1,1,1),
-            text_scale=0.75,
+            scale=16,
+        )
+
+        # Entry
+        DirectLabel(
+            parent=self.mainFrame,
+            frameColor=(0.8, 0.8, 0.8, 0.0),
+            pos=LPoint3f(-250, 0, 0),
+            scale=12,
+            text = actionText,
+            text_align=0,
+        )
+        self.pathEntry = DirectEntry(
+            parent=self.mainFrame,
+            relief=DGG.SUNKEN,
+            frameColor=(1, 1, 1, 1),
+            pad=(0.2, 0.2),
+            pos=LPoint3f(-250, 0, -20),
+            scale=12,
+            width=500/12,
+            overflow=True,
+            command=command,
+            extraArgs=[1],
+            initialText=filePath
+        )
+
+        # Command Buttons
+        DirectButton(
+            parent=self.mainFrame,
+            relief=1,
+            frameColor = (
+                (0.8, 0.8, 0.8, 1), # Normal
+                (0.9, 0.9, 1, 1), # Click
+                (0.8, 0.8, 1, 1), # Hover
+                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameSize=(-45, 45, -6, 14),
+            pos=LPoint3f(140, 0, -135),
+            text = affirmText,
+            text_scale=12,
+            command=command,
+            extraArgs=[1],
         )
         DirectButton(
             parent=self.mainFrame,
             relief=1,
-            frameColor=(0.8, 0.8, 0.8, 1),
-            pos=LPoint3f(0.325, 0, -0.35),
-            scale=LVecBase3f(0.1, 0.1, 0.1),
-            text = affirmText,
-            text_scale=0.75,
+            frameColor = (
+                (0.8, 0.8, 0.8, 1), # Normal
+                (0.9, 0.9, 1, 1), # Click
+                (0.8, 0.8, 1, 1), # Hover
+                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameSize=(-45, 45, -6, 14),
+            pos=LPoint3f(245, 0, -135),
+            text = "Cancel",
+            text_scale=12,
             command=command,
-            extraArgs=[1],
-        )
-        DirectLabel(
-            parent=self.mainFrame,
-            frameColor=(0.8, 0.8, 0.8, 0.0),
-            pos=LPoint3f(-0.71, 0, 0.11),
-            scale=LVecBase3f(0.1, 0.1, 0.1),
-            text_scale=0.5,
-            text = actionText,
-            text_align=0,
+            extraArgs=[0]
         )
 
     def destroy(self):

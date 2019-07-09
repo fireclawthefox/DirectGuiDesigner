@@ -8,6 +8,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import os
 import json
+import logging
 
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
@@ -67,8 +68,8 @@ class DirectGuiDesignerExporterProject:
             try:
                 jsonElements[name] = self.__createJSONEntry(elementInfo)
             except Exception as e:
-                print("error while writing {}:".format(elementInfo.name))
-                print(e)
+                logging.exception("error while writing {}:".format(elementInfo.name))
+                base.messenger.send("showWarning", ["error while writing {}:".format(elementInfo.name)])
 
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)

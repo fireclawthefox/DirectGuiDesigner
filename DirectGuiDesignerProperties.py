@@ -182,15 +182,15 @@ class DirectGuiDesignerProperties():
         self.maxElementWidth = 0
         self.lblHeader = DirectLabel(
             text="Properties",
-            text_scale=0.05,
-            text_pos=(parent["frameSize"][0], -0.015),
+            text_scale=16,
+            text_pos=(parent["frameSize"][0], 0),
             text_align=TextNode.ALeft,
             text_fg=(1,1,1,1),
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], 0.03, -0.03),
+            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-0.03),
-            parent=parent)
-        posZ -= 0.06
+            pos=(0,0,posZ-20),
+            parent=parent,)
+        posZ -= 30
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
             (0.9, 0.9, 1, 1), # Click
@@ -198,13 +198,13 @@ class DirectGuiDesignerProperties():
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.propertiesFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -(height-0.08), 0),
+            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], height+30, 0),
             # make the canvas as big as the frame
-            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-0.04, -1, 0.0),
+            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
             # set the frames color to transparent
             frameColor=VBase4(1, 1, 1, 1),
-            scrollBarWidth=0.04,
-            verticalScroll_scrollSize=0.04,
+            scrollBarWidth=20,
+            verticalScroll_scrollSize=20,
             verticalScroll_thumb_relief=DGG.FLAT,
             verticalScroll_incButton_relief=DGG.FLAT,
             verticalScroll_decButton_relief=DGG.FLAT,
@@ -217,18 +217,22 @@ class DirectGuiDesignerProperties():
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),)
-        self.propertiesFrame.reparentTo(parent)
+            pos=(0,0,posZ),
+            parent=parent,)
 
         self.visualEditor = visualEditor
 
     def resizeFrame(self, posZ, height):
-        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], 0.03, -0.03)
-        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], -0.015)
-        self.lblHeader.setPos(0,0,posZ-0.03)
-        posZ -= 0.06
-        self.propertiesFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -(height-0.08), 0)
+        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
+        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
+        self.lblHeader.setPos(0,0,posZ-20)
+        posZ -= 30
+        self.propertiesFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
         self.propertiesFrame.setPos(0,0,posZ)
+
+        # refresh properties
+        self.clear()
+        self.setupProperties(self.headerText, self.elementInfo, self.elementDict)
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
@@ -246,26 +250,28 @@ class DirectGuiDesignerProperties():
             self.propertyList[key] = False
 
     def moveNext(self):
-        self.startPos.setZ(self.startPos.getZ() - 0.13)
-        self.frameSize += 0.13
+        self.startPos.setZ(self.startPos.getZ() - 15)
+        self.frameSize += 60
 
     def setupProperties(self, headerText, elementInfo, elementDict):
+        self.headerText = headerText
+        self.elementInfo = elementInfo
         self.elementDict = elementDict
         propFrame = DirectFrame(
-            frameSize=(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-0.04, -0.5, 0.0),
+            frameSize=(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-20, -50, 0.0),
             frameColor=VBase4(0,0,0,0),
             parent=self.propertiesFrame.getCanvas())
         DirectLabel(
             text=headerText,
-            text_scale=0.05,
-            text_pos=(0, -0.015),
+            text_scale=18,
+            text_pos=(0, 0),
             text_align=TextNode.ACenter,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
+            frameSize=VBase4(-self.propertiesFrame["frameSize"][1]/2, self.propertiesFrame["frameSize"][1]/2, -10, 20),
             frameColor=VBase4(0.7,0.7,0.7,1),
-            pos=(0,0,-0.03),
+            pos=(self.propertiesFrame["frameSize"][1]/2,0,-20),
             parent=propFrame)
-        self.startPos = Point3(self.propertiesFrame["frameSize"][0], 0, -0.06)
-        self.frameSize = 0.06
+        self.startPos = Point3(self.propertiesFrame["frameSize"][0], 0, -30)
+        self.frameSize = 30
 
         element = elementInfo.element
 
@@ -273,7 +279,7 @@ class DirectGuiDesignerProperties():
         # General Properties
         #
         self.__createInbetweenHeader("General Properties", self.startPos, propFrame)
-        self.frameSize += 0.035
+        self.frameSize += 30
         if self.propertyList["name"]:
             self.__createNameProperty(self.startPos, propFrame, elementInfo)
             self.moveNext()
@@ -307,9 +313,9 @@ class DirectGuiDesignerProperties():
         if self.propertyList["frameSize"]:
             self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
             self.moveNext()
-            self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, element)
-            self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.13
+            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, element)
+            self.startPos.setZ(self.startPos.getZ() - 30)
+            self.frameSize += 30
         if self.propertyList["frameColor"]:
             self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
             self.moveNext()
@@ -420,9 +426,9 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("incButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "incButton_frameSize")
             self.moveNext()
             incBtn = element.incButton
-            self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, incBtn)
-            self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.13
+            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, incBtn)
+            self.startPos.setZ(self.startPos.getZ() - 30)
+            self.frameSize += 30
 
         for key in self.propertyList.keys():
             if key.startswith("decButton") and self.propertyList[key]:
@@ -444,9 +450,9 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("decButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "decButton_frameSize")
             self.moveNext()
             decBtn = element.decButton
-            self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, decBtn)
-            self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.13
+            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, decBtn)
+            self.startPos.setZ(self.startPos.getZ() - 30)
+            self.frameSize += 30
 
         for key in self.propertyList.keys():
             if key.startswith("thumb") and self.propertyList[key]:
@@ -468,9 +474,9 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("thumb Frame Size (L/R/B/T)", self.startPos, propFrame, element, "thumb_frameSize")
             self.moveNext()
             decBtn = element.thumb
-            self.__createResetFramesize("Reset Frame Size", self.startPos, propFrame, decBtn)
-            self.startPos.setZ(self.startPos.getZ() - 0.065)
-            self.frameSize += 0.13
+            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, decBtn)
+            self.startPos.setZ(self.startPos.getZ() - 30)
+            self.frameSize += 30
 
         #
         # CheckButton specific
@@ -592,12 +598,12 @@ class DirectGuiDesignerProperties():
             self.moveNext()
 
         propFrame["frameSize"] = (
-            self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-0.04,
+            self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-20,
             -self.frameSize, 0.0)
 
         self.propertiesFrame["canvasSize"] = (
-            self.propertiesFrame["frameSize"][0], max(self.propertiesFrame["frameSize"][1]-0.04, self.maxElementWidth),
-            propFrame.bounds[2]-0.04, 0)
+            self.propertiesFrame["frameSize"][0], max(self.propertiesFrame["frameSize"][1]-20, self.maxElementWidth),
+            propFrame.bounds[2]-20, 0)
         self.propertiesFrame.setCanvasSize()
 
         self.curPropFrame = propFrame
@@ -608,30 +614,31 @@ class DirectGuiDesignerProperties():
 
     def __createInbetweenHeader(self, description, startPos, parent):
         x = startPos.getX()
-        z = startPos.getZ()-0.035
+        z = startPos.getZ()
         DirectLabel(
             text=description,
-            text_scale=0.07,
-            #text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
-            text_pos=(0, -0.015),
+            text_scale=16,
+            text_pos=(0, 0),
             text_align=TextNode.ACenter,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
+            frameSize=VBase4(-self.propertiesFrame["frameSize"][1]/2, self.propertiesFrame["frameSize"][1]/2, -10, 20),
             frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
+            pos=(self.propertiesFrame["frameSize"][1]/2,0,z-20),
             parent=parent)
-        self.startPos.setZ(self.startPos.getZ() - 0.07)
-        self.frameSize += 0.035
+        self.startPos.setZ(self.startPos.getZ() - 30)
+        self.frameSize += 30
 
     def __createPropertyHeader(self, description, z, parent):
         DirectLabel(
             text=description,
-            text_scale=0.05,
-            text_pos=(self.propertiesFrame["frameSize"][0], -0.015),
+            text_scale=12,
+            text_pos=(self.propertiesFrame["frameSize"][0], 0),
             text_align=TextNode.ALeft,
-            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], 0.03, -0.03),
+            frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], -10, 20),
             frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(0,0,z),
+            pos=(0,0,z-20),
             parent=parent)
+        self.startPos.setZ(self.startPos.getZ() - 30 - 15)
+
 
     def __getFormated(self, value):
         if type(value) is int:
@@ -702,8 +709,9 @@ class DirectGuiDesignerProperties():
                     valueC,
                     valueD)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = valueB = valueC = valueD = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC, valueD = self.__getValues(updateElement, updateAttribute)
@@ -717,39 +725,48 @@ class DirectGuiDesignerProperties():
         valueB = self.__getFormated(valueB)
         valueC = self.__getFormated(valueC)
         valueD = self.__getFormated(valueD)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        width = (parent.bounds[1]-10) / 4
+        entryWidth = width / 13
         a = DirectEntry(
             initialText=str(valueA),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         b = DirectEntry(
             initialText=str(valueB),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         c = DirectEntry(
             initialText=str(valueC),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         d = DirectEntry(
             initialText=str(valueD),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -791,8 +808,9 @@ class DirectGuiDesignerProperties():
                     valueB,
                     valueC)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = valueB = valueC = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA, valueB, valueC = self.__getValues(updateElement, updateAttribute)
@@ -804,30 +822,37 @@ class DirectGuiDesignerProperties():
         valueA = self.__getFormated(valueA)
         valueB = self.__getFormated(valueB)
         valueC = self.__getFormated(valueC)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        width = (parent.bounds[1]-10) / 3
+        entryWidth = width / 13
         a = DirectEntry(
             initialText=str(valueA),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         b = DirectEntry(
             initialText=str(valueB),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         c = DirectEntry(
             initialText=str(valueC),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -866,8 +891,9 @@ class DirectGuiDesignerProperties():
                     valueA,
                     valueB)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = valueB = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             v = self.__getValues(updateElement, updateAttribute)
@@ -879,21 +905,26 @@ class DirectGuiDesignerProperties():
 
         valueA = self.__getFormated(valueA)
         valueB = self.__getFormated(valueB)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        width = (parent.bounds[1]-10) / 2
+        entryWidth = width / 13
         a = DirectEntry(
             initialText=str(valueA),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
-        x += 0.15
+        x += width
         b = DirectEntry(
             initialText=str(valueB),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=2.5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -916,8 +947,9 @@ class DirectGuiDesignerProperties():
             else:
                 updateElement[updateAttribute] = value
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
@@ -925,12 +957,15 @@ class DirectGuiDesignerProperties():
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=str(valueA),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -953,8 +988,9 @@ class DirectGuiDesignerProperties():
             else:
                 updateElement[updateAttribute] = (value)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
@@ -962,12 +998,15 @@ class DirectGuiDesignerProperties():
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=str(valueA),
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=5,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -979,15 +1018,20 @@ class DirectGuiDesignerProperties():
                 name = text
             base.messenger.send("setName", [updateElementInfo, name])
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader("Name", z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
+
         text = updateElementInfo.name
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=text,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=12,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -1007,19 +1051,23 @@ class DirectGuiDesignerProperties():
             else:
                 updateElement[updateAttribute] = (text)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
         text = ""
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             text = self.__getValues(updateElement, updateAttribute)
         elif updateElement[updateAttribute] is not None:
             text = updateElement[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=text,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=12,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -1033,13 +1081,17 @@ class DirectGuiDesignerProperties():
         x = startPos.getX()
         z = startPos.getZ()-0.03
         self.__createPropertyHeader("Command", z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
         cmd = "" if updateElementInfo.command is None else updateElementInfo.command
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=cmd,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=12,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -1053,13 +1105,17 @@ class DirectGuiDesignerProperties():
         x = startPos.getX()
         z = startPos.getZ()-0.03
         self.__createPropertyHeader("Command Arguments", z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
         args = "" if updateElementInfo.extraArgs is None else updateElementInfo.extraArgs
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=args,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=12,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
@@ -1081,19 +1137,19 @@ class DirectGuiDesignerProperties():
             else:
                 updateElement[updateAttribute] = value
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
         valueA = 0
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             valueA = self.__getValues(updateElement, updateAttribute)
         elif updateElement[updateAttribute] is not None:
             valueA = updateElement[updateAttribute]
-        z -= (0.06)
         DirectCheckButton(
-            pos=(x+0.05, 0, z),
+            pos=(x+10, 0, z),
             indicatorValue=valueA,
             boxPlacement="right",
-            scale=0.05,
+            scale=12,
             text_align=TextNode.ALeft,
             command=update,
             parent=parent)
@@ -1106,40 +1162,41 @@ class DirectGuiDesignerProperties():
             else:
                 updateElement["others"].remove(selection.element)
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader("Others", z, parent)
+        z = startPos.getZ()
         z -= (0.06)
 
         selectionFrame = DirectScrolledFrame(
             pos=(x,0,z),
             frameColor=(1,1,1,1),
-            frameSize=(0,parent["frameSize"][1]*2+0.04,-0.2,0),
-            canvasSize=(0,parent["frameSize"][1]*2+0.04,-0.2,0),
-            scrollBarWidth=0.04,
+            frameSize=(0,parent["frameSize"][1]-20,-60,0),
+            canvasSize=(0,parent["frameSize"][1]-20,-60,0),
+            scrollBarWidth=20,
             parent=parent,
         )
         innerZ = 0
-        nextZ = 0.13
+        nextZ = 30
         for keys, radioButton in self.elementDict.items():
             #if radioButton == updateElement: continue
             if radioButton.type != "DirectRadioButton": continue
             DirectCheckButton(
                 text=radioButton.name,
-                pos=(0, 0, innerZ-0.035),
+                pos=(0, 0, innerZ),
                 indicatorValue=radioButton.element in updateElement["others"],
                 boxPlacement="right",
-                scale=0.05,
+                scale=12,
                 text_align=TextNode.ALeft,
                 command=update,
                 extraArgs=[radioButton],
                 parent=selectionFrame.getCanvas())
-            innerZ -= 0.07
+            innerZ -= 30
         selectionFrame["canvasSize"] = (
-            0,parent["frameSize"][1]*0.2-0.04,
+            0,selectionFrame["frameSize"][1]-20,
             innerZ, 0)
         selectionFrame.setCanvasSize()
-        self.startPos.setZ(self.startPos.getZ() - 0.3)
-        self.frameSize += 0.3
+        self.startPos.setZ(self.startPos.getZ() - 60)
+        self.frameSize += 60
 
     def __createTransparencyProperty(self, startPos, parent, updateElement):
         transparencyAttribs = [
@@ -1170,28 +1227,32 @@ class DirectGuiDesignerProperties():
                 print("Couldn't load image: {}".format(text))
                 updateElement[updateAttribute] = None
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
         image = updateElement[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
         DirectEntry(
             initialText=image,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
-            width=12,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
             overflow=True,
             command=update,
             parent=parent)
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
         x = startPos.getX()
-        z = startPos.getZ()-0.03
+        z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
-        z -= (0.06+0.025) # 0.025 = half height of the following DirectEntries
+        z = startPos.getZ()
         menu = DirectOptionMenu(
             items=items,
-            pos=(x+0.05, 0, z+0.0125),
-            scale=0.05,
+            pos=(x+10, 0, z+0.0125),
+            scale=12,
             popupMenuLocation=DGG.BELOW,
             initialitem=selectedElement,
             command=command,
@@ -1323,12 +1384,13 @@ class DirectGuiDesignerProperties():
 
     def __createResetFramesize(self, description, startPos, parent, updateElement):
         x = startPos.getX()
-        z = startPos.getZ()-0.05
+        z = startPos.getZ()
         DirectButton(
             text=description,
-            text_align=0,
-            pos=(x+0.05, 0, z),
-            scale=0.05,
+            #text_align=0,
+            pad=(0.25,0.25),
+            pos=(self.parent.getWidth() / 2, 0, z-15),
+            scale=12,
             parent=parent,
             command=updateElement.resetFrameSize
             )
