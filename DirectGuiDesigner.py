@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
+import platform
+import logging
+import tempfile
 
 from direct.showbase.ShowBase import ShowBase
 
@@ -10,7 +14,8 @@ from panda3d.core import Point3, Vec3, loadPrcFileData, WindowProperties
 from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
-from direct.gui.DirectScrolledFrame import DirectScrolledFrame
+#from direct.gui.DirectScrolledFrame import DirectScrolledFrame
+from directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectDialog import OkDialog
 from direct.gui.DirectDialog import OkCancelDialog
 
@@ -36,9 +41,9 @@ loadPrcFileData(
     win-size 1920 1080
     textures-power-2 none
     fullscreen #f
-    show-frame-rate-meter #t
     window-title DirectGUI Designer
-    want-pstats #t
+    #show-frame-rate-meter #t
+    #want-pstats #t
     """)
 
 class DirectGuiDesigner(ShowBase):
@@ -46,13 +51,24 @@ class DirectGuiDesigner(ShowBase):
         ShowBase.__init__(self)
 
         wp = WindowProperties()
-        wp.setIconFilename("icons/DirectGuiDesigner64.png")
+        if platform.system() == "Windows":
+            wp.setIconFilename("icons/DirectGuiDesigner.ico")
+        else:
+            wp.setIconFilename("icons/DirectGuiDesigner64.png")
         base.win.requestProperties(wp)
 
         self.selectedElement = None
         # dict of all elements in the visual editor
-        # Key = guiID; Value = [element, properties]
+        # Key = guiID; Value = elementInfo
         self.elementDict = {}
+
+        map = base.win.get_keyboard_map()
+
+        self.is_down = base.mouseWatcherNode.is_button_down
+        self.key_lcontrol = map.get_mapped_button("lcontrol")
+        self.key_rcontrol = map.get_mapped_button("rcontrol")
+        self.key_lshift = map.get_mapped_button("lshift")
+        self.key_rshift = map.get_mapped_button("rshift")
 
         self.dlgHelp = None
         self.dlgHelpShadow = None
@@ -62,6 +78,9 @@ class DirectGuiDesigner(ShowBase):
 
         self.dlgWarning = None
         self.dlgWarningShadow = None
+
+        self.dlgInfo = None
+        self.dlgInfoShadow = None
 
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
@@ -90,7 +109,7 @@ class DirectGuiDesigner(ShowBase):
                 base.a2dBottom,base.a2dTop-topMargin),
             pos=(self.screenWidth*(0.25), 0, 0),
             canvasSize=(-2, 2, -2, 2),
-            scrollBarWidth=0.04,
+            scrollBarWidth=self.calcScrollBarWidth(),
             verticalScroll_value=0.5,
             horizontalScroll_value=0.5,
             verticalScroll_thumb_relief=DGG.FLAT,
@@ -142,24 +161,9 @@ class DirectGuiDesigner(ShowBase):
 
         self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.visualEditor)
 
-        self.accept("escape", self.selectElement, extraArgs=[self.visualEditorInfo, None])
-        self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
-        self.accept("mouse2", self.dragEditorFrame, extraArgs=[True])
-        self.accept("mouse2-up", self.dragEditorFrame, extraArgs=[False])
-        self.accept("wheel_up", self.zoom, extraArgs=[.1])
-        self.accept("wheel_down", self.zoom, extraArgs=[-.1])
-
-        self.accept("control-n", self.new)
-        self.accept("control-s", self.save)
-        self.accept("control-e", self.export)
-        self.accept("control-o", self.load)
-        self.accept("control-q", self.quitApp)
-        self.accept("control-delete", self.removeElement)
-        self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
-        self.accept("control-h", self.toggleElementVisibility)
-        self.accept("f1", self.showHelp)
-
-        self.accept("arrow-left", print, extraArgs=["Test"])
+        self.registerKeyboardEvents()
+        self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
+        self.accept("reregisterKeyboardEvents", self.registerKeyboardEvents)
 
         self.accept("createControl", self.__createControl)
         self.accept("newProject", self.new)
@@ -183,11 +187,127 @@ class DirectGuiDesigner(ShowBase):
         self.accept("dragStop", self.dragStop)
 
         self.accept("showWarning", self.showWarning)
-
-        #base.exitFunc = self.quitApp
+        self.accept("showInfo", self.showInfo)
 
         self.screenSize = base.getSize()
         self.accept('window-event', self.windowEventHandler)
+
+        sys.excepthook = self.excHandler
+
+        self.win.setCloseRequestEvent("quitApp")
+
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        if os.path.exists(tmpPath):
+            logging.info("Loading crash session file {}".format(tmpPath))
+            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, True)
+            self.elementDict = projectLoader.get()
+            base.messenger.send("refreshStructureTree")
+            base.messenger.send("showInfo", ["Loaded previously crashed session!"])
+            os.remove(tmpPath)
+            logging.info("Removed crash session file")
+
+    def excHandler(self, ex_type, ex_value, ex_traceback):
+        logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
+
+        DirectGuiDesignerExporterProject(self.elementDict)
+
+    def registerKeyboardEvents(self):
+        self.accept("escape", self.selectElement, extraArgs=[self.visualEditorInfo, None])
+        self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
+        self.accept("mouse2", self.dragEditorFrame, extraArgs=[True])
+        self.accept("mouse2-up", self.dragEditorFrame, extraArgs=[False])
+        self.accept("wheel_up", self.zoom, extraArgs=[.1])
+        self.accept("wheel_down", self.zoom, extraArgs=[-.1])
+
+        self.accept("control-n", self.new)
+        self.accept("control-s", self.save)
+        self.accept("control-e", self.export)
+        self.accept("control-o", self.load)
+        self.accept("control-q", self.quitApp)
+        self.accept("delete", self.removeElement)
+        self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
+        self.accept("control-h", self.toggleElementVisibility)
+        self.accept("f1", self.showHelp)
+
+        self.accept("arrow_left", self.moveElement, extraArgs=["left"])
+        self.accept("arrow_right", self.moveElement, extraArgs=["right"])
+        self.accept("arrow_up", self.moveElement, extraArgs=["up"])
+        self.accept("arrow_down", self.moveElement, extraArgs=["down"])
+
+        self.accept("arrow_left-repeat", self.moveElement, extraArgs=["left"])
+        self.accept("arrow_right-repeat", self.moveElement, extraArgs=["right"])
+        self.accept("arrow_up-repeat", self.moveElement, extraArgs=["up"])
+        self.accept("arrow_down-repeat", self.moveElement, extraArgs=["down"])
+
+        speedUp = 5
+        self.accept("shift-arrow_left", self.moveElement, extraArgs=["left", speedUp])
+        self.accept("shift-arrow_right", self.moveElement, extraArgs=["right", speedUp])
+        self.accept("shift-arrow_up", self.moveElement, extraArgs=["up", speedUp])
+        self.accept("shift-arrow_down", self.moveElement, extraArgs=["down", speedUp])
+
+        self.accept("shift-arrow_left-repeat", self.moveElement, extraArgs=["left", speedUp])
+        self.accept("shift-arrow_right-repeat", self.moveElement, extraArgs=["right", speedUp])
+        self.accept("shift-arrow_up-repeat", self.moveElement, extraArgs=["up", speedUp])
+        self.accept("shift-arrow_down-repeat", self.moveElement, extraArgs=["down", speedUp])
+
+        speedDown = 0.5
+        self.accept("control-arrow_left", self.moveElement, extraArgs=["left", speedDown])
+        self.accept("control-arrow_right", self.moveElement, extraArgs=["right", speedDown])
+        self.accept("control-arrow_up", self.moveElement, extraArgs=["up", speedDown])
+        self.accept("control-arrow_down", self.moveElement, extraArgs=["down", speedDown])
+
+        self.accept("control-arrow_left-repeat", self.moveElement, extraArgs=["left", speedDown])
+        self.accept("control-arrow_right-repeat", self.moveElement, extraArgs=["right", speedDown])
+        self.accept("control-arrow_up-repeat", self.moveElement, extraArgs=["up", speedDown])
+        self.accept("control-arrow_down-repeat", self.moveElement, extraArgs=["down", speedDown])
+
+    def ignoreKeyboardEvents(self):
+        self.ignore("control-n")
+        self.ignore("control-s")
+        self.ignore("control-e")
+        self.ignore("control-o")
+        self.ignore("control-q")
+        self.ignore("delete")
+        self.ignore("control-g")
+        self.ignore("control-h")
+        self.ignore("f1")
+
+        self.ignore("arrow_left")
+        self.ignore("arrow_right")
+        self.ignore("arrow_up")
+        self.ignore("arrow_down")
+
+        self.ignore("arrow_left-repeat")
+        self.ignore("arrow_right-repeat")
+        self.ignore("arrow_up-repeat")
+        self.ignore("arrow_down-repeat")
+
+        self.ignore("shift-arrow_left")
+        self.ignore("shift-arrow_right")
+        self.ignore("shift-arrow_up")
+        self.ignore("shift-arrow_down")
+
+        self.ignore("shift-arrow_left-repeat")
+        self.ignore("shift-arrow_right-repeat")
+        self.ignore("shift-arrow_up-repeat")
+        self.ignore("shift-arrow_down-repeat")
+
+        self.ignore("control-arrow_left")
+        self.ignore("control-arrow_right")
+        self.ignore("control-arrow_up")
+        self.ignore("control-arrow_down")
+
+        self.ignore("control-arrow_left-repeat")
+        self.ignore("control-arrow_right-repeat")
+        self.ignore("control-arrow_up-repeat")
+        self.ignore("control-arrow_down-repeat")
+
+    def calcScrollBarWidth(self):
+        widthInPx = 20
+        screenWidthPx = base.getSize()[0]
+        screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
+
+        return screenWidth / (screenWidthPx / widthInPx)
 
     def windowEventHandler(self, window=None):
         # call showBase windowEvent which would otherwise get overridden and breaking the app
@@ -210,6 +330,7 @@ class DirectGuiDesigner(ShowBase):
             topMargin=48 / self.screenHeightPx * 2
             self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-topMargin)
             self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
+            self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
 
             self.menuBar.resizeFrame()
 
@@ -220,7 +341,6 @@ class DirectGuiDesigner(ShowBase):
             self.propertiesFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
             self.nextToolFrameY += self.toolFrameHeight
             self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
-
 
             if self.dlgHelp is not None:
                 self.dlgHelp.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
@@ -270,19 +390,22 @@ class DirectGuiDesigner(ShowBase):
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
             self.selectedElement.element.clearColorScale()
+            self.ignoreKeyboardEvents()
+            self.registerKeyboardEvents()
         if elementInfo is None:
             base.messenger.send("showWarning", ["Element can't be selected"])
             return
-        self.refreshProperties(elementInfo)
         if elementInfo.element is self.visualEditor:
             # we don't need to select the editor itself
             self.selectedElement = None
+            self.refreshProperties(elementInfo)
             base.messenger.send("refreshStructureTree")
             return
         if elementInfo.element is None:
             return
         self.selectedElement = elementInfo
         elementInfo.element.setColorScale(1,1,0,1)
+        self.refreshProperties(elementInfo)
         base.messenger.send("refreshStructureTree")
 
     def dragEditorFrame(self, dragEnabled):
@@ -327,20 +450,30 @@ class DirectGuiDesigner(ShowBase):
         t = taskMgr.add(self.dragTask, "dragDropTask")
         t.elementInfo = elementInfo
         t.editVec = editVec
+        t.mouseVec = vMouse2render2d
 
     def dragTask(self, t):
         mwn = base.mouseWatcherNode
         if mwn.hasMouse():
             vMouse2render2d = Point3(mwn.getMouse()[0], 0, mwn.getMouse()[1])
             newPos = vMouse2render2d + t.editVec
+
+            if self.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
+                return t.cont
+
             t.elementInfo.element.setPos(render2d, newPos)
 
             if self.snapToGrid:
                 newPos = t.elementInfo.element.getPos()
+                modifier = 0.5
+                if self.is_down(self.key_lcontrol) or self.is_down(self.key_rcontrol):
+                    modifier = 0.25
+                if self.is_down(self.key_lshift) or self.is_down(self.key_rshift):
+                    modifier = 1
                 newPos.set(
-                    ROUND_TO(newPos[0], self.gridSpacing),
-                    ROUND_TO(newPos[1], self.gridSpacing),
-                    ROUND_TO(newPos[2], self.gridSpacing))
+                    ROUND_TO(newPos[0], self.gridSpacing*modifier),
+                    ROUND_TO(newPos[1], self.gridSpacing*modifier),
+                    ROUND_TO(newPos[2], self.gridSpacing*modifier))
                 t.elementInfo.element.setPos(newPos)
 
         return t.cont
@@ -359,7 +492,26 @@ class DirectGuiDesigner(ShowBase):
         if pos.z > self.visualEditor["canvasSize"][3]:
             t.elementInfo.element.setZ(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][3])
         taskMgr.remove("dragDropTask")
-        self.refreshProperties(t.elementInfo)
+
+    def moveElement(self, direction, speedMult=1):
+        if self.selectedElement is None: return
+        workOn = self.selectedElement.element
+
+        # Make sure elements always move the same amount no matter their scale
+        # The parents scale will be ignored, elements will move
+        # respective to their parents scale not the visual editor frame
+        scale = workOn.getScale()
+        moverScaleX = 1 / scale.getX()
+        moverScaleZ = 1 / scale.getZ()
+
+        if direction == "left":
+            workOn.setX(workOn, -0.01*moverScaleX*speedMult)
+        elif direction == "right":
+            workOn.setX(workOn, 0.01*moverScaleX*speedMult)
+        elif direction == "up":
+            workOn.setZ(workOn, 0.01*moverScaleZ*speedMult)
+        elif direction == "down":
+            workOn.setZ(workOn, -0.01*moverScaleZ*speedMult)
 
     def removeElement(self, element=None):
         workOn = None
@@ -473,18 +625,21 @@ class DirectGuiDesigner(ShowBase):
         self.elementDict = {}
 
     def save(self):
-        DirectGuiDesignerExporterProject(self.elementDict, self.visualEditor)
+        self.selectElement(self.visualEditorInfo)
+        DirectGuiDesignerExporterProject(self.elementDict, self.visualEditor, self.tt)
 
     def export(self):
-        DirectGuiDesignerExporterPy(self.elementDict, self.visualEditor)
+        self.selectElement(self.visualEditorInfo)
+        DirectGuiDesignerExporterPy(self.elementDict, self.visualEditor, self.tt)
 
     def load(self):
-        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler)
+        self.selectElement(self.visualEditorInfo)
+        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, False, self.tt, self.new)
         self.elementDict = projectLoader.get()
 
     def __quit(self, selection):
         if selection == 1:
-            sys.exit()
+            self.userExit()
         else:
             self.dlgQuit.destroy()
             self.dlgQuitShadow.destroy()
@@ -533,6 +688,8 @@ Ctrl-Q - Quit Application
 Ctrl-Del - Delete selected Element
 Ctrl-H - Toggle selected Element visibility
 Ctrl-G - Toggle grid and snap to grid
+
+Arrow Keys - Move the selected Element (use Shift and Ctrl to change distance)
 
 F1 - Show this help Dialog
 
@@ -593,6 +750,35 @@ LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button
         self.dlgWarningShadow.destroy()
         self.dlgWarning = None
         self.dlgWarningShadow = None
+
+    def showInfo(self, text):
+        if self.dlgInfo is not None: return
+        text = "INFO:\n\n" + text
+        self.dlgInfo = OkDialog(
+            text=text,
+            state=DGG.NORMAL,
+            relief=DGG.RIDGE,
+            frameColor=(1,1,1,1),
+            sortOrder=1,
+            scale=300,
+            pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
+            button_relief=DGG.FLAT,
+            button_frameColor=(0.8, 0.8, 0.8, 1),
+            command=self.hideInfo,
+            parent=base.pixel2d)
+        self.dlgInfoShadow = DirectFrame(
+            state=DGG.NORMAL,
+            pos=(0,0,0),
+            sortOrder=0,
+            frameColor=(0.15,0.15,0.25,0.5),
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
+            parent=base.pixel2d)
+
+    def hideInfo(self, args):
+        self.dlgInfo.destroy()
+        self.dlgInfoShadow.destroy()
+        self.dlgInfo = None
+        self.dlgInfoShadow = None
 
 designer=DirectGuiDesigner()
 designer.run()

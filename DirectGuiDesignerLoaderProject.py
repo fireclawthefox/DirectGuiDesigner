@@ -9,6 +9,8 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 import os
 import json
 import logging
+import tempfile
+
 from direct.gui import DirectGuiGlobals as DGG
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 
@@ -28,7 +30,8 @@ class DirectGuiDesignerLoaderProject:
     setAsOption = ["frameSize", "barColor", "barRelief", "range", "value"]
     ignoreMap = ["state"]
 
-    def __init__(self, visualEditorInfo, elementHandler):
+    def __init__(self, visualEditorInfo, elementHandler, exceptionLoading=False, tooltip=None, newProjectCall=None):
+        self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
         self.radiobuttonOthersDict = {}
@@ -36,34 +39,46 @@ class DirectGuiDesignerLoaderProject:
         self.elementHandler = elementHandler
         self.visualEditorInfo = visualEditorInfo
         self.visualEditor = visualEditorInfo.element
-        self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.Load, "Load Project File", "Load file path", "Load", "~/export.json")
+        if exceptionLoading:
+            self.excLoad()
+        else:
+            self.dlgPathSelect = DirectGuiDesignerPathSelect(
+                self.Load, "Load Project File", "Load file path", "Load", "~/export.json", tooltip)
+
+    def excLoad(self):
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        self.__executeLoad(tmpPath)
 
     def get(self):
         return self.elementDict
 
     def Load(self, doLoad):
         if doLoad:
+            self.newProjectCall()
             path = self.dlgPathSelect.getPath()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
 
-            with open(path, 'r') as infile:
-                fileContent = json.load(infile)
-            self.createdParents = ["root"]
-            self.postponedElements = {}
-            for name, elementInfo in fileContent.items():
-                self.__createElement(name, elementInfo)
-
-            for elementInfo, option in self.radiobuttonOthersDict.items():
-                elementList = []
-                for elementId, info in self.elementDict.items():
-                    if info.name in option:
-                        elementList.append(info.element)
-                elementInfo.element["others"] = elementList
+            self.__executeLoad(path)
 
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect
+
+    def __executeLoad(self, path):
+        with open(path, 'r') as infile:
+            fileContent = json.load(infile)
+        self.createdParents = ["root"]
+        self.postponedElements = {}
+        for name, elementInfo in fileContent.items():
+            self.__createElement(name, elementInfo)
+
+        for elementInfo, option in self.radiobuttonOthersDict.items():
+            elementList = []
+            for elementId, info in self.elementDict.items():
+                if info.name in option:
+                    elementList.append(info.element)
+            elementInfo.element["others"] = elementList
+
 
     def __createElement(self, name, info):
         if info["parent"] not in self.createdParents:

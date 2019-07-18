@@ -28,7 +28,7 @@ class DirectGuiDesignerExporterPy:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible"]
 
-    def __init__(self, guiElementsDict, visualEditor):
+    def __init__(self, guiElementsDict, visualEditor, tooltip):
         self.guiElementsDict = guiElementsDict
 
         self.createdParents = ["root"]
@@ -103,7 +103,7 @@ GUI()
 app.run()"""
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.save, "Save Python File", "Save file path", "Save", "~/export.py")
+            self.save, "Save Python File", "Save file path", "Save", "~/export.py", tooltip)
 
     def save(self, doSave):
         if doSave:

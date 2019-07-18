@@ -736,6 +736,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         b = DirectEntry(
@@ -747,6 +751,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         c = DirectEntry(
@@ -758,6 +766,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         d = DirectEntry(
@@ -769,6 +781,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createBase3Input(self, description, startPos, parent, updateElement, updateAttribute):
@@ -833,6 +849,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         b = DirectEntry(
@@ -844,6 +864,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         c = DirectEntry(
@@ -855,6 +879,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createBase2Input(self, description, startPos, parent, updateElement, updateAttribute):
@@ -916,6 +944,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
         x += width
         b = DirectEntry(
@@ -927,6 +959,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute):
@@ -968,6 +1004,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createIntegerInput(self, description, startPos, parent, updateElement, updateAttribute):
@@ -1009,6 +1049,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createNameProperty(self, startPos, parent, updateElementInfo):
@@ -1034,6 +1078,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
 
@@ -1070,6 +1118,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createCommandProperty(self, startPos, parent, updateElementInfo):
@@ -1094,6 +1146,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createCommandArgsProperty(self, startPos, parent, updateElementInfo):
@@ -1118,6 +1174,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
@@ -1181,7 +1241,7 @@ class DirectGuiDesignerProperties():
             if radioButton.type != "DirectRadioButton": continue
             DirectCheckButton(
                 text=radioButton.name,
-                pos=(0, 0, innerZ),
+                pos=(0, 0, innerZ-12),
                 indicatorValue=radioButton.element in updateElement["others"],
                 boxPlacement="right",
                 scale=12,
@@ -1241,6 +1301,10 @@ class DirectGuiDesignerProperties():
             width=entryWidth,
             overflow=True,
             command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):

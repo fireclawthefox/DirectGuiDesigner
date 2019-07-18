@@ -15,10 +15,10 @@ import importlib.util
 
 
 class DirectGuiDesignerLoaderPy:
-    def __init__(self, visualEditor):
+    def __init__(self, visualEditor, tooltip):
         self.visualEditor = visualEditor
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.Load, "Load Python File", "Load file path", "Load", "~/export.py")
+            self.Load, "Load Python File", "Load file path", "Load", "~/export.py", tooltip)
 
     def Load(self, doLoad):
         if doLoad:

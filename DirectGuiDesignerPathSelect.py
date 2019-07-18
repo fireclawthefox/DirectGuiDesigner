@@ -13,8 +13,11 @@ from panda3d.core import (
     LVecBase3f
 )
 
+from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+
 class DirectGuiDesignerPathSelect:
-    def __init__(self, command, headerText, actionText, affirmText, filePath):
+    def __init__(self, command, headerText, actionText, affirmText, filePath, tooltip):
+        self.command = command
         self.darkenFrame = DirectFrame(
             relief=1,
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
@@ -65,12 +68,27 @@ class DirectGuiDesignerPathSelect:
             pad=(0.2, 0.2),
             pos=LPoint3f(-250, 0, -20),
             scale=12,
-            width=500/12,
+            width=(500-90)/12,
             overflow=True,
-            command=command,
-            extraArgs=[1],
+            command=self.entryCommandHandler,
             initialText=filePath
         )
+        DirectButton(
+            parent=self.mainFrame,
+            relief=1,
+            frameColor = (
+                (0.8, 0.8, 0.8, 1), # Normal
+                (0.9, 0.9, 1, 1), # Click
+                (0.8, 0.8, 1, 1), # Hover
+                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameSize=(-45, 45, -6, 14),
+            pos=LPoint3f(235, 0, -20),
+            text = "Browse",
+            text_scale=12,
+            command=self.browse,
+        )
+        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, filePath.split("/")[-1:][0], tooltip)
+        self.browser.hide()
 
         # Command Buttons
         DirectButton(
@@ -104,7 +122,19 @@ class DirectGuiDesignerPathSelect:
             extraArgs=[0]
         )
 
+    def browse(self):
+        self.browser.show()
+
+    def selectPath(self, confirm):
+        if confirm:
+            self.pathEntry.set(self.browser.get())
+        self.browser.hide()
+
+    def entryCommandHandler(self, text):
+        self.command(1)
+
     def destroy(self):
+        self.browser.destroy()
         self.darkenFrame.destroy()
         self.mainFrame.destroy()
 

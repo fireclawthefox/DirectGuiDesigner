@@ -9,6 +9,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 import os
 import json
 import logging
+import tempfile
 
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
@@ -24,11 +25,23 @@ class DirectGuiDesignerExporterProject:
 
     ignoreRepr = ["command"]
 
-    def __init__(self, guiElementsDict, visualEditor):
+    def __init__(self, guiElementsDict, visualEditor=None, tooltip=None):
         self.guiElementsDict = guiElementsDict
 
+        if visualEditor is None:
+            self.excSave()
+            return
+
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.save, "Save Project File", "Save file path", "Save", "~/export.json")
+            self.save, "Save Project File", "Save file path", "Save", "~/export.json", tooltip)
+
+    def excSave(self):
+        self.dlgOverwrite = None
+        self.dlgOverwriteShadow = None
+
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        self.__executeSave(True, tmpPath)
+        logging.info("Wrote crash session file to {}".format(tmpPath))
 
     def save(self, doSave):
         if doSave:
@@ -106,7 +119,9 @@ class DirectGuiDesignerExporterProject:
         for subcomponentName in element.components():
             self.__getAllSubcomponents(subcomponentName, element.component(subcomponentName), "")
 
-        print(self.componentsList)
+        #print(self.componentsList)
+
+        hasError = False
 
         for element, name in self.componentsList.items():
             if name in self.ignoreRepr:
@@ -126,63 +141,67 @@ class DirectGuiDesignerExporterProject:
             if not hasattr(element, "options"): continue
 
             for option in element.options():
-                print("Storing:", option)
+                #print("Storing:", option)
                 if not option[DGG._OPT_FUNCTION]:
-                    print("NORMAL")
-                    print("VALUES:")
-                    print(option[DGG._OPT_VALUE])
-                    print(element[option[DGG._OPT_DEFAULT]])
+                    #print("NORMAL")
+                    #print("VALUES:")
+                    #print(option[DGG._OPT_VALUE])
+                    #print(element[option[DGG._OPT_DEFAULT]])
                     if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
-                        print("DIFFERS")
+                        #print("DIFFERS")
                         elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_DEFAULT]])
-                    print("NORMAL END")
+                    #print("NORMAL END")
                 else:
-                    print("FUNCTION")
+                    #print("FUNCTION")
                     funcName = "get{}{}".format(option[DGG._OPT_DEFAULT][0].upper(), option[DGG._OPT_DEFAULT][1:])
                     propName = "{}".format(option[DGG._OPT_DEFAULT])
-                    print(funcName)
+                    #print(funcName)
                     if hasattr(element, funcName):
                         if funcName == "getColor":
                             # Savety check. I currently only know of this function that isn't set by default
                             if not element.hasColor(): continue
                         value = getattr(element, funcName)()
-                        print("VALUES:")
-                        print(option[DGG._OPT_DEFAULT])
-                        print(value)
+                        #print("VALUES:")
+                        #print(option[DGG._OPT_DEFAULT])
+                        #print(value)
                         if option[DGG._OPT_VALUE] != value:
                             elementJson[name + option[0]] = reprFunc(value)
                     elif hasattr(element, propName):
-                        print("Property:", propName)
+                        #print("Property:", propName)
                         if not callable(type(getattr(element, propName))):
-                            print("GOOD")
+                            #print("GOOD")
                             # TODO: Check if we ever get here at al
                             value = getattr(element, propName)
-                            print("VALUES:")
-                            print(option[DGG._OPT_DEFAULT])
-                            print(value)
+                            #print("VALUES:")
+                            #print(option[DGG._OPT_DEFAULT])
+                            #print(value)
                             if option[DGG._OPT_VALUE] != value:
                                 elementJson[name + option[0]] = reprFunc(value)
                     elif option[DGG._OPT_DEFAULT] in self.functionMapping["base"]:
                         funcName = self.functionMapping["base"][option[DGG._OPT_DEFAULT]]
                         if hasattr(element, funcName):
                             value = getattr(element, funcName)()
-                            print("VALUES:")
-                            print(option[DGG._OPT_DEFAULT])
-                            print(value)
+                            #print("VALUES:")
+                            #print(option[DGG._OPT_DEFAULT])
+                            #print(value)
                             if option[DGG._OPT_VALUE] != value:
                                 elementJson[name + option[0]] = reprFunc(value)
                         else:
-                            print("Can't call:", option[DGG._OPT_DEFAULT])
+                            hasError = True
+                            logging.warning("Can't call: {}".format(option[DGG._OPT_DEFAULT]))
+                            #print("Can't call:", option[DGG._OPT_DEFAULT])
                     else:
                         try:
                             if option[DGG._OPT_VALUE] != element[option[DGG._OPT_DEFAULT]]:
-                                print("VALUES:")
-                                print(option[DGG._OPT_DEFAULT])
-                                print(element[option[DGG._OPT_DEFAULT]])
+                                #print("VALUES:")
+                                #print(option[DGG._OPT_DEFAULT])
+                                #print(element[option[DGG._OPT_DEFAULT]])
                                 elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(element[option[DGG._OPT_VALUE]])
                         except:
-                            print("Can't write:", option[DGG._OPT_DEFAULT])
-                    print("FUNCTION END")
+                            hasError = True
+                            logging.warning("Can't write: {}".format(option[DGG._OPT_DEFAULT]))
+                            #print("Can't write:", option[DGG._OPT_DEFAULT])
+                    #print("FUNCTION END")
 
             # special options for specific elements
             if elementInfo.type == "DirectRadioButton":
@@ -195,6 +214,8 @@ class DirectGuiDesignerExporterProject:
                         others.append("{}".format(elementNameDict[otherElement]))
                 elementJson["others"] = others
 
+        if hasError:
+            base.messenger.send("showWarning", ["Saved Project with errors! See log for more information"])
         #print(elementJson)
         return elementJson
 
