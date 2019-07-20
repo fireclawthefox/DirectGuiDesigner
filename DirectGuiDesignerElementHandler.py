@@ -64,6 +64,14 @@ class DirectGuiDesignerElementHandler:
     def __init__(self, propertiesFrame, visualEditor):
         self.propertiesFrame = propertiesFrame
         self.visualEditor = visualEditor
+        self.visEditorInAspect2D = True
+        self.editorCenter = (0,0,0)
+
+    def setEditorParentType(self, isAspect2D):
+        self.visEditorInAspect2D = isAspect2D
+
+    def setEditorCenter(self, center):
+        self.editorCenter = center
 
     def dragStart(self, elementInfo, event):
         base.messenger.send("dragStart", [elementInfo, event])
@@ -76,10 +84,21 @@ class DirectGuiDesignerElementHandler:
         elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
 
     def createDirectButton(self, parent=None):
-        element = DirectButton(
-            text="button",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectButton(
+                text="button",
+                parent=parent,
+                scale=0.1)
+        else:
+            element = DirectButton(
+                text="button",
+                parent=parent,
+                pos=pos,
+                text_scale=24,
+                borderWidth=(2, 2),
+                scale=1)
         elementInfo = ElementInfo(element, "DirectButton")
         self.setupBind(elementInfo)
         return elementInfo
@@ -92,9 +111,19 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):
-        element = DirectEntry(
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectEntry(
+                parent=parent,
+                scale=0.1)
+        else:
+            element = DirectEntry(
+                pos=pos,
+                text_scale=24,
+                borderWidth=(2, 2),
+                parent=parent,
+                scale=1)
         elementInfo = ElementInfo(element, "DirectEntry")
         self.setupBind(elementInfo)
         return elementInfo
@@ -110,13 +139,26 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Entry Properties", element, elementDict)
 
     def createDirectEntryScroll(self, parent=None, createEntry=True):
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
         if createEntry:
-            entry = DirectEntry(
-                parent=self.visualEditor.getCanvas())
-            element = DirectEntryScroll(
-                entry=entry,
-                parent=parent if parent is not None else self.visualEditor.getCanvas(),
-                scale=0.1)
+            if self.visEditorInAspect2D:
+                entry = DirectEntry()
+                element = DirectEntryScroll(
+                    entry=entry,
+                    parent=parent,
+                    scale=0.1)
+            else:
+                entry = DirectEntry(
+                    text_scale=24,
+                    borderWidth=(2, 2))
+                element = DirectEntryScroll(
+                    entry=entry,
+                    pos=pos,
+                    borderWidth=(2, 2),
+                    parent=parent,
+                    clipSize=(-50, 50, -25, 25),
+                    scale=1)
             elementInfoA = ElementInfo(entry, "DirectEntry")
             elementInfoB = ElementInfo(element, "DirectEntryScroll", createAfter=[elementInfoA])
             elementInfoB.extraOptions["entry"] = "self." + elementInfoA.name
@@ -125,10 +167,19 @@ class DirectGuiDesignerElementHandler:
             self.setupBind(elementInfoB)
             return elementInfoA, elementInfoB
         else:
-            element = DirectEntryScroll(
-                entry=None,
-                parent=parent if parent is not None else self.visualEditor.getCanvas(),
-                scale=0.1)
+            if self.visEditorInAspect2D:
+                element = DirectEntryScroll(
+                    entry=None,
+                    parent=parent,
+                    scale=0.1)
+            else:
+                element = DirectEntryScroll(
+                    entry=None,
+                    pos=pos,
+                    borderWidth=(2, 2),
+                    parent=parent,
+                    clipSize=(-50, 50, -25, 25),
+                    scale=1)
             elementInfo = ElementInfo(element, "DirectEntryScroll")
             self.setupBind(elementInfo)
             return elementInfo
@@ -139,12 +190,24 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scrolled Entry Properties", element, elementDict)
 
     def createDirectCheckBox(self, parent=None):
-        element = DirectCheckBox(
-            #image="icons/minusnode.gif",
-            #uncheckedImage="icons/minusnode.gif",
-            #checkedImage="icons/plusnode.gif",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectCheckBox(
+                #image="icons/minusnode.gif",
+                #uncheckedImage="icons/minusnode.gif",
+                #checkedImage="icons/plusnode.gif",
+                parent=parent,
+                scale=0.1)
+        else:
+            element = DirectCheckBox(
+                pos=pos,
+                borderWidth=(2, 2),
+                #image="icons/minusnode.gif",
+                #uncheckedImage="icons/minusnode.gif",
+                #checkedImage="icons/plusnode.gif",
+                parent=parent,
+                scale=1)
         elementInfo = ElementInfo(element, "DirectCheckBox")
         self.setupBind(elementInfo)
         return elementInfo
@@ -161,10 +224,24 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Checkbox Properties", element, elementDict)
 
     def createDirectCheckButton(self, parent=None):
-        element = DirectCheckButton(
-            text="Checkbutton",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectCheckButton(
+                text="Checkbutton",
+                parent=parent,
+                scale=0.1)
+        else:
+            element = DirectCheckButton(
+                pos=pos,
+                text_scale=24,
+                borderWidth=(2, 2),
+                text="Checkbutton",
+                indicator_text_scale=24,
+                indicator_borderWidth=(2, 2),
+                parent=parent,
+                scale=1)
+
         elementInfo = ElementInfo(element, "DirectCheckButton")
         self.setupBind(elementInfo)
         return elementInfo
@@ -180,13 +257,25 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["boxImageScale"] = True
         self.propertiesFrame.propertyList["boxImageColor"] = True
         self.propertiesFrame.propertyList["boxRelief"] = True
+        self.propertiesFrame.propertyList["indicator_text_scale"] = True
+        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
-        element = DirectOptionMenu(
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            items=["item1"],
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectOptionMenu(
+                parent=parent,
+                items=["item1"],
+                scale=0.1)
+        else:
+            element = DirectOptionMenu(
+                pos=pos,
+                borderWidth=(2, 2),
+                parent=parent,
+                items=["item1"],
+                scale=24)
         elementInfo = ElementInfo(element, "DirectOptionMenu")
         self.setupBind(elementInfo)
         return elementInfo
@@ -204,10 +293,23 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
     def createDirectRadioButton(self, parent=None):
-        element = DirectRadioButton(
-            text="Radiobutton",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectRadioButton(
+                text="Radiobutton",
+                parent=parent,
+                scale=0.1)
+        else:
+            element = DirectRadioButton(
+                text="Radiobutton",
+                parent=parent,
+                pos=pos,
+                text_scale=24,
+                borderWidth=(2, 2),
+                indicator_text_scale=24,
+                indicator_borderWidth=(2, 2),
+                scale=1)
         elementInfo = ElementInfo(element, "DirectRadioButton")
 
         elementInfo.extraOptions["variable"] = []
@@ -229,13 +331,26 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["boxRelief"] = True
         self.propertiesFrame.propertyList["others"] = True
         self.propertiesFrame.propertyList["indicatorValue"] = True
+        self.propertiesFrame.propertyList["indicator_text_scale"] = True
+        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
     def createDirectSlider(self, parent=None):
-        element = DirectSlider(
-            text="Slider",
-            text_scale=0.1,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectSlider(
+                text="Slider",
+                text_scale=0.1,
+                parent=parent)
+        else:
+            element = DirectSlider(
+                text="Slider",
+                text_scale=0.1,
+                parent=parent,
+                pos=pos,
+                borderWidth=(2, 2),
+                scale=150)
         elementInfo = ElementInfo(element, "DirectSlider")
         self.setupBind(elementInfo)
         return elementInfo
@@ -260,8 +375,17 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
-        element = DirectScrollBar(
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectScrollBar(
+                parent=parent)
+        else:
+            element = DirectScrollBar(
+                pos=pos,
+                borderWidth=(2, 2),
+                scale=150,
+                parent=parent)
         elementInfo = ElementInfo(element, "DirectScrollBar")
         self.setupBind(elementInfo)
         return elementInfo
@@ -301,36 +425,71 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
     def createDirectScrolledList(self, parent=None):
-        element = DirectScrolledList(
-            text="scrolled list",
-            text_scale=0.1,
-            text_pos=(0,0.015),
-            state = DGG.NORMAL,
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectScrolledList(
+                text="scrolled list",
+                text_scale=0.1,
+                text_pos=(0,0.015),
+                state = DGG.NORMAL,
 
-            decButton_pos= (-0.45, 0, 0.03),
-            decButton_text = "Prev",
-            decButton_text_scale = 0.05,
-            decButton_text_align = TextNode.ALeft,
-            decButton_borderWidth = (0.005, 0.005),
+                decButton_pos= (-0.45, 0, 0.03),
+                decButton_text = "Prev",
+                decButton_text_scale = 0.05,
+                decButton_text_align = TextNode.ALeft,
+                decButton_borderWidth = (0.005, 0.005),
 
-            incButton_pos= (0.45, 0, 0.03),
-            incButton_text = "Next",
-            incButton_text_scale = 0.05,
-            incButton_text_align = TextNode.ARight,
-            incButton_borderWidth = (0.005, 0.005),
+                incButton_pos= (0.45, 0, 0.03),
+                incButton_text = "Next",
+                incButton_text_scale = 0.05,
+                incButton_text_align = TextNode.ARight,
+                incButton_borderWidth = (0.005, 0.005),
 
-            forceHeight=0.1,
+                forceHeight=0.1,
 
-            numItemsVisible=5,
-            itemFrame_frameSize=(-0.47, 0.47, -0.5, 0.1),
-            itemFrame_frameColor=(1, 1, 1, 1),
-            frameSize=(-0.5, 0.5, -0.01, 0.75),
-            frameColor=(0.8, 0.8, 0.8, 1),
-            itemFrame_pos = (0, 0, 0.6),
+                numItemsVisible=5,
+                itemFrame_frameSize=(-0.47, 0.47, -0.5, 0.1),
+                itemFrame_frameColor=(1, 1, 1, 1),
+                frameSize=(-0.5, 0.5, -0.01, 0.75),
+                frameColor=(0.8, 0.8, 0.8, 1),
+                itemFrame_pos = (0, 0, 0.6),
 
-            parent=self.visualEditor.getCanvas())
+                parent=parent)
+        else:
+            element = DirectScrolledList(
+                pos=pos,
+
+                text="scrolled list",
+                text_scale=24,
+                text_pos=(0,-225),
+                borderWidth=(2, 2),
+                state = DGG.NORMAL,
+
+                decButton_pos= (-125, 0, -225),
+                decButton_text = "Prev",
+                decButton_text_scale = 24,
+                decButton_text_align = TextNode.ALeft,
+                decButton_borderWidth = (2, 2),
+
+                incButton_pos= (125, 0, -225),
+                incButton_text = "Next",
+                incButton_text_scale = 24,
+                incButton_text_align = TextNode.ARight,
+                incButton_borderWidth = (2, 2),
+
+                forceHeight=50,
+
+                numItemsVisible=5,
+                itemFrame_frameSize=(-125, 125, -250, 50),
+                itemFrame_frameColor=(1, 1, 1, 1),
+                frameSize=(-150, 150, -250, 125),
+                frameColor=(0.8, 0.8, 0.8, 1),
+                itemFrame_pos = (0, 0, 50),
+
+                parent=parent)
         elementInfo = ElementInfo(element, "DirectScrolledList")
-        element["incButton_pos"] = (-0.35, 0, 0.03)
+        #element["incButton_pos"] = (-0.35, 0, 0.03)
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -347,12 +506,22 @@ class DirectGuiDesignerElementHandler:
         if parent is None or parent.getName().split("-")[0] != "DirectScrolledList":
             base.messenger.send("showWarning", ["Scrolled List Items must be added to Scrolled Lists.\nPlease select a scrolled list first!"])
             return None
-        element = DirectScrolledListItem(
-            text="scrolled list item",
-            parent=parent,
-            command=base.messenger.send,
-            extraArgs=["select_list_item_changed"],
-            scale=0.1)
+        if self.visEditorInAspect2D:
+            element = DirectScrolledListItem(
+                text="scrolled list item",
+                parent=parent,
+                command=base.messenger.send,
+                extraArgs=["select_list_item_changed"],
+                scale=0.1)
+        else:
+            element = DirectScrolledListItem(
+                text="scrolled list item",
+                text_scale=24,
+                borderWidth=(2, 2),
+                parent=parent,
+                command=base.messenger.send,
+                extraArgs=["select_list_item_changed"],
+                scale=1)
         elementInfo = ElementInfo(element, "DirectScrolledListItem")
         elementInfo.command = "base.messenger.send"
         elementInfo.extraArgs = "'select_list_item_changed'"
@@ -366,11 +535,23 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scrolled List Item Properties", element, elementDict)
 
     def createDirectLabel(self, parent=None):
-        element = DirectLabel(
-            text = "Label",
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            state = DGG.NORMAL,
-            scale=0.1)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectLabel(
+                text = "Label",
+                parent=parent,
+                state = DGG.NORMAL,
+                scale=0.1)
+        else:
+            element = DirectLabel(
+                text = "Label",
+                parent=parent,
+                state = DGG.NORMAL,
+                pos=pos,
+                text_scale=24,
+                borderWidth=(2, 2),
+                scale=1)
         elementInfo = ElementInfo(element, "DirectLabel")
         self.setupBind(elementInfo)
         return elementInfo
@@ -382,11 +563,23 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Label Properties", element, elementDict)
 
     def createDirectWaitBar(self, parent=None):
-        element = DirectWaitBar(
-            text="0%",
-            text_scale=0.1,
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectWaitBar(
+                text="0%",
+                text_scale=0.1,
+                state = DGG.NORMAL,
+                parent=parent)
+        else:
+            element = DirectWaitBar(
+                text="0%",
+                text_scale=0.1,
+                scale=150,
+                pos=pos,
+                borderWidth=(2, 2),
+                state = DGG.NORMAL,
+                parent=parent)
         elementInfo = ElementInfo(element, "DirectWaitBar")
         self.setupBind(elementInfo)
         return elementInfo
@@ -404,10 +597,20 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Wait Bar Properties", element, elementDict)
 
     def createOkDialog(self, parent=None):
-        element = OkDialog(
-            text="Ok Dialog",
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = OkDialog(
+                text="Ok Dialog",
+                state = DGG.NORMAL,
+                parent=parent)
+        else:
+            element = OkDialog(
+                text="Ok Dialog",
+                state=DGG.NORMAL,
+                scale=300,
+                pos=pos,
+                parent=parent)
         elementInfo = ElementInfo(element, "OkDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -420,10 +623,21 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
     def createOkCancelDialog(self, parent=None):
-        element = OkCancelDialog(
-            text="Ok/Cancel Dialog",
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = OkCancelDialog(
+                text="Ok/Cancel Dialog",
+                state = DGG.NORMAL,
+                parent=parent)
+        else:
+            element = OkCancelDialog(
+                text="Ok/Cancel Dialog",
+                state=DGG.NORMAL,
+                scale=300,
+                pos=pos,
+                parent=parent)
+
         elementInfo = ElementInfo(element, "OkCancelDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -436,10 +650,20 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
     def createYesNoDialog(self, parent=None):
-        element = YesNoDialog(
-            text="Yes/No Dialog",
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = YesNoDialog(
+                text="Yes/No Dialog",
+                state = DGG.NORMAL,
+                parent=parent)
+        else:
+            element = YesNoDialog(
+                text="Yes/No Dialog",
+                state=DGG.NORMAL,
+                scale=300,
+                pos=pos,
+                parent=parent)
         elementInfo = ElementInfo(element, "YesNoDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -452,10 +676,18 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Yes No Dialog Properties", element, elementDict)
 
     def createYesNoCancelDialog(self, parent=None):
-        element = YesNoCancelDialog(
-            text="Yes/No/Cancel Dialog",
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        if self.visEditorInAspect2D:
+            element = YesNoCancelDialog(
+                text="Yes/No/Cancel Dialog",
+                state = DGG.NORMAL,
+                parent=self.visualEditor.getCanvas())
+        else:
+            element = YesNoCancelDialog(
+                text="Yes/No/Cancel Dialog",
+                state=DGG.NORMAL,
+                scale=300,
+                pos=self.editorCenter,
+                parent=self.visualEditor.getCanvas())
         elementInfo = ElementInfo(element, "YesNoCancelDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -468,10 +700,20 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
     def createRetryCancelDialog(self, parent=None):
-        element = RetryCancelDialog(
-            text="Retry/Cancel Dialog",
-            state = DGG.NORMAL,
-            parent=self.visualEditor.getCanvas())
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = RetryCancelDialog(
+                text="Retry/Cancel Dialog",
+                state = DGG.NORMAL,
+                parent=parent)
+        else:
+            element = RetryCancelDialog(
+                text="Retry/Cancel Dialog",
+                state=DGG.NORMAL,
+                scale=300,
+                pos=pos,
+                parent=parent)
         elementInfo = ElementInfo(element, "RetryCancelDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -484,11 +726,23 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 
     def createDirectFrame(self, parent=None):
-        element = DirectFrame(
-            frameColor=(1,1,1,1),
-            frameSize=(-1,1,-1,1),
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            state = DGG.NORMAL)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectFrame(
+                frameColor=(1,1,1,1),
+                frameSize=(-1,1,-1,1),
+                parent=parent,
+                state = DGG.NORMAL)
+        else:
+            element = DirectFrame(
+                frameColor=(1,1,1,1),
+                text_scale=24,
+                frameSize=(-150, 150, -150, 150),
+                pos=pos,
+                borderWidth=(2, 2),
+                parent=parent,
+                state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectFrame")
         self.setupBind(elementInfo)
         return elementInfo
@@ -498,12 +752,26 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Frame Properties", element, elementDict)
 
     def createDirectScrolledFrame(self, parent=None):
-        element = DirectScrolledFrame(
-            frameColor=(1,1,1,1),
-            frameSize=(-1,1,-1,1),
-            canvasSize=(-2,2,-2,2),
-            parent=parent if parent is not None else self.visualEditor.getCanvas(),
-            state = DGG.NORMAL)
+        parent = self.visualEditor.getCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        if self.visEditorInAspect2D:
+            element = DirectScrolledFrame(
+                frameColor=(1,1,1,1),
+                frameSize=(-1,1,-1,1),
+                canvasSize=(-2,2,-2,2),
+                parent=parent,
+                state = DGG.NORMAL)
+        else:
+            element = DirectScrolledFrame(
+                frameColor=(1,1,1,1),
+                text_scale=24,
+                frameSize=(-150, 150, -150, 150),
+                pos=pos,
+                borderWidth=(2, 2),
+                canvasSize=(-300,300,-300,300),
+                scrollBarWidth=20,
+                parent=parent,
+                state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectScrolledFrame")
         self.setupBind(elementInfo)
         return elementInfo

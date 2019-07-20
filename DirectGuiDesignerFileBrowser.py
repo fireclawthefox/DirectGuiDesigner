@@ -244,13 +244,15 @@ class DirectGuiDesignerFileBrowser:
         path = os.path.expanduser(path)
         path = os.path.expandvars(path)
         if not os.path.exists(path): return
+        self.currentPath = path
 
         try:
             content = os.scandir(path)
         except PermissionError:
-            print("Access denied!")
+            base.messenger.send("showWarning", ["Access denied!"])
             self.pathEntry.set(self.previousPath)
             self.currentPath = self.previousPath
+            self.folderReload()
             return
 
         xPos = -280 + 50 - 110

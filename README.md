@@ -34,6 +34,10 @@ To start the DirectGUI Designer, simply run the DirectGuiDesigner.py script
 2. Left click on the item you want to edit.
 3. Drag and Drop to position the element and use the properties panel to set all desired options.
 
+### Editor Scale
+The editor supports two units of measurement, the default window aspect related one where ranges usually go from -1 to 1 and the center being in the middle of the window. The other system uses the pixel2d nodepath and hence scales according to pixels. It 0 location is at the top left corner of the editor and extends to 1920 by -1080 by default. It usually don't go into a negative value for screen coordinates but you can set negative pixel values for relative positioning.
+To switch between those scales, just hit the button in the menu bar that has the ruler symbol on it.
+
 ### Remove elements
 Click on the X in the structure view, hit Ctrl-Delete or use the respective button from the toolbar
 
@@ -46,6 +50,11 @@ To export as a python script that can directly be used in projects, either hit C
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
 **NOTE:** In the current development version, the exported GUI script will instantiate showbase and run the GUI by default.
+
+### Configuration
+These custom configuration variables have been introduced for the editor.
+
+skip-ask-for-quit : bool : If set to True, the dialog to ask for confirmation when quitting the Designer will not be shown. Defaults to False
 
 ## Known Bugs and missing features
 - DirectGui has heavy flickering and sometimes doesn't render gui controls correct

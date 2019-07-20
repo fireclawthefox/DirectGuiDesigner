@@ -122,12 +122,17 @@ app.run()"""
                     button_relief=DGG.FLAT,
                     button_frameColor=(0.8, 0.8, 0.8, 1),
                     command=self.__executeSave,
-                    extraArgs=[path])
+                    extraArgs=[path],
+                    scale=300,
+                    pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
+                    parent=base.pixel2d)
                 self.dlgOverwriteShadow = DirectFrame(
-                    pos=(0.025, 0, -0.025),
+                    pos=(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10),
                     sortOrder=0,
                     frameColor=(0,0,0,0.5),
-                    frameSize=self.dlgOverwrite.bounds)
+                    frameSize=self.dlgOverwrite.bounds,
+                    scale=300,
+                    parent=base.pixel2d)
             else:
                 self.__executeSave(True, path)
         self.dlgPathSelect.destroy()

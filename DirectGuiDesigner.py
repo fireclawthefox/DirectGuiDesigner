@@ -9,7 +9,13 @@ import tempfile
 
 from direct.showbase.ShowBase import ShowBase
 
-from panda3d.core import Point3, Vec3, loadPrcFileData, WindowProperties
+from panda3d.core import (
+    Point3,
+    Vec3,
+    loadPrcFileData,
+    WindowProperties,
+    ConfigVariableBool
+)
 
 from direct.gui import DirectGuiGlobals as DGG
 
@@ -102,11 +108,11 @@ class DirectGuiDesigner(ShowBase):
             (0.8, 0.8, 1, 1), # Hover
             (0.5, 0.5, 0.5, 1)) # Disabled
         # respect menu bar
-        topMargin=48 / self.screenHeightPx * 2
+        self.topMargin=48 / self.screenHeightPx * 2
         self.visualEditor = DirectScrolledFrame(
             frameColor=(0, 0, 0, 0),
             frameSize=(0,self.screenWidth*(0.75),
-                base.a2dBottom,base.a2dTop-topMargin),
+                base.a2dBottom,base.a2dTop-self.topMargin),
             pos=(self.screenWidth*(0.25), 0, 0),
             canvasSize=(-2, 2, -2, 2),
             scrollBarWidth=self.calcScrollBarWidth(),
@@ -127,6 +133,8 @@ class DirectGuiDesigner(ShowBase):
             horizontalScroll_decButton_frameColor=color,
             horizontalScroll_resizeThumb=True,
             parent=base.a2dLeftCenter)
+        self.currentVisEditorParent = base.a2dLeftCenter
+        self.visEditorInAspect2D = True
 
         self.visualEditorInfo = ElementInfo(self.visualEditor, "Editor")
 
@@ -135,7 +143,6 @@ class DirectGuiDesigner(ShowBase):
         self.grid.snapMarker.hide()
 
         self.snapToGrid = not self.grid.isHidden()
-        self.gridSpacing = 0.05
 
         self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.grid)
 
@@ -170,12 +177,14 @@ class DirectGuiDesigner(ShowBase):
         self.accept("saveProject", self.save)
         self.accept("exportProject", self.export)
         self.accept("loadProject", self.load)
+        self.accept("updateElementDict-afterLoad", self.updateElementDict)
         self.accept("refreshStructureTree", self.__refreshStructureTree)
         self.accept("selectElement", self.selectElement)
         self.accept("removeElement", self.removeElement)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
         self.accept("toggleGrid", self.toggleGrid)
+        self.accept("toggleVisualEditorParent", self.toggleVisualEditorParent)
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
 
@@ -205,6 +214,38 @@ class DirectGuiDesigner(ShowBase):
             base.messenger.send("showInfo", ["Loaded previously crashed session!"])
             os.remove(tmpPath)
             logging.info("Removed crash session file")
+
+    def toggleVisualEditorParent(self):
+        if self.currentVisEditorParent == base.a2dLeftCenter:
+            # change to pixel2d
+            self.visualEditor["frameSize"] = (0,self.screenWidthPx*0.75,-self.screenHeightPx,-48)
+            self.visualEditor.setPos(self.screenWidthPx/4, 0, 0)
+            self.visualEditor["scrollBarWidth"] = 20
+            self.visualEditor["canvasSize"] = (0, 1920, -1080, 0)
+            self.visualEditor.reparentTo(pixel2d)
+            self.visualEditor.verticalScroll["value"] = 0
+            self.visualEditor.horizontalScroll["value"] = 0
+            self.currentVisEditorParent = base.pixel2d
+            self.grid.setGridSpacing(20)
+            self.grid.setGridSize(1920)
+            self.visEditorInAspect2D = False
+            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
+            self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
+        else:
+            # change to aspect2d
+            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75), base.a2dBottom,base.a2dTop-self.topMargin)
+            self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
+            self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
+            self.visualEditor["canvasSize"] = (-2, 2, -2, 2)
+            self.visualEditor.reparentTo(base.a2dLeftCenter)
+            self.visualEditor.verticalScroll["value"] = 0.5
+            self.visualEditor.horizontalScroll["value"] = 0.5
+            self.currentVisEditorParent = base.a2dLeftCenter
+            self.grid.setGridSpacing(0.05)
+            self.grid.setGridSize(50)
+            self.visEditorInAspect2D = True
+            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
+            self.elementHandler.setEditorCenter((0, 0, 0))
 
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
@@ -327,10 +368,16 @@ class DirectGuiDesigner(ShowBase):
             self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, 0)
             self.toolsFrame.setPos(0,0,0)
 
-            topMargin=48 / self.screenHeightPx * 2
-            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-topMargin)
-            self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
-            self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
+
+            self.topMargin=48 / self.screenHeightPx * 2
+            if self.visEditorInAspect2D:
+                self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-self.topMargin)
+                self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
+                self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
+            else:
+                self.visualEditor["frameSize"] = (0,self.screenWidthPx*0.75,-self.screenHeightPx,-48)
+                self.visualEditor.setPos(self.screenWidthPx/4, 0, 0)
+                self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
 
             self.menuBar.resizeFrame()
 
@@ -424,6 +471,7 @@ class DirectGuiDesigner(ShowBase):
             newValue = self.visualEditor["verticalScroll_value"] - moveVec.getZ()
             if newValue <= 1 and newValue >= 0:
                 self.visualEditor["verticalScroll_value"] = newValue
+
             newValue = self.visualEditor["horizontalScroll_value"] + moveVec.getX()
             if newValue <= 1 and newValue >= 0:
                 self.visualEditor["horizontalScroll_value"] = newValue
@@ -471,9 +519,9 @@ class DirectGuiDesigner(ShowBase):
                 if self.is_down(self.key_lshift) or self.is_down(self.key_rshift):
                     modifier = 1
                 newPos.set(
-                    ROUND_TO(newPos[0], self.gridSpacing*modifier),
-                    ROUND_TO(newPos[1], self.gridSpacing*modifier),
-                    ROUND_TO(newPos[2], self.gridSpacing*modifier))
+                    ROUND_TO(newPos[0], self.grid.getGridSpacing()*modifier),
+                    ROUND_TO(newPos[1], self.grid.getGridSpacing()*modifier),
+                    ROUND_TO(newPos[2], self.grid.getGridSpacing()*modifier))
                 t.elementInfo.element.setPos(newPos)
 
         return t.cont
@@ -482,7 +530,6 @@ class DirectGuiDesigner(ShowBase):
         t = taskMgr.getTasksNamed("dragDropTask")[0]
         parent = t.elementInfo.element.getParent()
         pos = t.elementInfo.element.getPos(self.visualEditor.getCanvas())
-
         if pos.x < self.visualEditor["canvasSize"][0]:
             t.elementInfo.element.setX(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][0])
         if pos.x > self.visualEditor["canvasSize"][1]:
@@ -504,14 +551,18 @@ class DirectGuiDesigner(ShowBase):
         moverScaleX = 1 / scale.getX()
         moverScaleZ = 1 / scale.getZ()
 
+        speed = 0.01
+        if not self.visEditorInAspect2D:
+            speed = 5
+
         if direction == "left":
-            workOn.setX(workOn, -0.01*moverScaleX*speedMult)
+            workOn.setX(workOn, -speed*moverScaleX*speedMult)
         elif direction == "right":
-            workOn.setX(workOn, 0.01*moverScaleX*speedMult)
+            workOn.setX(workOn, speed*moverScaleX*speedMult)
         elif direction == "up":
-            workOn.setZ(workOn, 0.01*moverScaleZ*speedMult)
+            workOn.setZ(workOn, speed*moverScaleZ*speedMult)
         elif direction == "down":
-            workOn.setZ(workOn, -0.01*moverScaleZ*speedMult)
+            workOn.setZ(workOn, -speed*moverScaleZ*speedMult)
 
     def removeElement(self, element=None):
         workOn = None
@@ -635,7 +686,11 @@ class DirectGuiDesigner(ShowBase):
     def load(self):
         self.selectElement(self.visualEditorInfo)
         projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, False, self.tt, self.new)
-        self.elementDict = projectLoader.get()
+
+    def updateElementDict(self, newDict):
+        self.elementDict.update(newDict)
+        print(self.elementDict)
+        base.messenger.send("refreshStructureTree")
 
     def __quit(self, selection):
         if selection == 1:
@@ -648,6 +703,11 @@ class DirectGuiDesigner(ShowBase):
 
     def quitApp(self):
         if self.dlgQuit is not None: return
+
+        if ConfigVariableBool("skip-ask-for-quit", False).getValue():
+            self.__quit(1)
+            return
+
         self.dlgQuit = OkCancelDialog(
             text="Really Quit?",
             state=DGG.NORMAL,

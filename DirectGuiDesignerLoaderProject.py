@@ -60,6 +60,7 @@ class DirectGuiDesignerLoaderProject:
             path = os.path.expandvars(path)
 
             self.__executeLoad(path)
+            base.messenger.send("updateElementDict-afterLoad", [self.elementDict])
 
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect

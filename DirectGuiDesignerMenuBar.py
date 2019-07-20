@@ -102,7 +102,7 @@ class DirectGuiDesignerMenuBar:
             image="icons/Delete.png",
             image_scale=24)
         btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del)"])
+        btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Del)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 48
         self.cb_grid = DirectCheckBox(
@@ -112,7 +112,7 @@ class DirectGuiDesignerMenuBar:
             pos=(x + 24, 0, 0),
             scale=1,
             relief=DGG.FLAT,
-            text_scale=0.33,
+            text_scale=12,
             image="icons/GridOff.png" if self.grid.isHidden() else "icons/GridOn.png",
             uncheckedImage="icons/GridOff.png",
             checkedImage="icons/GridOn.png",
@@ -121,6 +121,24 @@ class DirectGuiDesignerMenuBar:
             command=self.toggleGrid)
         self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
         self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
+        self.cb_grid.bind(DGG.EXIT, self.tt.hide)
+        x += 48
+        self.cb_grid = DirectCheckBox(
+            parent=self.menuBar,
+            frameSize=(-24,24,-24,24),
+            frameColor=buttonColor,
+            pos=(x + 24, 0, 0),
+            scale=1,
+            relief=DGG.FLAT,
+            text_scale=12,
+            image="icons/Scale1.png",
+            uncheckedImage="icons/Scale2.png",
+            checkedImage="icons/Scale1.png",
+            image_scale=24,
+            isChecked=True,
+            command=self.toggleVisualEditorParent)
+        self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
+        self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle editor scale (Aspect/Pixel)"])
         self.cb_grid.bind(DGG.EXIT, self.tt.hide)
         x += 48 + 12
         btn = DirectButton(
@@ -157,6 +175,9 @@ class DirectGuiDesignerMenuBar:
 
     def toggleGrid(self, selection):
         base.messenger.send("toggleGrid", [selection])
+
+    def toggleVisualEditorParent(self, selection):
+        base.messenger.send("toggleVisualEditorParent")
 
     def resizeFrame(self):
         screenWidthPx = base.getSize()[0]

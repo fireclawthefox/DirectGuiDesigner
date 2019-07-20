@@ -6,6 +6,8 @@ Simplified BSD (BSD 2-Clause) License.
 See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
+import logging
+
 from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib
 
 from direct.gui import DirectGuiGlobals as DGG
@@ -85,6 +87,8 @@ class DirectGuiDesignerProperties():
         "boxImageScale":False,
         "boxImageColor":False,
         "boxRelief":False,
+        "indicator_text_scale":False,
+        "indicator_borderWidth":False,
 
         # RadioButton specific
         "others":False,
@@ -142,6 +146,11 @@ class DirectGuiDesignerProperties():
         "text_pos":"pos",
     }
     subControlInitOpGetDict = {
+        "text_pos":["text", "getPos"],
+        "text_hpr":["text", "getHpr"],
+        "text_scale":["text", "getScale"],
+        "text_frameSize":["text", "getBounds"],
+
         "incButton_pos":["incButton", "getPos"],
         "incButton_hpr":["incButton", "getHpr"],
         "incButton_scale":["incButton", "getScale"],
@@ -158,14 +167,21 @@ class DirectGuiDesignerProperties():
         "thumb_frameSize":["thumb", "getBounds"],
     }
     subControlInitOpDict = {
+        "text_pos":["text", "setPos"],
+        "text_hpr":["text", "setHpr"],
+        "text_scale":["text", "setScale"],
+        "text_text":["text", "setText"],
+
         "incButton_pos":["incButton", "setPos"],
         "incButton_hpr":["incButton", "setHpr"],
         "incButton_scale":["incButton", "setScale"],
         "incButton_text":["incButton", "setText"],
+
         "decButton_pos":["decButton", "setPos"],
         "decButton_hpr":["decButton", "setHpr"],
         "decButton_scale":["decButton", "setScale"],
         "decButton_text":["thumb", "setText"],
+
         "thumb_pos":["thumb", "setPos"],
         "thumb_hpr":["thumb", "setHpr"],
         "thumb_scale":["thumb", "setScale"],
@@ -481,7 +497,7 @@ class DirectGuiDesignerProperties():
         #
         # CheckButton specific
         #
-        for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief"]:
+        for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief", "indicator_text_scale", "indicator_borderWidth"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
                 break
@@ -503,6 +519,12 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["boxRelief"]:
             self.__createReliefProperty("Box Relief", self.startPos, propFrame, element, "boxRelief")
+            self.moveNext()
+        if self.propertyList["indicator_text_scale"]:
+            self.__createBase2Input("Indicator Text Scale", self.startPos, propFrame, element, "indicator_text_scale")
+            self.moveNext()
+        if self.propertyList["indicator_borderWidth"]:
+            self.__createBase2Input("Indicator Border Width", self.startPos, propFrame, element, "indicator_borderWidth")
             self.moveNext()
 
         #
