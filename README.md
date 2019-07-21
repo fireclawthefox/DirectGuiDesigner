@@ -54,7 +54,9 @@ The python script will always contain a class called Gui which you can pass a No
 ### Configuration
 These custom configuration variables have been introduced for the editor.
 
-skip-ask-for-quit : bool : If set to True, the dialog to ask for confirmation when quitting the Designer will not be shown. Defaults to False
+|Name|Type|Description|
+|---|---|---|
+|skip-ask-for-quit|bool|If set to True, the dialog to ask for confirmation when quitting the Designer will not be shown. Defaults to False|
 
 ## Known Bugs and missing features
 - DirectGui has heavy flickering and sometimes doesn't render gui controls correct
