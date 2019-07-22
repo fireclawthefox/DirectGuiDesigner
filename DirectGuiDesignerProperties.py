@@ -21,6 +21,8 @@ from direct.gui.DirectButton import DirectButton
 from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectCheckButton import DirectCheckButton
 
+from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+
 class DirectGuiDesignerProperties():
 
     propertyList = {
@@ -118,7 +120,6 @@ class DirectGuiDesignerProperties():
         "barTexture":False,
         "barRelief":False,
     }
-
     initOpDict = {
         "pos":"setPos",
         "hpr":"setHpr",
@@ -129,7 +130,6 @@ class DirectGuiDesignerProperties():
         # Entry specific
         "initialText":"set",
     }
-
     initOpGetDict = {
         "pos":"getPos",
         "hpr":"getHpr",
@@ -143,12 +143,8 @@ class DirectGuiDesignerProperties():
     getAsPropDict = {
         "text_fg":"fg",
         "text_bg":"bg",
-        "text_pos":"pos",
     }
     subControlInitOpGetDict = {
-        "text_pos":["text", "getPos"],
-        "text_hpr":["text", "getHpr"],
-        "text_scale":["text", "getScale"],
         "text_frameSize":["text", "getBounds"],
 
         "incButton_pos":["incButton", "getPos"],
@@ -167,11 +163,6 @@ class DirectGuiDesignerProperties():
         "thumb_frameSize":["thumb", "getBounds"],
     }
     subControlInitOpDict = {
-        "text_pos":["text", "setPos"],
-        "text_hpr":["text", "setHpr"],
-        "text_scale":["text", "setScale"],
-        "text_text":["text", "setText"],
-
         "incButton_pos":["incButton", "setPos"],
         "incButton_hpr":["incButton", "setHpr"],
         "incButton_scale":["incButton", "setScale"],
@@ -187,13 +178,13 @@ class DirectGuiDesignerProperties():
         "thumb_scale":["thumb", "setScale"],
         "thumb_text":["thumb", "setText"],
     }
-
     # Call a function instead of directly set the option
     callFunc = {
         "isChecked":["commandFunc",None]
     }
 
-    def __init__(self, parent, posZ, height, visualEditor):
+    def __init__(self, parent, posZ, height, visualEditor, tooltip):
+        self.tooltip = tooltip
         self.parent = parent
         self.maxElementWidth = 0
         self.lblHeader = DirectLabel(
@@ -661,7 +652,6 @@ class DirectGuiDesignerProperties():
             parent=parent)
         self.startPos.setZ(self.startPos.getZ() - 30 - 15)
 
-
     def __getFormated(self, value):
         if type(value) is int:
             return "{}".format(value)
@@ -724,6 +714,9 @@ class DirectGuiDesignerProperties():
                             valueB,
                             valueC,
                             valueD)
+            elif updateAttribute in self.getAsPropDict:
+                if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
+                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB, valueC, valueD)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -840,6 +833,9 @@ class DirectGuiDesignerProperties():
                             valueA,
                             valueB,
                             valueC)
+            elif updateAttribute in self.getAsPropDict:
+                if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
+                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB, valueC)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -933,9 +929,7 @@ class DirectGuiDesignerProperties():
                             valueB)
             elif updateAttribute in self.getAsPropDict:
                 if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
-                    valueA, valueB = getattr(updateElement, self.getAsPropDict[updateAttribute])
-                    valueA = self.__getFormated(valueA)
-                    valueB = self.__getFormated(valueB)
+                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -1105,7 +1099,6 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-
 
     def __createTextProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
@@ -1307,14 +1300,25 @@ class DirectGuiDesignerProperties():
             except:
                 logging.exception("Couldn't load image: {}".format(text))
                 updateElement[updateAttribute] = None
+        def setImage(imgUrl):
+            entry.set(imgUrl)
+            update(imgUrl)
+
+        def selectPath(confirm):
+            if confirm:
+                setImage(self.browser.get())
+            self.browser.hide()
+        def showBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", self.tooltip)
+            self.browser.show()
         x = startPos.getX()
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
         z = startPos.getZ()
         image = updateElement[updateAttribute]
         width = (parent.bounds[1]-10)
-        entryWidth = width / 13
-        DirectEntry(
+        entryWidth = width / 15
+        entry = DirectEntry(
             initialText=image,
             relief=DGG.SUNKEN,
             frameColor=(1,1,1,1),
@@ -1328,6 +1332,16 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
+
+        DirectButton(
+            text="Browse",
+            command=showBrowser,
+            pad=(0.25,0.25),
+            pos=(width - entryWidth, 0, z),
+            scale=12,
+            parent=parent
+            )
+
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
         x = startPos.getX()

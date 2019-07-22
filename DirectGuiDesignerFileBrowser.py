@@ -24,6 +24,8 @@ from panda3d.core import (
 class DirectGuiDesignerFileBrowser:
     def __init__(self, command, fileBrowser=False, defaultFilename="export.json", tooltip=None):
         self.tt = tooltip
+        if tooltip is None:
+            raise Exception("No Tooltip instance given for File Browser")
         self.command = command
         self.showFiles = fileBrowser
 
@@ -52,7 +54,11 @@ class DirectGuiDesignerFileBrowser:
             width=475/12,
             overflow=True,
             command=self.entryAccept,
-            initialText=self.currentPath
+            initialText=self.currentPath,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
         )
         x = 475/2-28
         btn = DirectButton(
@@ -176,6 +182,10 @@ class DirectGuiDesignerFileBrowser:
             overflow=True,
             command=self.filenameAccept,
             initialText=defaultFilename,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
         )
 
         self.newFolderFrame = DirectFrame(
@@ -203,7 +213,11 @@ class DirectGuiDesignerFileBrowser:
             width=(275*2-txtNewFolderName.getWidth() - 100)/12,
             overflow=True,
             command=self.entryAccept,
-            initialText="New Folder"
+            initialText="New Folder",
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
         )
         DirectButton(
             parent=self.newFolderFrame,

@@ -160,7 +160,7 @@ class DirectGuiDesigner(ShowBase):
         self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
         self.nextToolFrameY += self.toolFrameHeight
 
-        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor)
+        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.tt)
         self.propertiesEditor(self.visualEditorInfo)
         self.nextToolFrameY += self.toolFrameHeight
 
