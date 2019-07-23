@@ -54,11 +54,17 @@ class DirectGuiDesignerStructure():
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),)
+            pos=(0,0,posZ),
+            state=DGG.NORMAL,
+            parent=parent)
+        self.structureFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
+        self.structureFrame.bind(DGG.MWUP, self.scroll, [-0.01])
         self.maxWidth = parent["frameSize"][1]-20
-        self.structureFrame.reparentTo(parent)
         self.visualEditor = visualEditor
         self.refreshStructureTree(elementDict, selectedElement)
+
+    def scroll(self, scrollStep, event):
+        self.structureFrame.verticalScroll.scrollStep(scrollStep)
 
     def resizeFrame(self, posZ, height):
         self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
@@ -124,6 +130,8 @@ class DirectGuiDesignerStructure():
                 command=self.__selectElement,
                 extraArgs=[elementInfo],
                 parent=self.structureFrame.getCanvas())
+            btn.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btn.bind(DGG.MWUP, self.scroll, [-0.01])
             if self.selectedElement is not None and self.selectedElement == elementInfo:
                 btn.setColorScale(1,1,0,1)
 
@@ -139,6 +147,8 @@ class DirectGuiDesignerStructure():
                 image_scale=8,
                 parent=self.structureFrame.getCanvas())
             btnX.setTransparency(TransparencyAttrib.M_multisample)
+            btnX.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnX.bind(DGG.MWUP, self.scroll, [-0.01])
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
                 pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z),
@@ -153,6 +163,8 @@ class DirectGuiDesignerStructure():
                 isChecked=not elementInfo.element.isHidden(),
                 parent=self.structureFrame.getCanvas())
             btnV.setTransparency(TransparencyAttrib.M_multisample)
+            btnV.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnV.bind(DGG.MWUP, self.scroll, [-0.01])
             self.maxWidth = max(self.maxWidth, btnV.getX() + 8)
 
     def __selectElement(self, elementInfo, args=None):

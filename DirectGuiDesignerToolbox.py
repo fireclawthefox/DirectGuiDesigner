@@ -1,8 +1,10 @@
 
 
-from panda3d.core import VBase4, TextNode
+from panda3d.core import VBase4, TextNode, PGButton, MouseButton
 
 from direct.gui import DirectGuiGlobals as DGG
+DGG.MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
+DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
 
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectButton import DirectButton
@@ -50,8 +52,11 @@ class DirectGuiDesignerToolbox:
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),)
-        self.toolboxFrame.reparentTo(parent)
+            pos=(0,0,posZ),
+            state=DGG.NORMAL,
+            parent=parent)
+        self.toolboxFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
+        self.toolboxFrame.bind(DGG.MWUP, self.scroll, [-0.01])
         self.toolboxEntries = [
             ["~Interactive Elements~"],
             ["Button", "DirectButton"],
@@ -83,6 +88,9 @@ class DirectGuiDesignerToolbox:
         ]
         self.createEntries()
 
+    def scroll(self, scrollStep, event):
+        self.toolboxFrame.verticalScroll.scrollStep(scrollStep)
+
     def createEntries(self):
         # Empty the toolbox if there were any elements
         for child in self.toolboxFrame.getCanvas().getChildren():
@@ -95,6 +103,8 @@ class DirectGuiDesignerToolbox:
             else:
                 item = self.__makeToolboxCenteredListItem(entry[0], idx)
                 item.reparentTo(self.toolboxFrame.getCanvas())
+            item.bind(DGG.MWDOWN, self.scroll, [0.01])
+            item.bind(DGG.MWUP, self.scroll, [-0.01])
             idx += 1
         self.toolboxFrame["canvasSize"] = (
             self.parent["frameSize"][0], self.parent["frameSize"][1]-20,
@@ -127,7 +137,9 @@ class DirectGuiDesignerToolbox:
             pos=(0, 0, -30 * index + 10),
             relief=DGG.FLAT,
             command=self.__createControl,
-            extraArgs=[name])
+            extraArgs=[name],
+            #suppressMouse=0
+            )
         return item
 
     def __makeToolboxCenteredListItem(self, displayName, index):
@@ -138,5 +150,8 @@ class DirectGuiDesignerToolbox:
             text_align=TextNode.ACenter,
             text_scale=16,
             text_pos=(0, 0),
-            pos=(self.toolsFrame["frameSize"][1]/2-10, 0, -30 * index + 10))
+            pos=(self.toolsFrame["frameSize"][1]/2-10, 0, -30 * index + 10),
+            state=DGG.NORMAL,
+            #suppressMouse=0
+            )
         return item
