@@ -271,7 +271,22 @@ class DirectGuiDesignerFileBrowser:
 
         xPos = -280 + 50 - 110
         zPos = 140-40
+
+        dirList = []
+        fileList = []
+        unkList = []
+
         for entry in content:
+            if entry.is_dir():
+                dirList.append(entry)
+            elif entry.is_file() and self.showFiles:
+                fileList.append(entry)
+            elif self.showFiles:
+                unkList.append(entry)
+
+        def moveNext(entry):
+            nonlocal xPos
+            nonlocal zPos
             if entry.is_dir() or self.showFiles:
                 if xPos + 110 > 290:
                     xPos = -280 + 50 - 110
@@ -279,12 +294,18 @@ class DirectGuiDesignerFileBrowser:
                 else:
                     xPos += 110
 
-            if entry.is_dir():
-                self.__createFolder(entry, xPos, zPos)
-            elif entry.is_file() and self.showFiles:
-                self.__createFile(entry.name, xPos, zPos)
-            elif self.showFiles:
-                self.__createUnknown(entry.name, xPos, zPos)
+        def getKey(item):
+            return item.name.lower()
+
+        for entry in sorted(dirList, key=getKey):
+            moveNext(entry)
+            self.__createFolder(entry, xPos, zPos)
+        for entry in sorted(fileList, key=getKey):
+            moveNext(entry)
+            self.__createFile(entry.name, xPos, zPos)
+        for entry in sorted(unkList, key=getKey):
+            moveNext(entry)
+            self.__createUnknown(entry.name, xPos, zPos)
 
         self.container["canvasSize"] = (-269, 290, zPos-90, 150)
         self.container.setCanvasSize()
