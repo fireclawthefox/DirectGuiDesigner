@@ -71,10 +71,14 @@ class DirectGuiDesignerFileBrowser:
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-14, 14, -10, 18),
             pos=LPoint3f(x, 0, 175),
-            text = "( )",
-            text_scale=12,
-            command=self.folderReload
+            #text = "( )",
+            #text_scale=12,
+            command=self.folderReload,
+            image="icons/Reload.png",
+            image_scale=14,
+            image_pos=(0,0,4),
         )
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Reload Folder"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 28
@@ -90,8 +94,12 @@ class DirectGuiDesignerFileBrowser:
             pos=LPoint3f(x, 0, 175),
             text = "^",
             text_scale=12,
-            command=self.folderUp
+            command=self.folderUp,
+            image="icons/FolderUp.png",
+            image_scale=14,
+            image_pos=(0,0,4),
         )
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Move up one level"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 28
@@ -107,8 +115,12 @@ class DirectGuiDesignerFileBrowser:
             pos=LPoint3f(x, 0, 175),
             text = "+",
             text_scale=12,
-            command=self.folderNew
+            command=self.folderNew,
+            image="icons/FolderNew.png",
+            image_scale=14,
+            image_pos=(0,0,4),
         )
+        btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Create new folder"])
         btn.bind(DGG.EXIT, self.tt.hide)
 
@@ -138,7 +150,10 @@ class DirectGuiDesignerFileBrowser:
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
+            state=DGG.NORMAL,
         )
+        self.container.bind(DGG.MWDOWN, self.scroll, [0.01])
+        self.container.bind(DGG.MWUP, self.scroll, [-0.01])
 
         DirectButton(
             parent=self.mainFrame,
@@ -237,6 +252,9 @@ class DirectGuiDesignerFileBrowser:
         self.newFolderFrame.hide()
 
         self.folderReload()
+
+    def scroll(self, scrollStep, event):
+        self.container.verticalScroll.scrollStep(scrollStep)
 
     def get(self):
         if self.showFiles:
@@ -366,6 +384,8 @@ class DirectGuiDesignerFileBrowser:
             command=self.folderMoveIn,
             extraArgs=[entry.path]
         )
+        btn.bind(DGG.MWDOWN, self.scroll, [0.01])
+        btn.bind(DGG.MWUP, self.scroll, [-0.01])
         btn.setTransparency(TransparencyAttrib.M_multisample)
 
     def __createFile(self, filename, xPos, zPos):
@@ -395,6 +415,8 @@ class DirectGuiDesignerFileBrowser:
             command=self.txtFileName.set,
             extraArgs=[filename]
         )
+        btn.bind(DGG.MWDOWN, self.scroll, [0.01])
+        btn.bind(DGG.MWUP, self.scroll, [-0.01])
         btn.setTransparency(TransparencyAttrib.M_multisample)
 
     def __createUnknown(self, filename, xPos, zPos):
@@ -417,4 +439,6 @@ class DirectGuiDesignerFileBrowser:
             text_scale=12,
             text_pos=(0,-40),
         )
+        lbl.bind(DGG.MWDOWN, self.scroll, [0.01])
+        lbl.bind(DGG.MWUP, self.scroll, [-0.01])
         lbl.setTransparency(TransparencyAttrib.M_multisample)
