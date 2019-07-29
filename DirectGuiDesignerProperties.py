@@ -92,6 +92,7 @@ class DirectGuiDesignerProperties():
         "boxImageColor":False,
         "boxRelief":False,
         "indicator_text_scale":False,
+        "indicator_text_pos":False,
         "indicator_borderWidth":False,
 
         # RadioButton specific
@@ -185,6 +186,9 @@ class DirectGuiDesignerProperties():
         "isChecked":["commandFunc",None]
     }
 
+    scrollSpeedUp = -0.001
+    scrollSpeedDown = 0.001
+
     def __init__(self, parent, posZ, height, visualEditor, tooltip):
         self.tooltip = tooltip
         self.parent = parent
@@ -229,8 +233,8 @@ class DirectGuiDesignerProperties():
             pos=(0,0,posZ),
             state=DGG.NORMAL,
             parent=parent,)
-        self.propertiesFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
-        self.propertiesFrame.bind(DGG.MWUP, self.scroll, [-0.01])
+        self.propertiesFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        self.propertiesFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
         self.visualEditor = visualEditor
 
@@ -496,7 +500,7 @@ class DirectGuiDesignerProperties():
         #
         # CheckButton specific
         #
-        for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief", "indicator_text_scale", "indicator_borderWidth"]:
+        for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief", "indicator_text_scale", "indicator_text_pos", "indicator_borderWidth"]:
             if self.propertyList[prop]:
                 self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
                 break
@@ -511,7 +515,7 @@ class DirectGuiDesignerProperties():
             self.__createImageProperty("Box Image", self.startPos, propFrame, element, "boxImage")
             self.moveNext()
         if self.propertyList["boxImageScale"]:
-            self.__createFloatInput("Box Image scale (X/Y/Z)", self.startPos, propFrame, element, "boxImageScale")
+            self.__createFloatInput("Box Image Scale (X/Y/Z)", self.startPos, propFrame, element, "boxImageScale")
             self.moveNext()
         if self.propertyList["boxImageColor"]:
             self.__createBase4Input("Box Image Color (r/g/b/a)", self.startPos, propFrame, element, "boxImageColor")
@@ -521,6 +525,9 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["indicator_text_scale"]:
             self.__createBase2Input("Indicator Text Scale", self.startPos, propFrame, element, "indicator_text_scale")
+            self.moveNext()
+        if self.propertyList["indicator_text_pos"]:
+            self.__createBase2Input("Indicator Text Position (X/Y)", self.startPos, propFrame, element, "indicator_text_pos")
             self.moveNext()
         if self.propertyList["indicator_borderWidth"]:
             self.__createBase2Input("Indicator Border Width", self.startPos, propFrame, element, "indicator_borderWidth")
@@ -686,6 +693,7 @@ class DirectGuiDesignerProperties():
 
     def __createBase4Input(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             valueA = 0.0
             try:
                 valueA = float(a.get(True))
@@ -764,8 +772,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        a.bind(DGG.MWDOWN, self.scroll, [0.01])
-        a.bind(DGG.MWUP, self.scroll, [-0.01])
+        a.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        a.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         b = DirectEntry(
             initialText=str(valueB),
@@ -781,8 +789,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        b.bind(DGG.MWDOWN, self.scroll, [0.01])
-        b.bind(DGG.MWUP, self.scroll, [-0.01])
+        b.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        b.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         c = DirectEntry(
             initialText=str(valueC),
@@ -798,8 +806,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        c.bind(DGG.MWDOWN, self.scroll, [0.01])
-        c.bind(DGG.MWUP, self.scroll, [-0.01])
+        c.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        c.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         d = DirectEntry(
             initialText=str(valueD),
@@ -815,11 +823,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        d.bind(DGG.MWDOWN, self.scroll, [0.01])
-        d.bind(DGG.MWUP, self.scroll, [-0.01])
+        d.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        d.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createBase3Input(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             valueA = 0.0
             try:
                 valueA = float(a.get(True))
@@ -888,8 +897,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        a.bind(DGG.MWDOWN, self.scroll, [0.01])
-        a.bind(DGG.MWUP, self.scroll, [-0.01])
+        a.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        a.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         b = DirectEntry(
             initialText=str(valueB),
@@ -905,8 +914,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        b.bind(DGG.MWDOWN, self.scroll, [0.01])
-        b.bind(DGG.MWUP, self.scroll, [-0.01])
+        b.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        b.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         c = DirectEntry(
             initialText=str(valueC),
@@ -922,11 +931,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        c.bind(DGG.MWDOWN, self.scroll, [0.01])
-        c.bind(DGG.MWUP, self.scroll, [-0.01])
+        c.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        c.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createBase2Input(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             valueA = 0.0
             try:
                 valueA = float(a.get(True))
@@ -987,8 +997,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        a.bind(DGG.MWDOWN, self.scroll, [0.01])
-        a.bind(DGG.MWUP, self.scroll, [-0.01])
+        a.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        a.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         x += width
         b = DirectEntry(
             initialText=str(valueB),
@@ -1004,11 +1014,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        b.bind(DGG.MWDOWN, self.scroll, [0.01])
-        b.bind(DGG.MWUP, self.scroll, [-0.01])
+        b.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        b.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             value = 0.0
             try:
                 value = float(text)
@@ -1051,11 +1062,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createIntegerInput(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             value = 0
             try:
                 value = int(text)
@@ -1098,11 +1110,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createNameProperty(self, startPos, parent, updateElementInfo):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             name = updateElementInfo.element.guiId.replace("-", "")
             if text != "":
                 name = text
@@ -1129,11 +1142,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createTextProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
+            base.messenger.send("setDirtyFlag")
 
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
@@ -1170,11 +1184,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createCommandProperty(self, startPos, parent, updateElementInfo):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             command = None
             if text != "":
                 command = text
@@ -1200,11 +1215,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createCommandArgsProperty(self, startPos, parent, updateElementInfo):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             extraArgs = None
             if text != "":
                 extraArgs = text
@@ -1230,11 +1246,12 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(value):
+            base.messenger.send("setDirtyFlag")
             if updateAttribute in self.callFunc.keys():
                 if hasattr(updateElement, self.callFunc[updateAttribute][0]):
                     getattr(updateElement, self.callFunc[updateAttribute][0])(self.callFunc[updateAttribute][1])
@@ -1266,11 +1283,12 @@ class DirectGuiDesignerProperties():
             text_align=TextNode.ALeft,
             command=update,
             parent=parent)
-        btn.bind(DGG.MWDOWN, self.scroll, [0.01])
-        btn.bind(DGG.MWUP, self.scroll, [-0.01])
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
     def __createOthersSelectorProperty(self, startPos, parent, updateElement):
         def update(selected, selection):
+            base.messenger.send("setDirtyFlag")
             if selected:
                 updateElement["others"].append(selection.element)
             else:
@@ -1290,8 +1308,8 @@ class DirectGuiDesignerProperties():
             state=DGG.NORMAL,
             parent=parent,
         )
-        selectionFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
-        selectionFrame.bind(DGG.MWUP, self.scroll, [-0.01])
+        selectionFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        selectionFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         innerZ = 0
         nextZ = 30
         for keys, radioButton in self.elementDict.items():
@@ -1307,8 +1325,8 @@ class DirectGuiDesignerProperties():
                 command=update,
                 extraArgs=[radioButton],
                 parent=selectionFrame.getCanvas())
-            cb.bind(DGG.MWDOWN, self.scroll, [0.01])
-            cb.bind(DGG.MWUP, self.scroll, [-0.01])
+            cb.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+            cb.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
             innerZ -= 30
         selectionFrame["canvasSize"] = (
             0,selectionFrame["frameSize"][1]-20,
@@ -1328,6 +1346,7 @@ class DirectGuiDesignerProperties():
             "M_dual"]
 
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             updateElement.setTransparency(getattr(TransparencyAttrib, selection))
 
         for attrib in transparencyAttribs:
@@ -1340,6 +1359,7 @@ class DirectGuiDesignerProperties():
 
     def __createImageProperty(self, description, startPos, parent, updateElement, updateAttribute="image"):
         def update(text):
+            base.messenger.send("setDirtyFlag")
             try:
                 updateElement[updateAttribute] = text
             except:
@@ -1377,8 +1397,8 @@ class DirectGuiDesignerProperties():
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
             parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [0.01])
-        entry.bind(DGG.MWUP, self.scroll, [-0.01])
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
         btn = DirectButton(
             text="Browse",
@@ -1388,8 +1408,8 @@ class DirectGuiDesignerProperties():
             scale=12,
             parent=parent
             )
-        btn.bind(DGG.MWDOWN, self.scroll, [0.01])
-        btn.bind(DGG.MWUP, self.scroll, [-0.01])
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
@@ -1405,8 +1425,8 @@ class DirectGuiDesignerProperties():
             initialitem=selectedElement,
             command=command,
             parent=parent)
-        menu.bind(DGG.MWDOWN, self.scroll, [0.01])
-        menu.bind(DGG.MWUP, self.scroll, [-0.01])
+        menu.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        menu.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.maxElementWidth = max(menu.bounds[1]*menu.getScale()[0], self.maxElementWidth)
 
     def __findAllChildren(self, root, path):
@@ -1427,6 +1447,7 @@ class DirectGuiDesignerProperties():
     def __createParentProperty(self, startPos, parent, updateElementInfo):
         updateElement = updateElementInfo.element
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             if selection == "root":
                 newParent = self.visualEditor.getCanvas()
             elif selection.startswith("root/"):
@@ -1476,6 +1497,7 @@ class DirectGuiDesignerProperties():
 
     def __createReliefProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
         selectedElement = None
         for key, value in DGG.FrameStyleDict.items():
@@ -1489,6 +1511,7 @@ class DirectGuiDesignerProperties():
     def __createOrientationProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
         orientationDict = {'horizontal': DGG.HORIZONTAL, 'vertical': DGG.VERTICAL, 'vertical_inverted': DGG.VERTICAL_INVERTED}
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             updateElement[updateAttribute] = orientationDict[selection]
         selectedElement = None
         for key, value in orientationDict.items():
@@ -1508,6 +1531,7 @@ class DirectGuiDesignerProperties():
             "Boxed Right":4,
             "Boxed Center":5}
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             updateElement["text_align"] = alignments[selection]
         selectedElement = None
 
@@ -1526,6 +1550,7 @@ class DirectGuiDesignerProperties():
     def __createBoxPlacementProperty(self, description, startPos, parent, updateElement, updateAttribute):
         placements = ["left", "above", "right", "below"]
         def update(selection):
+            base.messenger.send("setDirtyFlag")
             updateElement[updateAttribute] = selection
         selectedElement = updateElement[updateAttribute]
         self.__createOptionMenuProperty(
@@ -1544,5 +1569,5 @@ class DirectGuiDesignerProperties():
             parent=parent,
             command=updateElement.resetFrameSize
             )
-        btn.bind(DGG.MWDOWN, self.scroll, [0.01])
-        btn.bind(DGG.MWUP, self.scroll, [-0.01])
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])

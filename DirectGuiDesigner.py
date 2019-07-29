@@ -56,6 +56,8 @@ class DirectGuiDesigner(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
+        self.dirty = False
+
         wp = WindowProperties()
         if platform.system() == "Windows":
             wp.setIconFilename("icons/DirectGuiDesigner.ico")
@@ -87,6 +89,9 @@ class DirectGuiDesigner(ShowBase):
 
         self.dlgInfo = None
         self.dlgInfoShadow = None
+
+        self.dlgNewProject = None
+        self.dlgNewProjectShadow = None
 
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
@@ -188,6 +193,9 @@ class DirectGuiDesigner(ShowBase):
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
 
+        self.accept("setDirtyFlag", self.setDirty)
+        self.accept("clearDirtyFlag", self.setClean)
+
         self.accept("setName", self.setName)
         self.accept("setCommand", self.setCommand)
         self.accept("setExtraArgs", self.setExtraArgs)
@@ -211,9 +219,24 @@ class DirectGuiDesigner(ShowBase):
             projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
+            base.messenger.send("setDirtyFlag")
             base.messenger.send("showInfo", ["Loaded previously crashed session!"])
             os.remove(tmpPath)
             logging.info("Removed crash session file")
+
+    def setDirty(self):
+        wp = WindowProperties()
+        wp.setTitle("*DirectGUI Designer")
+        base.win.requestProperties(wp)
+
+        self.dirty = True
+
+    def setClean(self):
+        wp = WindowProperties()
+        wp.setTitle("DirectGUI Designer")
+        base.win.requestProperties(wp)
+
+        self.dirty = False
 
     def toggleVisualEditorParent(self):
         if self.currentVisEditorParent == base.a2dLeftCenter:
@@ -407,26 +430,32 @@ class DirectGuiDesigner(ShowBase):
 
     def __createControl(self, element):
         funcName = "create{}".format(element)
+        parent = None
+        elementInfo = None
+        if self.selectedElement is not None:
+            parent = self.selectedElement.element
         if hasattr(self.elementHandler, funcName):
-            parent = None
-            if self.selectedElement is not None:
-                parent = self.selectedElement.element
             elementInfo = getattr(self.elementHandler, funcName)(parent)
-            if elementInfo is None: return
-            if type(elementInfo) is tuple:
-                if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
-                    self.selectedElement.element.addItem(elementInfo[0].element)
-                for entry in elementInfo:
-                    if self.selectedElement is not None and entry.parent is None:
-                        entry.parent = self.selectedElement
-                    self.elementDict[entry.element.guiId] = entry
-            else:
-                if self.selectedElement is not None:
-                    elementInfo.parent = self.selectedElement
-                    if self.selectedElement.type == "DirectScrolledList":
-                        self.selectedElement.element.addItem(elementInfo.element)
-                self.elementDict[elementInfo.element.guiId] = elementInfo
-            base.messenger.send("refreshStructureTree")
+        else:
+            # Try custom elements
+            elementInfo = self.elementHandler.createCustomElement(funcName, parent)
+
+        if elementInfo is None: return
+        if type(elementInfo) is tuple:
+            if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
+                self.selectedElement.element.addItem(elementInfo[0].element)
+            for entry in elementInfo:
+                if self.selectedElement is not None and entry.parent is None:
+                    entry.parent = self.selectedElement
+                self.elementDict[entry.element.guiId] = entry
+        else:
+            if self.selectedElement is not None:
+                elementInfo.parent = self.selectedElement
+                if self.selectedElement.type == "DirectScrolledList":
+                    self.selectedElement.element.addItem(elementInfo.element)
+            self.elementDict[elementInfo.element.guiId] = elementInfo
+        base.messenger.send("refreshStructureTree")
+        base.messenger.send("setDirtyFlag")
 
     def zoom(self, direction):
         if direction < 0 and self.visualEditor.getCanvas().getScale() > 0.5:
@@ -563,6 +592,7 @@ class DirectGuiDesigner(ShowBase):
             workOn.setZ(workOn, speed*moverScaleZ*speedMult)
         elif direction == "down":
             workOn.setZ(workOn, -speed*moverScaleZ*speedMult)
+        base.messenger.send("setDirtyFlag")
 
     def removeElement(self, element=None):
         workOn = None
@@ -600,6 +630,7 @@ class DirectGuiDesigner(ShowBase):
         if selectEditor:
             self.selectElement(self.visualEditorInfo)
         base.messenger.send("refreshStructureTree")
+        base.messenger.send("setDirtyFlag")
 
     def toggleElementVisibility(self, element=None):
         workOn = None
@@ -670,10 +701,41 @@ class DirectGuiDesigner(ShowBase):
             self.snapToGrid = False
 
     def new(self):
-        for name, elementInfo in list(self.elementDict.items()):
-            self.removeElement(elementInfo.element)
-        self.selectedElement = None
-        self.elementDict = {}
+        if self.dirty:
+            self.dlgNewProject = OkCancelDialog(
+                text="You have unsaved changes!\nReally create new project?",
+                relief=DGG.RIDGE,
+                frameColor=(1,1,1,1),
+                frameSize=(-0.5,0.5,-0.3,0.2),
+                sortOrder=1,
+                button_relief=DGG.FLAT,
+                button_frameColor=(0.8, 0.8, 0.8, 1),
+                command=self.__newProject,
+                scale=300,
+                pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
+                parent=base.pixel2d)
+            self.dlgNewProjectShadow = DirectFrame(
+                pos=(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10),
+                sortOrder=0,
+                frameColor=(0,0,0,0.5),
+                frameSize=self.dlgNewProject.bounds,
+                scale=300,
+                parent=base.pixel2d)
+        else:
+            self.__newProject(1)
+
+    def __newProject(self, selection):
+        if selection == 1:
+            for name, elementInfo in list(self.elementDict.items()):
+                self.removeElement(elementInfo.element)
+            self.selectedElement = None
+            self.elementDict = {}
+            base.messenger.send("clearDirtyFlag")
+        if self.dlgNewProject is not None:
+            self.dlgNewProject.destroy()
+            self.dlgNewProjectShadow.destroy()
+            self.dlgNewProject = None
+            self.dlgNewProjectShadow = None
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
@@ -681,7 +743,7 @@ class DirectGuiDesigner(ShowBase):
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(self.elementDict, self.visualEditor, self.tt)
+        DirectGuiDesignerExporterPy(self.elementDict, self.tt, not self.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
@@ -704,12 +766,12 @@ class DirectGuiDesigner(ShowBase):
     def quitApp(self):
         if self.dlgQuit is not None: return
 
-        if ConfigVariableBool("skip-ask-for-quit", False).getValue():
+        if ConfigVariableBool("skip-ask-for-quit", False).getValue() or self.dirty == False:
             self.__quit(1)
             return
 
         self.dlgQuit = OkCancelDialog(
-            text="Really Quit?",
+            text="You have unsaved changes!\nReally Quit?",
             state=DGG.NORMAL,
             relief=DGG.RIDGE,
             frameColor=(1,1,1,1),

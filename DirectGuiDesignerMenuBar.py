@@ -123,7 +123,7 @@ class DirectGuiDesignerMenuBar:
         self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
         self.cb_grid.bind(DGG.EXIT, self.tt.hide)
         x += 48
-        self.cb_grid = DirectCheckBox(
+        self.cb_scale = DirectCheckBox(
             parent=self.menuBar,
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
@@ -137,9 +137,9 @@ class DirectGuiDesignerMenuBar:
             image_scale=24,
             isChecked=True,
             command=self.toggleVisualEditorParent)
-        self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
-        self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle editor scale (Aspect/Pixel)"])
-        self.cb_grid.bind(DGG.EXIT, self.tt.hide)
+        self.cb_scale.setTransparency(TransparencyAttrib.M_alpha)
+        self.cb_scale.bind(DGG.ENTER, self.tt.show, ["Toggle editor scale (Aspect/Pixel)"])
+        self.cb_scale.bind(DGG.EXIT, self.tt.hide)
         x += 48 + 12
         btn = DirectButton(
             parent=self.menuBar,
@@ -153,7 +153,7 @@ class DirectGuiDesignerMenuBar:
             extraArgs=["quitApp"],
             image="icons/Quit.png",
             image_scale=24)
-        btn.setTransparency(TransparencyAttrib.M_multisample)
+        btn.setTransparency(TransparencyAttrib.M_alpha)
         btn.bind(DGG.ENTER, self.tt.show, ["Quit Direct GUI Designer (Ctrl-Q)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         x += 48 + 12

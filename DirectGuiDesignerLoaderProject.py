@@ -68,6 +68,9 @@ class DirectGuiDesignerLoaderProject:
     def __executeLoad(self, path):
         with open(path, 'r') as infile:
             fileContent = json.load(infile)
+        if fileContent is None:
+            logging.error("Problems reading Project file: {}".format(infile))
+            return
         self.createdParents = ["root"]
         self.postponedElements = {}
         for name, elementInfo in fileContent.items():

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
+import importlib
+
 from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectLabel import DirectLabel
@@ -83,6 +86,21 @@ class DirectGuiDesignerElementHandler:
         elementInfo.element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
         elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
 
+    def loadCustomElements(self, path):
+        modules = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".py")]
+        '''
+        spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
+        foo = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(foo)
+        foo.MyClass()
+        todo: fill dict with info about custom element modules
+        {name: class, other stuff like import path and such if that's not in the class itself}
+        '''
+        print(modules)
+
+    def createCustomElement(self, function, parent=None):
+        pass
+
     def createDirectButton(self, parent=None):
         parent = self.visualEditor.getCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
@@ -130,6 +148,7 @@ class DirectGuiDesignerElementHandler:
 
     def propertiesDirectEntry(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["initialText"] = True
         self.propertiesFrame.propertyList["width"] = True
@@ -258,6 +277,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["boxImageColor"] = True
         self.propertiesFrame.propertyList["boxRelief"] = True
         self.propertiesFrame.propertyList["indicator_text_scale"] = True
+        self.propertiesFrame.propertyList["indicator_text_pos"] = True
         self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
@@ -332,6 +352,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["others"] = True
         self.propertiesFrame.propertyList["indicatorValue"] = True
         self.propertiesFrame.propertyList["indicator_text_scale"] = True
+        self.propertiesFrame.propertyList["indicator_text_pos"] = True
         self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
