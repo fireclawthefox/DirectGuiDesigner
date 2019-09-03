@@ -7,6 +7,7 @@
 import os
 import math
 
+from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectEntry import DirectEntry
@@ -21,7 +22,7 @@ from panda3d.core import (
     TextNode
 )
 
-class DirectGuiDesignerFileBrowser:
+class DirectGuiDesignerFileBrowser(DirectObject):
     def __init__(self, command, fileBrowser=False, defaultFilename="export.json", tooltip=None):
         self.tt = tooltip
         if tooltip is None:
@@ -253,6 +254,10 @@ class DirectGuiDesignerFileBrowser:
 
         self.folderReload()
 
+        # handle window resizing
+        self.prevScreenSize = base.getSize()
+        self.accept("window-event", self.windowEventHandler)
+
     def scroll(self, scrollStep, event):
         self.container.verticalScroll.scrollStep(scrollStep)
 
@@ -307,7 +312,7 @@ class DirectGuiDesignerFileBrowser:
             nonlocal zPos
             if entry.is_dir() or self.showFiles:
                 if xPos + 110 > 290:
-                    xPos = -280 + 50 - 110
+                    xPos = -280 + 50
                     zPos -= 110
                 else:
                     xPos += 110
@@ -442,3 +447,18 @@ class DirectGuiDesignerFileBrowser:
         lbl.bind(DGG.MWDOWN, self.scroll, [0.01])
         lbl.bind(DGG.MWUP, self.scroll, [-0.01])
         lbl.setTransparency(TransparencyAttrib.M_multisample)
+
+
+    def windowEventHandler(self, window=None):
+        if window != base.win:
+            # This event isn't about our window.
+            return
+
+        if window is not None: # window is none if panda3d is not started
+            if self.prevScreenSize == base.getSize():
+                return
+            self.prevScreenSize = base.getSize()
+            screenWidthPx = base.getSize()[0]
+            screenHeightPx = base.getSize()[1]
+
+            self.mainFrame.setPos(screenWidthPx/2, 0, -screenHeightPx/2)

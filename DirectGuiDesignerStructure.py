@@ -15,7 +15,7 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectCheckBox import DirectCheckBox
 
 class DirectGuiDesignerStructure():
-    def __init__(self, parent, posZ, height, visualEditor, elementDict, selectedElement):
+    def __init__(self, parent, posZ, height, getEditorRootCanvas, elementDict, selectedElement):
         self.parent = parent
         self.lblHeader = DirectLabel(
             text="Structure",
@@ -60,7 +60,7 @@ class DirectGuiDesignerStructure():
         self.structureFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
         self.structureFrame.bind(DGG.MWUP, self.scroll, [-0.01])
         self.maxWidth = parent["frameSize"][1]-20
-        self.visualEditor = visualEditor
+        self.getEditorRootCanvas = getEditorRootCanvas
         self.refreshStructureTree(elementDict, selectedElement)
 
     def scroll(self, scrollStep, event):
@@ -82,7 +82,7 @@ class DirectGuiDesignerStructure():
 
         self.maxWidth = self.parent["frameSize"][1]-20
         self.itemCounter = 0
-        self.__fillStructureTree(self.visualEditor.getCanvas(), 0, 0)
+        self.__fillStructureTree(self.getEditorRootCanvas(), 0, 0)
 
         self.structureFrame["canvasSize"] = (
             self.structureFrame["frameSize"][0], self.maxWidth,

@@ -29,6 +29,7 @@ class DirectGuiDesignerLoaderProject:
     prioList = ["frameSize"]
     setAsOption = ["frameSize", "barColor", "barRelief", "range", "value"]
     ignoreMap = ["state"]
+    ignoreComponentSplit = ["text"]
 
     def __init__(self, visualEditorInfo, elementHandler, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
@@ -179,7 +180,7 @@ class DirectGuiDesignerLoaderProject:
                     elementInfo.element[name] = eval(value)
             else:
                 components = name.split("_")
-                if len(components) > 1:
+                if len(components) > 1 and components[0] not in self.ignoreComponentSplit:
                     component = components[0]
                     elementInfo.element.component(component)[components[1]] = eval(value)
                 else:

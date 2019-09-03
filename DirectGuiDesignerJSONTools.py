@@ -34,14 +34,14 @@ class DirectGuiDesignerJSONTools:
     ignoreOptions = ["guiId", "enableEdit"]
     ignoreRepr = ["command"]
 
-    explIncludeOptions = ["forceHeight", "numItemsVisible"]
+    explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr"]
 
     def getProjectJSON(self, guiElementsDict):
         self.guiElementsDict = guiElementsDict
         jsonElements = {}
         for name, elementInfo in self.guiElementsDict.items():
             try:
-                jsonElements[name] = self.__createJSONEntry(elementInfo)
+                jsonElements[elementInfo.name] = self.__createJSONEntry(elementInfo)
             except Exception as e:
                 logging.exception("error while writing {}:".format(elementInfo.name))
                 base.messenger.send("showWarning", ["error while writing {}:".format(elementInfo.name)])
@@ -151,7 +151,6 @@ class DirectGuiDesignerJSONTools:
                     if option[DGG._OPT_DEFAULT] in self.specialPropMapping:
                         value = self.specialPropMapping[option[DGG._OPT_DEFAULT]][reprFunc(value)]
 
-                    print(name)
                     elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(value)
 
             # special options for specific elements
@@ -167,5 +166,4 @@ class DirectGuiDesignerJSONTools:
 
         if hasError:
             base.messenger.send("showWarning", ["Saved Project with errors! See log for more information"])
-        print(elementJson)
         return elementJson

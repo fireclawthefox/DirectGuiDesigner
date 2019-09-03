@@ -12,9 +12,14 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (
     Point3,
     Vec3,
+    Filename,
+    loadPrcFile,
     loadPrcFileData,
     WindowProperties,
-    ConfigVariableBool
+    ConfigVariableBool,
+    TextNode,
+    TextProperties,
+    TextPropertiesManager
 )
 
 from direct.gui import DirectGuiGlobals as DGG
@@ -28,6 +33,7 @@ from direct.gui.DirectDialog import OkCancelDialog
 from direct.directtools.DirectGrid import DirectGrid
 from direct.directtools.DirectUtil import ROUND_TO
 
+from DirectGuiDesignerEditorCanvas import DirectGuiDesignerEditorCanvas
 from DirectGuiDesignerElementHandler import DirectGuiDesignerElementHandler
 from DirectGuiDesignerElementHandler import ElementInfo
 from DirectGuiDesignerMenuBar import DirectGuiDesignerMenuBar
@@ -44,13 +50,35 @@ from DirectGuiDesignerTooltip import Tooltip
 loadPrcFileData(
     "",
     """
-    win-size 1920 1080
+    #win-size 1920 1080
     textures-power-2 none
-    fullscreen #f
+    #fullscreen #f
     window-title DirectGUI Designer
     #show-frame-rate-meter #t
     #want-pstats #t
     """)
+
+# check if we have a config file
+home = os.path.expanduser("~")
+prcFileName = os.path.join(home, ".DirectGuiDesigner.prc")
+if os.path.exists(prcFileName):
+    loadPrcFile(Filename.fromOsSpecific(prcFileName))
+else:
+    with open(prcFileName, "w") as prcFile:
+        prcFile.write("skip-ask-for-quit #f\n")
+        prcFile.write("create-executable-scripts #f\n")
+
+    if platform.system() == "Windows":
+        from ctypes import WinDLL
+        from stat import FILE_ATTRIBUTE_HIDDEN
+        from os import stat
+
+        # Change the current files attributes to contain the "hidden" attribute
+        kernel32 = WinDLL("kernel32")
+        attrs = stat(prcFileName).st_file_attributes
+        attrs = attrs | FILE_ATTRIBUTE_HIDDEN
+        kernel32.SetFileAttributesW(prcFileName, attrs)
+
 
 class DirectGuiDesigner(ShowBase):
     def __init__(self):
@@ -107,49 +135,10 @@ class DirectGuiDesigner(ShowBase):
         self.tt = Tooltip()
 
         # 3/4 wide editor content frame
-        color = (
-            (0.8, 0.8, 0.8, 1), # Normal
-            (0.9, 0.9, 1, 1), # Click
-            (0.8, 0.8, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)) # Disabled
-        # respect menu bar
-        self.topMargin=48 / self.screenHeightPx * 2
-        self.visualEditor = DirectScrolledFrame(
-            frameColor=(0, 0, 0, 0),
-            frameSize=(0,self.screenWidth*(0.75),
-                base.a2dBottom,base.a2dTop-self.topMargin),
-            pos=(self.screenWidth*(0.25), 0, 0),
-            canvasSize=(-2, 2, -2, 2),
-            scrollBarWidth=self.calcScrollBarWidth(),
-            verticalScroll_value=0.5,
-            horizontalScroll_value=0.5,
-            verticalScroll_thumb_relief=DGG.FLAT,
-            verticalScroll_incButton_relief=DGG.FLAT,
-            verticalScroll_decButton_relief=DGG.FLAT,
-            verticalScroll_thumb_frameColor=color,
-            verticalScroll_incButton_frameColor=color,
-            verticalScroll_decButton_frameColor=color,
-            verticalScroll_resizeThumb=True,
-            horizontalScroll_thumb_relief=DGG.FLAT,
-            horizontalScroll_incButton_relief=DGG.FLAT,
-            horizontalScroll_decButton_relief=DGG.FLAT,
-            horizontalScroll_thumb_frameColor=color,
-            horizontalScroll_incButton_frameColor=color,
-            horizontalScroll_decButton_frameColor=color,
-            horizontalScroll_resizeThumb=True,
-            parent=base.a2dLeftCenter)
-        self.currentVisEditorParent = base.a2dLeftCenter
-        self.visEditorInAspect2D = True
+        self.editorFrame = DirectGuiDesignerEditorCanvas()
+        self.visualEditorInfo = ElementInfo(self.editorFrame.visualEditor, "Editor")
 
-        self.visualEditorInfo = ElementInfo(self.visualEditor, "Editor")
-
-        self.grid = DirectGrid(gridSize=50.0, gridSpacing=0.05,parent=self.visualEditor.getCanvas())
-        self.grid.setP(90)
-        self.grid.snapMarker.hide()
-
-        self.snapToGrid = not self.grid.isHidden()
-
-        self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.grid)
+        self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.editorFrame.grid)
 
         # 1/4 wide toolbox, properties and structure frame
         self.toolsFrame = DirectFrame(
@@ -165,13 +154,14 @@ class DirectGuiDesigner(ShowBase):
         self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
         self.nextToolFrameY += self.toolFrameHeight
 
-        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.tt)
+        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.tt)
         self.propertiesEditor(self.visualEditorInfo)
         self.nextToolFrameY += self.toolFrameHeight
 
-        self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.visualEditor, self.elementDict, self.selectedElement)
+        self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.elementDict, self.selectedElement)
 
-        self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.visualEditor)
+        self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
+        self.editorFrame.setElementHandler(self.elementHandler)
 
         self.registerKeyboardEvents()
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
@@ -188,8 +178,8 @@ class DirectGuiDesigner(ShowBase):
         self.accept("removeElement", self.removeElement)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
-        self.accept("toggleGrid", self.toggleGrid)
-        self.accept("toggleVisualEditorParent", self.toggleVisualEditorParent)
+        self.accept("toggleGrid", self.editorFrame.toggleGrid)
+        self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
 
@@ -207,7 +197,7 @@ class DirectGuiDesigner(ShowBase):
         self.accept("showInfo", self.showInfo)
 
         self.screenSize = base.getSize()
-        self.accept('window-event', self.windowEventHandler)
+        self.accept("window-event", self.windowEventHandler)
 
         sys.excepthook = self.excHandler
 
@@ -238,50 +228,21 @@ class DirectGuiDesigner(ShowBase):
 
         self.dirty = False
 
-    def toggleVisualEditorParent(self):
-        if self.currentVisEditorParent == base.a2dLeftCenter:
-            # change to pixel2d
-            self.visualEditor["frameSize"] = (0,self.screenWidthPx*0.75,-self.screenHeightPx,-48)
-            self.visualEditor.setPos(self.screenWidthPx/4, 0, 0)
-            self.visualEditor["scrollBarWidth"] = 20
-            self.visualEditor["canvasSize"] = (0, 1920, -1080, 0)
-            self.visualEditor.reparentTo(pixel2d)
-            self.visualEditor.verticalScroll["value"] = 0
-            self.visualEditor.horizontalScroll["value"] = 0
-            self.currentVisEditorParent = base.pixel2d
-            self.grid.setGridSpacing(20)
-            self.grid.setGridSize(1920)
-            self.visEditorInAspect2D = False
-            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
-            self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
-        else:
-            # change to aspect2d
-            self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75), base.a2dBottom,base.a2dTop-self.topMargin)
-            self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
-            self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
-            self.visualEditor["canvasSize"] = (-2, 2, -2, 2)
-            self.visualEditor.reparentTo(base.a2dLeftCenter)
-            self.visualEditor.verticalScroll["value"] = 0.5
-            self.visualEditor.horizontalScroll["value"] = 0.5
-            self.currentVisEditorParent = base.a2dLeftCenter
-            self.grid.setGridSpacing(0.05)
-            self.grid.setGridSize(50)
-            self.visEditorInAspect2D = True
-            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
-            self.elementHandler.setEditorCenter((0, 0, 0))
+    def getEditorRootCanvas(self):
+        return self.editorFrame.visualEditor.getCanvas()
 
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
 
-        DirectGuiDesignerExporterProject(self.elementDict)
+        DirectGuiDesignerExporterProject(self.elementDict, exceptionSave=True)
 
     def registerKeyboardEvents(self):
         self.accept("escape", self.selectElement, extraArgs=[self.visualEditorInfo, None])
         self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
-        self.accept("mouse2", self.dragEditorFrame, extraArgs=[True])
-        self.accept("mouse2-up", self.dragEditorFrame, extraArgs=[False])
-        self.accept("wheel_up", self.zoom, extraArgs=[.1])
-        self.accept("wheel_down", self.zoom, extraArgs=[-.1])
+        self.accept("mouse2", self.editorFrame.dragEditorFrame, extraArgs=[True])
+        self.accept("mouse2-up", self.editorFrame.dragEditorFrame, extraArgs=[False])
+        self.accept("wheel_up", self.editorFrame.zoom, extraArgs=[.1])
+        self.accept("wheel_down", self.editorFrame.zoom, extraArgs=[-.1])
 
         self.accept("control-n", self.new)
         self.accept("control-s", self.save)
@@ -366,13 +327,6 @@ class DirectGuiDesigner(ShowBase):
         self.ignore("control-arrow_up-repeat")
         self.ignore("control-arrow_down-repeat")
 
-    def calcScrollBarWidth(self):
-        widthInPx = 20
-        screenWidthPx = base.getSize()[0]
-        screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
-
-        return screenWidth / (screenWidthPx / widthInPx)
-
     def windowEventHandler(self, window=None):
         # call showBase windowEvent which would otherwise get overridden and breaking the app
         self.windowEvent(window)
@@ -391,19 +345,9 @@ class DirectGuiDesigner(ShowBase):
             self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, 0)
             self.toolsFrame.setPos(0,0,0)
 
-
-            self.topMargin=48 / self.screenHeightPx * 2
-            if self.visEditorInAspect2D:
-                self.visualEditor["frameSize"] = (0,self.screenWidth*(0.75),base.a2dBottom,base.a2dTop-self.topMargin)
-                self.visualEditor.setPos(self.screenWidth*(0.25), 0, 0)
-                self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
-            else:
-                self.visualEditor["frameSize"] = (0,self.screenWidthPx*0.75,-self.screenHeightPx,-48)
-                self.visualEditor.setPos(self.screenWidthPx/4, 0, 0)
-                self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
-
+            # Resize all editor frames
+            self.editorFrame.resizeFrame()
             self.menuBar.resizeFrame()
-
             self.toolFrameHeight = -self.screenHeightPx / 3
             self.nextToolFrameY = 0
             self.toolboxFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
@@ -412,6 +356,7 @@ class DirectGuiDesigner(ShowBase):
             self.nextToolFrameY += self.toolFrameHeight
             self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
 
+            # Reposition dialogs and resize thier shadows
             if self.dlgHelp is not None:
                 self.dlgHelp.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
                 self.dlgHelpShadow.setPos(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10)
@@ -457,12 +402,6 @@ class DirectGuiDesigner(ShowBase):
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
 
-    def zoom(self, direction):
-        if direction < 0 and self.visualEditor.getCanvas().getScale() > 0.5:
-            self.visualEditor.getCanvas().setScale(self.visualEditor.getCanvas().getScale() + direction)
-        elif direction > 0 and self.visualEditor.getCanvas().getScale() < 5.0:
-            self.visualEditor.getCanvas().setScale(self.visualEditor.getCanvas().getScale() + direction)
-
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
             self.selectedElement.element.clearColorScale()
@@ -471,7 +410,7 @@ class DirectGuiDesigner(ShowBase):
         if elementInfo is None:
             base.messenger.send("showWarning", ["Element can't be selected"])
             return
-        if elementInfo.element is self.visualEditor:
+        if elementInfo.element is self.editorFrame.visualEditor:
             # we don't need to select the editor itself
             self.selectedElement = None
             self.refreshProperties(elementInfo)
@@ -483,28 +422,6 @@ class DirectGuiDesigner(ShowBase):
         elementInfo.element.setColorScale(1,1,0,1)
         self.refreshProperties(elementInfo)
         base.messenger.send("refreshStructureTree")
-
-    def dragEditorFrame(self, dragEnabled):
-        taskMgr.remove("dragEditorFrameTask")
-        mwn = base.mouseWatcherNode
-        if dragEnabled:
-            t = taskMgr.add(self.dragEditorFrameTask, "dragEditorFrameTask")
-            t.vMouse2render2d = Point3(mwn.getMouse()[0], 0, mwn.getMouse()[1])
-
-    def dragEditorFrameTask(self, t):
-        mwn = base.mouseWatcherNode
-        if mwn.hasMouse():
-            vMouse2render2d = Point3(mwn.getMouse()[0], 0, mwn.getMouse()[1])
-            moveVec = t.vMouse2render2d - vMouse2render2d
-            t.vMouse2render2d = vMouse2render2d
-            newValue = self.visualEditor["verticalScroll_value"] - moveVec.getZ()
-            if newValue <= 1 and newValue >= 0:
-                self.visualEditor["verticalScroll_value"] = newValue
-
-            newValue = self.visualEditor["horizontalScroll_value"] + moveVec.getX()
-            if newValue <= 1 and newValue >= 0:
-                self.visualEditor["horizontalScroll_value"] = newValue
-        return t.cont
 
     def refreshProperties(self, elementInfo):
         self.propertiesFrame.clear()
@@ -535,12 +452,12 @@ class DirectGuiDesigner(ShowBase):
             vMouse2render2d = Point3(mwn.getMouse()[0], 0, mwn.getMouse()[1])
             newPos = vMouse2render2d + t.editVec
 
-            if self.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
+            if self.editorFrame.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
                 return t.cont
 
             t.elementInfo.element.setPos(render2d, newPos)
 
-            if self.snapToGrid:
+            if self.editorFrame.snapToGrid:
                 newPos = t.elementInfo.element.getPos()
                 modifier = 0.5
                 if self.is_down(self.key_lcontrol) or self.is_down(self.key_rcontrol):
@@ -548,9 +465,9 @@ class DirectGuiDesigner(ShowBase):
                 if self.is_down(self.key_lshift) or self.is_down(self.key_rshift):
                     modifier = 1
                 newPos.set(
-                    ROUND_TO(newPos[0], self.grid.getGridSpacing()*modifier),
-                    ROUND_TO(newPos[1], self.grid.getGridSpacing()*modifier),
-                    ROUND_TO(newPos[2], self.grid.getGridSpacing()*modifier))
+                    ROUND_TO(newPos[0], self.editorFrame.grid.getGridSpacing()*modifier),
+                    ROUND_TO(newPos[1], self.editorFrame.grid.getGridSpacing()*modifier),
+                    ROUND_TO(newPos[2], self.editorFrame.grid.getGridSpacing()*modifier))
                 t.elementInfo.element.setPos(newPos)
 
         return t.cont
@@ -558,15 +475,16 @@ class DirectGuiDesigner(ShowBase):
     def dragStop(self, event):
         t = taskMgr.getTasksNamed("dragDropTask")[0]
         parent = t.elementInfo.element.getParent()
-        pos = t.elementInfo.element.getPos(self.visualEditor.getCanvas())
-        if pos.x < self.visualEditor["canvasSize"][0]:
-            t.elementInfo.element.setX(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][0])
-        if pos.x > self.visualEditor["canvasSize"][1]:
-            t.elementInfo.element.setX(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][1])
-        if pos.z < self.visualEditor["canvasSize"][2]:
-            t.elementInfo.element.setZ(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][2])
-        if pos.z > self.visualEditor["canvasSize"][3]:
-            t.elementInfo.element.setZ(self.visualEditor.getCanvas(), self.visualEditor["canvasSize"][3])
+        pos = t.elementInfo.element.getPos(self.editorFrame.visualEditor.getCanvas())
+        if pos.x < self.editorFrame.visualEditor["canvasSize"][0]:
+            t.elementInfo.element.setX(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][0])
+        if pos.x > self.editorFrame.visualEditor["canvasSize"][1]:
+            t.elementInfo.element.setX(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][1])
+        if pos.z < self.editorFrame.visualEditor["canvasSize"][2]:
+            t.elementInfo.element.setZ(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][2])
+        if pos.z > self.editorFrame.visualEditor["canvasSize"][3]:
+            t.elementInfo.element.setZ(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][3])
+        self.refreshProperties(t.elementInfo)
         taskMgr.remove("dragDropTask")
 
     def moveElement(self, direction, speedMult=1):
@@ -581,7 +499,7 @@ class DirectGuiDesigner(ShowBase):
         moverScaleZ = 1 / scale.getZ()
 
         speed = 0.01
-        if not self.visEditorInAspect2D:
+        if not self.editorFrame.visEditorInAspect2D:
             speed = 5
 
         if direction == "left":
@@ -592,6 +510,7 @@ class DirectGuiDesigner(ShowBase):
             workOn.setZ(workOn, speed*moverScaleZ*speedMult)
         elif direction == "down":
             workOn.setZ(workOn, -speed*moverScaleZ*speedMult)
+        self.refreshProperties(self.selectedElement)
         base.messenger.send("setDirtyFlag")
 
     def removeElement(self, element=None):
@@ -678,7 +597,7 @@ class DirectGuiDesigner(ShowBase):
         self.elementDict[elementInfo.element.guiId].extraArgs = extraArgs
 
     def setParentOfElement(self, element, parent):
-        if parent is self.visualEditor.getCanvas():
+        if parent is self.getEditorRootCanvas():
             self.elementDict[element.guiId].parent = None
         else:
             parentElement = None
@@ -691,14 +610,6 @@ class DirectGuiDesigner(ShowBase):
                 # This happens for elements that have a canvas or other sub NPs
                 parentElement = self.__findFirstGUIElement(parent)
             self.elementDict[element.guiId].parent = parentElement
-
-    def toggleGrid(self, enable):
-        if enable:
-            self.grid.show()
-            self.snapToGrid = True
-        else:
-            self.grid.hide()
-            self.snapToGrid = False
 
     def new(self):
         if self.dirty:
@@ -739,11 +650,11 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterProject(self.elementDict, self.visualEditor, self.tt)
+        DirectGuiDesignerExporterProject(self.elementDict, tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(self.elementDict, self.tt, not self.visEditorInAspect2D)
+        DirectGuiDesignerExporterPy(self.elementDict, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
@@ -751,7 +662,6 @@ class DirectGuiDesigner(ShowBase):
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)
-        print(self.elementDict)
         base.messenger.send("refreshStructureTree")
 
     def __quit(self, selection):
@@ -793,30 +703,53 @@ class DirectGuiDesigner(ShowBase):
     def showHelp(self):
         if self.dlgHelp is not None: return
 
-        text="""~~~Direct GUI Visual Editor Help~~~
 
-LMB - Select an element / Press and drag to move element around
-Esc - Deselect currently selected Element
-RMB - Deselect currently selected Element
-MMB - Move Editor Area
+        tpMgr = TextPropertiesManager.getGlobalPtr()
 
-Mouse Wheel - Zoom
+        tpHeader = TextProperties()
+        tpHeader.setTextScale(1.5)
+        #tpHeader.setAlign(TextProperties.A_center)
+        tpHeader.setUnderscore(True)
+        tpHeader.setGlyphShift(1)
+        font = loader.loadFont("fonts/DejaVuSansMono-Bold.ttf")
+        tpHeader.setFont(font)
+        tpMgr.setProperties("header", tpHeader)
 
-Ctrl-N - Create New GUI
-Ctrl-S - Save as Project File
-Ctrl-E - Export as Python File
-Ctrl-O - Load Project File
-Ctrl-Q - Quit Application
-Ctrl-Del - Delete selected Element
-Ctrl-H - Toggle selected Element visibility
-Ctrl-G - Toggle grid and snap to grid
+        tpSmall = TextProperties()
+        tpSmall.setTextScale(0.75)
+        tpMgr.setProperties("small", tpSmall)
 
-Arrow Keys - Move the selected Element (use Shift and Ctrl to change distance)
+        tpBold = TextProperties()
+        font = loader.loadFont("fonts/DejaVuSansMono-Bold.ttf")
+        tpBold.setFont(font)
+        tpMgr.setProperties("bold", tpBold)
 
-F1 - Show this help Dialog
+        text="""\1header\1~~~Direct GUI Visual Editor Help~~~\2
+
+\1bold\1LMB\2 - Select an element / Press and drag to move element around
+\1bold\1Esc\2 - Deselect currently selected Element
+\1bold\1RMB\2 - Deselect currently selected Element
+\1bold\1MMB\2 - Move Editor Area
+
+\1bold\1Mouse Wheel\2 - Zoom
+
+\1bold\1Ctrl-N  \2 - Create New GUI
+\1bold\1Ctrl-S  \2 - Save as Project File
+\1bold\1Ctrl-E  \2 - Export as Python File
+\1bold\1Ctrl-O  \2 - Load Project File
+\1bold\1Ctrl-Q  \2 - Quit Application
+\1bold\1Ctrl-Del\2 - Delete selected Element
+\1bold\1Ctrl-H  \2 - Toggle selected Element visibility
+\1bold\1Ctrl-G  \2 - Toggle grid and snap to grid
+
+\1bold\1Arrow Keys\2 - Move the selected Element (use Shift and Ctrl to change distance)
+
+\1bold\1F1\2 - Show this help Dialog
+
+Note: If the grid is shown elements will automatically snap to it when moved
 
 
-LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button
+\1small\1LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button\2
 """
         self.dlgHelp = OkDialog(
             text=text,

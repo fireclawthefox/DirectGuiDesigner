@@ -8,6 +8,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import os
 import logging
+from panda3d.core import ConfigVariableBool
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
@@ -59,7 +60,7 @@ class DirectGuiDesignerExporterPy:
             "DirectScrolledFrame":"from direct.gui.DirectScrolledFrame import DirectScrolledFrame",
         }
 
-        self.content="""#!/usr/bin/python
+        self.content = """#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # This file was created using the DirectGUI Designer
@@ -71,21 +72,22 @@ from direct.gui import DirectGuiGlobals as DGG
             if elementInfo.type not in usedImports:
                 self.content = "{}\n{}".format(self.content, importStatements[elementInfo.type])
                 usedImports.append(elementInfo.type)
-        self.content = """
-{}
+        self.content += """
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
     LVecBase4f,
     TextNode
-)
-
-# Uncomment this line and the lines at the bottom to run this file directly
-from direct.showbase.ShowBase import ShowBase
+)"""
+        if ConfigVariableBool("create-executable-scripts", False).getValue():
+            self.content += """
+# We need showbase to make this script directly runnable
+from direct.showbase.ShowBase import ShowBase"""
+        self.content += """
 
 class GUI:
     def __init__(self, rootParent=None):
-        """.format(self.content)
+        """
 
         #self.__createStructuredElements("root", visualEditor.getCanvas())
 
@@ -102,14 +104,15 @@ class GUI:
             for other in others:
                 self.content += other + ","
             self.content += "])\n"
-        self.content += """
-# Uncomment these lines and the showbase import line at the top to run this file directly
+        if ConfigVariableBool("create-executable-scripts", False).getValue():
+            self.content += """
+# Create a ShowBase instance to make this gui directly runnable
 app = ShowBase()\n"""
-        if usePixel2D:
-            self.content += "GUI(app.pixel2d)\n"
-        else:
-            self.content += "GUI()\n"
-        self.content += "app.run()\n"
+            if usePixel2D:
+                self.content += "GUI(app.pixel2d)\n"
+            else:
+                self.content += "GUI()\n"
+            self.content += "app.run()\n"
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
             self.save, "Save Python File", "Save file path", "Save", "~/export.py", tooltip)
@@ -175,7 +178,6 @@ app = ShowBase()\n"""
         return elementCode
 
     def __writeElementOptions(self, name, elementInfo):
-        element = self.guiElementsDict[name].element
         elementOptions = ""
         indent = " "*12
 

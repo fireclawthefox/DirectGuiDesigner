@@ -3,6 +3,7 @@
 
 # This file was created using the DirectGUI Designer
 
+from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectLabel import DirectLabel
@@ -15,7 +16,7 @@ from panda3d.core import (
 
 from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
 
-class DirectGuiDesignerPathSelect:
+class DirectGuiDesignerPathSelect(DirectObject):
     def __init__(self, command, headerText, actionText, affirmText, filePath, tooltip):
         self.command = command
         self.darkenFrame = DirectFrame(
@@ -122,6 +123,10 @@ class DirectGuiDesignerPathSelect:
             extraArgs=[0]
         )
 
+        # handle window resizing
+        self.prevScreenSize = base.getSize()
+        self.accept("window-event", self.windowEventHandler)
+
     def browse(self):
         self.browser.show()
 
@@ -134,9 +139,25 @@ class DirectGuiDesignerPathSelect:
         self.command(1)
 
     def destroy(self):
+        self.ignoreAll()
         self.browser.destroy()
         self.darkenFrame.destroy()
         self.mainFrame.destroy()
 
     def getPath(self):
         return self.pathEntry.get()
+
+    def windowEventHandler(self, window=None):
+        if window != base.win:
+            # This event isn't about our window.
+            return
+
+        if window is not None: # window is none if panda3d is not started
+            if self.prevScreenSize == base.getSize():
+                return
+            self.prevScreenSize = base.getSize()
+            screenWidthPx = base.getSize()[0]
+            screenHeightPx = base.getSize()[1]
+
+            self.mainFrame.setPos(screenWidthPx/2, 0, -screenHeightPx/2)
+            self.darkenFrame["frameSize"] = (0, screenWidthPx, -screenHeightPx, 0)

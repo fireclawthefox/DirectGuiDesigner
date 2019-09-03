@@ -19,10 +19,10 @@ from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
 
 class DirectGuiDesignerExporterProject:
-    def __init__(self, guiElementsDict, visualEditor=None, tooltip=None):
+    def __init__(self, guiElementsDict, exceptionSave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
 
-        if visualEditor is None:
+        if exceptionSave:
             self.excSave()
             return
 

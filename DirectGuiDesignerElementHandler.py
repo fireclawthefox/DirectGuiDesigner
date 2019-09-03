@@ -64,9 +64,9 @@ class ElementInfo:
             self.createAfter = []
 
 class DirectGuiDesignerElementHandler:
-    def __init__(self, propertiesFrame, visualEditor):
+    def __init__(self, propertiesFrame, getEditorRootCanvas):
         self.propertiesFrame = propertiesFrame
-        self.visualEditor = visualEditor
+        self.getEditorRootCanvas = getEditorRootCanvas
         self.visEditorInAspect2D = True
         self.editorCenter = (0,0,0)
 
@@ -102,8 +102,8 @@ class DirectGuiDesignerElementHandler:
         pass
 
     def createDirectButton(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectButton(
                 text="button",
@@ -129,8 +129,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectEntry(
                 parent=parent,
@@ -158,8 +158,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Entry Properties", element, elementDict)
 
     def createDirectEntryScroll(self, parent=None, createEntry=True):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if createEntry:
             if self.visEditorInAspect2D:
                 entry = DirectEntry()
@@ -209,8 +209,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scrolled Entry Properties", element, elementDict)
 
     def createDirectCheckBox(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectCheckBox(
                 #image="icons/minusnode.gif",
@@ -243,8 +243,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Checkbox Properties", element, elementDict)
 
     def createDirectCheckButton(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectCheckButton(
                 text="Checkbutton",
@@ -282,8 +282,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectOptionMenu(
                 parent=parent,
@@ -313,8 +313,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
     def createDirectRadioButton(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectRadioButton(
                 text="Radiobutton",
@@ -357,8 +357,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
     def createDirectSlider(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectSlider(
                 text="Slider",
@@ -396,8 +396,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectScrollBar(
                 parent=parent)
@@ -446,8 +446,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
     def createDirectScrolledList(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectScrolledList(
                 text="scrolled list",
@@ -556,8 +556,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Scrolled List Item Properties", element, elementDict)
 
     def createDirectLabel(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectLabel(
                 text = "Label",
@@ -584,8 +584,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Label Properties", element, elementDict)
 
     def createDirectWaitBar(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectWaitBar(
                 text="0%",
@@ -618,8 +618,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Wait Bar Properties", element, elementDict)
 
     def createOkDialog(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = OkDialog(
                 text="Ok Dialog",
@@ -644,8 +644,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
     def createOkCancelDialog(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = OkCancelDialog(
                 text="Ok/Cancel Dialog",
@@ -671,8 +671,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
     def createYesNoDialog(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = YesNoDialog(
                 text="Yes/No Dialog",
@@ -701,14 +701,14 @@ class DirectGuiDesignerElementHandler:
             element = YesNoCancelDialog(
                 text="Yes/No/Cancel Dialog",
                 state = DGG.NORMAL,
-                parent=self.visualEditor.getCanvas())
+                parent=self.getEditorRootCanvas())
         else:
             element = YesNoCancelDialog(
                 text="Yes/No/Cancel Dialog",
                 state=DGG.NORMAL,
                 scale=300,
                 pos=self.editorCenter,
-                parent=self.visualEditor.getCanvas())
+                parent=self.getEditorRootCanvas())
         elementInfo = ElementInfo(element, "YesNoCancelDialog")
         self.setupBind(elementInfo)
         return elementInfo
@@ -721,8 +721,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
     def createRetryCancelDialog(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = RetryCancelDialog(
                 text="Retry/Cancel Dialog",
@@ -747,8 +747,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 
     def createDirectFrame(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectFrame(
                 frameColor=(1,1,1,1),
@@ -773,8 +773,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.setupProperties("Frame Properties", element, elementDict)
 
     def createDirectScrolledFrame(self, parent=None):
-        parent = self.visualEditor.getCanvas() if parent is None else parent
-        pos = self.editorCenter if parent == self.visualEditor.getCanvas() else (0,0,0)
+        parent = self.getEditorRootCanvas() if parent is None else parent
+        pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         if self.visEditorInAspect2D:
             element = DirectScrolledFrame(
                 frameColor=(1,1,1,1),

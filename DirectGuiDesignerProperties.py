@@ -189,7 +189,7 @@ class DirectGuiDesignerProperties():
     scrollSpeedUp = -0.001
     scrollSpeedDown = 0.001
 
-    def __init__(self, parent, posZ, height, visualEditor, tooltip):
+    def __init__(self, parent, posZ, height, getEditorRootCanvas, tooltip):
         self.tooltip = tooltip
         self.parent = parent
         self.maxElementWidth = 0
@@ -236,7 +236,7 @@ class DirectGuiDesignerProperties():
         self.propertiesFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         self.propertiesFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-        self.visualEditor = visualEditor
+        self.getEditorRootCanvas = getEditorRootCanvas
 
     def scroll(self, scrollStep, event):
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
@@ -577,7 +577,7 @@ class DirectGuiDesignerProperties():
                 self.__createInbetweenHeader("ScrollBar/Slider Properties", self.startPos, propFrame)
                 break
         if self.propertyList["SB-range"]:
-            self.__createBase2Input("Bar Color", self.startPos, propFrame, element, "range")
+            self.__createBase2Input("Bar Range", self.startPos, propFrame, element, "range")
             self.moveNext()
         if self.propertyList["scrollSize"]:
             self.__createFloatInput("Scroll Size", self.startPos, propFrame, element, "scrollSize")
@@ -671,7 +671,7 @@ class DirectGuiDesignerProperties():
         if type(value) is int or isInt:
             return "{}".format(int(value))
         else:
-            return "{:0.3}".format(value)
+            return "{:0.3f}".format(value)
 
     def __getValues(self, updateElement, updateAttribute):
         if updateAttribute in self.initOpGetDict:
@@ -730,9 +730,6 @@ class DirectGuiDesignerProperties():
                             valueB,
                             valueC,
                             valueD)
-            elif updateAttribute in self.getAsPropDict:
-                if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
-                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB, valueC, valueD)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -858,9 +855,6 @@ class DirectGuiDesignerProperties():
                             valueA,
                             valueB,
                             valueC)
-            elif updateAttribute in self.getAsPropDict:
-                if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
-                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB, valueC)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -959,9 +953,6 @@ class DirectGuiDesignerProperties():
                         getattr(control, self.subControlInitOpDict[updateAttribute][1])(
                             valueA,
                             valueB)
-            elif updateAttribute in self.getAsPropDict:
-                if hasattr(updateElement, self.getAsPropDict[updateAttribute]):
-                    getattr(updateElement, self.getAsPropDict[updateAttribute])(valueA, valueB)
             else:
                 updateElement[updateAttribute] = (
                     valueA,
@@ -1439,7 +1430,7 @@ class DirectGuiDesignerProperties():
             if name not in self.elementDict.keys():
                 self.parentList.append("{}{}".format(path, root.getName()))
         if hasattr(root, "getChildren"):
-            if root != self.visualEditor.getCanvas():
+            if root != self.getEditorRootCanvas():
                 path += root.getName() + "/"
             for child in root.getChildren():
                 self.__findAllChildren(child, path)
@@ -1449,12 +1440,12 @@ class DirectGuiDesignerProperties():
         def update(selection):
             base.messenger.send("setDirtyFlag")
             if selection == "root":
-                newParent = self.visualEditor.getCanvas()
+                newParent = self.getEditorRootCanvas()
             elif selection.startswith("root/"):
                 selection = selection.replace("root/", "**/")
-                newParent = self.visualEditor.getCanvas().find(selection)
+                newParent = self.getEditorRootCanvas().find(selection)
             else:
-                newParent = self.visualEditor.getCanvas().find("**/{}".format(selection))
+                newParent = self.getEditorRootCanvas().find("**/{}".format(selection))
             base.messenger.send("setParentOfElement", [updateElement, newParent])
             if not newParent.isEmpty():
                 try:
@@ -1472,18 +1463,18 @@ class DirectGuiDesignerProperties():
                     self.parentList.append(elementInfo.element.getName())
 
         self.tmpUpdateElementInfo = updateElementInfo
-        self.__findAllChildren(self.visualEditor.getCanvas(), "root/")
+        self.__findAllChildren(self.getEditorRootCanvas(), "root/")
         self.updateElementInfo = None
 
         selectedElement = None
-        if updateElement.getParent() == self.visualEditor.getCanvas():
+        if updateElement.getParent() == self.getEditorRootCanvas():
             selectedElement = "root"
 
         if selectedElement is None:
             if updateElement.getParent().getName() in self.parentList:
                 selectedElement = updateElement.getParent().getName()
             else:
-                canvas = str(self.visualEditor.getCanvas())
+                canvas = str(self.getEditorRootCanvas())
                 selectedElement = str(updateElement.getParent()).replace(canvas, "root")
 
         if selectedElement is None or selectedElement not in self.parentList:
