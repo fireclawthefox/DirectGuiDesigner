@@ -18,7 +18,7 @@ A Visual Editor for Panda3Ds Direct GUI
 
 ## Requirements
 - Python 3.x
-- Panda3D 1.10.x
+- Panda3D 1.10.4.1+
 
 ## Manual
 Hit F1 to see the help screen
@@ -49,7 +49,7 @@ To export as a python script that can directly be used in projects, either hit C
 
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
-**NOTE:** In the current development version, the exported GUI script will instantiate showbase and run the GUI by default.
+
 
 ### Configuration
 These custom configuration variables have been introduced for the editor.
@@ -57,8 +57,9 @@ These custom configuration variables have been introduced for the editor.
 |Name|Type|Description|
 |---|---|---|
 |skip-ask-for-quit|bool|If set to True, the dialog to ask for confirmation when quitting the Designer will not be shown. Defaults to False|
+|create-executable-scripts|bool|If set to True, the saved python scripts will contain everything to directly run. Defaults to False|
+
+The Designer will create a hidden configuration file called .DirectGuiDesigner.prc in the users Home directory. It will contain all custom configurations from the list above with their default values and can be changed/extended with other Panda3D configurations.
 
 ## Known Bugs and missing features
-- DirectGui has heavy flickering and sometimes doesn't render gui controls correct
-    -> As a workaround until this is fixed, scale the window or select/deselct elements in the editor to make it refresh the elements
 - Some element specific options aren't available in the properties editor yet
