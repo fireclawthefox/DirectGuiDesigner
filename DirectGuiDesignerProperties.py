@@ -8,7 +8,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import logging
 
-from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib, PGButton, MouseButton
+from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib, PGButton, MouseButton, NodePath
 
 from direct.gui import DirectGuiGlobals as DGG
 DGG.BELOW = "below"
@@ -189,7 +189,7 @@ class DirectGuiDesignerProperties():
     scrollSpeedUp = -0.001
     scrollSpeedDown = 0.001
 
-    def __init__(self, parent, posZ, height, getEditorRootCanvas, tooltip):
+    def __init__(self, parent, posZ, height, getEditorRootCanvas, getEditorPlacer, tooltip):
         self.tooltip = tooltip
         self.parent = parent
         self.maxElementWidth = 0
@@ -237,6 +237,7 @@ class DirectGuiDesignerProperties():
         self.propertiesFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
         self.getEditorRootCanvas = getEditorRootCanvas
+        self.getEditorPlacer = getEditorPlacer
 
     def scroll(self, scrollStep, event):
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
@@ -1437,10 +1438,15 @@ class DirectGuiDesignerProperties():
 
     def __createParentProperty(self, startPos, parent, updateElementInfo):
         updateElement = updateElementInfo.element
+        self.canvasParents = [
+            "a2dTopCenter","a2dBottomCenter","a2dLeftCenter","a2dRightCenter",
+            "a2dTopLeft","a2dTopRight","a2dBottomLeft","a2dBottomRight"]
         def update(selection):
             base.messenger.send("setDirtyFlag")
             if selection == "root":
                 newParent = self.getEditorRootCanvas()
+            elif selection in self.canvasParents:
+                newParent = self.getEditorPlacer(selection)
             elif selection.startswith("root/"):
                 selection = selection.replace("root/", "**/")
                 newParent = self.getEditorRootCanvas().find(selection)
@@ -1453,10 +1459,10 @@ class DirectGuiDesignerProperties():
                 except:
                     logging.exception("Failed to reparent {} to {}!\nNOTE: Circular parenting is not allowed!".format(updateElement.getName(), newParent.getName()))
                 base.messenger.send("refreshStructureTree")
-        self.parentList = ["root"]
+        self.parentList = ["root"] + self.canvasParents
         for guiID, elementInfo in self.elementDict.items():
             if elementInfo.element != updateElement:
-                if elementInfo.parent is not None:
+                if elementInfo.parent is not None and type(elementInfo.parent) != type(NodePath()):
                     if elementInfo.parent.element != updateElement:
                         self.parentList.append(elementInfo.element.getName())
                 else:
@@ -1469,16 +1475,20 @@ class DirectGuiDesignerProperties():
         selectedElement = None
         if updateElement.getParent() == self.getEditorRootCanvas():
             selectedElement = "root"
+        elif updateElement.getParent().getName().replace("canvas", "a2d") in self.canvasParents:
+            selectedElement = updateElement.getParent().name
 
         if selectedElement is None:
-            if updateElement.getParent().getName() in self.parentList:
-                selectedElement = updateElement.getParent().getName()
+            if updateElement.getParent().getName().replace("canvas", "a2d") in self.parentList:
+                selectedElement = updateElement.getParent().getName().replace("canvas", "a2d")
             else:
                 canvas = str(self.getEditorRootCanvas())
                 selectedElement = str(updateElement.getParent()).replace(canvas, "root")
 
         if selectedElement is None or selectedElement not in self.parentList:
-            if updateElementInfo.parent is not None:
+            if updateElement.getParent().getName().replace("canvas", "a2d") in self.parentList:
+                selectedElement = updateElement.getParent().getName().replace("canvas", "a2d")
+            elif updateElementInfo.parent is not None:
                 if "{}-{}".format(updateElementInfo.type, updateElementInfo.parent.element.guiId) in self.parentList:
                     selectedElement = "{}-{}".format(updateElementInfo.type, updateElementInfo.parent.element.guiId)
 

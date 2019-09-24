@@ -31,7 +31,7 @@ class DirectGuiDesignerLoaderProject:
     ignoreMap = ["state"]
     ignoreComponentSplit = ["text"]
 
-    def __init__(self, visualEditorInfo, elementHandler, exceptionLoading=False, tooltip=None, newProjectCall=None):
+    def __init__(self, visualEditorInfo, elementHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
@@ -40,6 +40,7 @@ class DirectGuiDesignerLoaderProject:
         self.elementHandler = elementHandler
         self.visualEditorInfo = visualEditorInfo
         self.visualEditor = visualEditorInfo.element
+        self.getEditorPlacer = getEditorPlacer
         if exceptionLoading:
             self.excLoad()
         else:
@@ -72,7 +73,11 @@ class DirectGuiDesignerLoaderProject:
         if fileContent is None:
             logging.error("Problems reading Project file: {}".format(infile))
             return
-        self.createdParents = ["root"]
+
+        self.canvasParents = [
+            "a2dTopCenter","a2dBottomCenter","a2dLeftCenter","a2dRightCenter",
+            "a2dTopLeft","a2dTopRight","a2dBottomLeft","a2dBottomRight"]
+        self.createdParents = ["root"] + self.canvasParents
         self.postponedElements = {}
         for name, elementInfo in fileContent.items():
             self.__createElement(name, elementInfo)
@@ -114,6 +119,9 @@ class DirectGuiDesignerLoaderProject:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None, False)
             else:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None)
+
+            if parentName in self.canvasParents:
+                elementInfo.element.reparentTo(self.getEditorPlacer(parentName))
 
             # load the extra definitions of the element info
             elementInfo.command = jsonElementInfo["command"]

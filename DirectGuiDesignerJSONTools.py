@@ -9,6 +9,7 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 import logging
 
 from direct.gui import DirectGuiGlobals as DGG
+from panda3d.core import NodePath
 
 class DirectGuiDesignerJSONTools:
     functionMapping = {
@@ -59,6 +60,15 @@ class DirectGuiDesignerJSONTools:
 
     def __writeParent(self, parent):
         if parent is None: return "root"
+
+        self.canvasParents = [
+            "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
+            "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
+        if type(parent) == type(NodePath()):
+            if parent.getName() in self.canvasParents:
+                return parent.getName().replace("canvas", "a2d")
+            else:
+                return parent.getName()
         return parent.element.guiId
 
     def __getAllSubcomponents(self, componentName, component, componentPath):

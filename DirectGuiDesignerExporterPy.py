@@ -195,9 +195,15 @@ app = ShowBase()\n"""
             elementOptions += indent + optionKey + "=" + optionValue + ",\n"
 
         if elementInfo["parent"] != "root":
-            if self.jsonElements[elementInfo["parent"]]["type"] == "DirectScrollFrame":
+            self.canvasParents = [
+                "a2dTopCenter","a2dBottomCenter","a2dLeftCenter","a2dRightCenter",
+                "a2dTopLeft","a2dTopRight","a2dBottomLeft","a2dBottomRight"]
+
+            if elementInfo["parent"] in self.jsonElements and self.jsonElements[elementInfo["parent"]]["type"] == "DirectScrollFrame":
                 # use the canvas as parent
                 elementOptions += indent + "parent=self." + elementInfo["parent"] + ".getCanvas(),\n"
+            elif elementInfo["parent"] in self.canvasParents:
+                elementOptions += indent + "parent=base." + elementInfo["parent"] + ",\n"
             else:
                 elementOptions += indent + "parent=self." + elementInfo["parent"] + ",\n"
         else:

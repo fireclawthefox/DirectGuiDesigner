@@ -154,7 +154,7 @@ class DirectGuiDesigner(ShowBase):
         self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
         self.nextToolFrameY += self.toolFrameHeight
 
-        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.tt)
+        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.getEditorPlacer, self.tt)
         self.propertiesEditor(self.visualEditorInfo)
         self.nextToolFrameY += self.toolFrameHeight
 
@@ -206,7 +206,7 @@ class DirectGuiDesigner(ShowBase):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
-            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, True)
+            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.getEditorPlacer, True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
             base.messenger.send("setDirtyFlag")
@@ -230,6 +230,9 @@ class DirectGuiDesigner(ShowBase):
 
     def getEditorRootCanvas(self):
         return self.editorFrame.visualEditor.getCanvas()
+
+    def getEditorPlacer(self, placerName):
+        return self.editorFrame.getEditorPlacer(placerName)
 
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
@@ -529,16 +532,18 @@ class DirectGuiDesigner(ShowBase):
             return
 
         if not workOn.isEmpty():
+            self.canvasParents = [
+                "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
+                "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
             name = workOn.getName()
+            if name.split("-")[1] in self.elementDict.keys():
+                name = name.split("-")[1]
             if name in self.elementDict.keys():
-                if self.elementDict[name].parent is not None and self.elementDict[name][0].parent.type == "DirectScrolledList":
+                if self.elementDict[name].parent is not None \
+                and self.elementDict[name].parent.getName() not in self.canvasParents \
+                and self.elementDict[name].parent.type == "DirectScrolledList":
                     self.elementDict[name].parent.element.removeItem(workOn)
                 del self.elementDict[name]
-            elif name.split("-")[1] in self.elementDict.keys():
-                if self.elementDict[name.split("-")[1]].parent is not None and self.elementDict[name.split("-")[1]].parent.type == "DirectScrolledList":
-                    self.elementDict[name.split("-")[1]].parent.element.removeItem(workOn)
-                del self.elementDict[name.split("-")[1]]
-
         workOn.destroy()
 
         # cleanup
@@ -597,6 +602,10 @@ class DirectGuiDesigner(ShowBase):
         self.elementDict[elementInfo.element.guiId].extraArgs = extraArgs
 
     def setParentOfElement(self, element, parent):
+        self.canvasParents = [
+            "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
+            "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
+
         if parent is self.getEditorRootCanvas():
             self.elementDict[element.guiId].parent = None
         else:
@@ -605,6 +614,8 @@ class DirectGuiDesigner(ShowBase):
                 parentElement = self.elementDict[parent.getName()]
             elif len(parent.getName().split("-")) > 1 and parent.getName().split("-")[1] in self.elementDict.keys():
                 parentElement = self.elementDict[parent.getName().split("-")[1]]
+            elif parent.getName() in self.canvasParents:
+                parentElement = parent
             else:
                 # check if we can find an element as parent of the current NP
                 # This happens for elements that have a canvas or other sub NPs
@@ -658,7 +669,7 @@ class DirectGuiDesigner(ShowBase):
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
-        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, False, self.tt, self.new)
+        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.getEditorPlacer, False, self.tt, self.new)
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)
