@@ -44,6 +44,7 @@ from DirectGuiDesignerExporterPy import DirectGuiDesignerExporterPy
 from DirectGuiDesignerExporterProject import DirectGuiDesignerExporterProject
 from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
 from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
+from DirectGuiDesignerSettings import GUI as DirectGuiDesignerSettings
 from DirectGuiDesignerTooltip import Tooltip
 
 
@@ -163,6 +164,9 @@ class DirectGuiDesigner(ShowBase):
         self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
         self.editorFrame.setElementHandler(self.elementHandler)
 
+        self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
+        self.dlgSettings.frmMain.hide()
+
         self.registerKeyboardEvents()
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
         self.accept("reregisterKeyboardEvents", self.registerKeyboardEvents)
@@ -182,6 +186,9 @@ class DirectGuiDesigner(ShowBase):
         self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
+        self.accept("showSettings", self.showSettings)
+        self.accept("Settings_OK", self.hideSettings, [True])
+        self.accept("Settings_CANCEL", self.hideSettings, [False])
 
         self.accept("setDirtyFlag", self.setDirty)
         self.accept("clearDirtyFlag", self.setClean)
@@ -710,6 +717,32 @@ class DirectGuiDesigner(ShowBase):
             frameColor=(0,0,0,0.5),
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
+
+    def showSettings(self):
+        self.dlgSettings.frmMain.show()
+        self.dlgSettings.cbAskForQuit["indicatorValue"] = ConfigVariableBool("skip-ask-for-quit", False).getValue()
+        self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
+
+    def hideSettings(self, accept):
+        if accept:
+            with open(prcFileName, "w") as prcFile:
+                prcFile.write("skip-ask-for-quit {}\n".format("#f" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#t"))
+                prcFile.write("create-executable-scripts {}\n".format("#f" if self.dlgSettings.cbExecutableScripts["indicatorValue"] == 0 else "#t"))
+                prcFile.write("custom-widgets-path {}\n".format(self.dlgSettings.txtCustomWidgetsPath.get()))
+
+            if platform.system() == "Windows":
+                from ctypes import WinDLL
+                from stat import FILE_ATTRIBUTE_HIDDEN
+                from os import stat
+
+                # Change the current files attributes to contain the "hidden" attribute
+                kernel32 = WinDLL("kernel32")
+                attrs = stat(prcFileName).st_file_attributes
+                attrs = attrs | FILE_ATTRIBUTE_HIDDEN
+                kernel32.SetFileAttributesW(prcFileName, attrs)
+
+
+        self.dlgSettings.frmMain.hide()
 
     def showHelp(self):
         if self.dlgHelp is not None: return

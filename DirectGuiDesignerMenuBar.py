@@ -172,6 +172,22 @@ class DirectGuiDesignerMenuBar:
         btn.setTransparency(TransparencyAttrib.M_multisample)
         btn.bind(DGG.ENTER, self.tt.show, ["Show a help Dialog (F1)"])
         btn.bind(DGG.EXIT, self.tt.hide)
+        x += 48 + 12
+        btn = DirectButton(
+            parent=self.menuBar,
+            frameSize=(-24,24,-24,24),
+            frameColor=buttonColor,
+            pos=(x + 24, 0, 0),
+            scale=1,
+            relief=DGG.FLAT,
+            text_scale=0.33,
+            command=base.messenger.send,
+            extraArgs=["showSettings"],
+            image="icons/Settings.png",
+            image_scale=24)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
+        btn.bind(DGG.ENTER, self.tt.show, ["Show Designer Settings"])
+        btn.bind(DGG.EXIT, self.tt.hide)
 
     def toggleGrid(self, selection):
         base.messenger.send("toggleGrid", [selection])
