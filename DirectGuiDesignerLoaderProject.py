@@ -14,6 +14,7 @@ import tempfile
 from direct.gui import DirectGuiGlobals as DGG
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 
+from panda3d.core import TextNode
 from panda3d.core import LVecBase2f, LVecBase3f, LVecBase4f, LPoint2f, LPoint3f, LPoint4f
 from panda3d.core import LVecBase2, LVecBase3, LVecBase4, LPoint2, LPoint3, LPoint4
 

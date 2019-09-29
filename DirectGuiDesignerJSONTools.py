@@ -18,12 +18,12 @@ class DirectGuiDesignerJSONTools:
 
     specialPropMapping = {
         "align":{
-            0:"TextNode.A_left",
-            1:"TextNode.A_right",
-            2:"TextNode.A_center",
-            3:"TextNode.A_boxed_left",
-            4:"TextNode.A_boxed_right",
-            5:"TextNode.A_boxed_center"
+            "0":"TextNode.A_left",
+            "1":"TextNode.A_right",
+            "2":"TextNode.A_center",
+            "3":"TextNode.A_boxed_left",
+            "4":"TextNode.A_boxed_right",
+            "5":"TextNode.A_boxed_center"
         }
     }
 
@@ -60,7 +60,6 @@ class DirectGuiDesignerJSONTools:
 
     def __writeParent(self, parent):
         if parent is None: return "root"
-
         self.canvasParents = [
             "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
             "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
@@ -69,6 +68,8 @@ class DirectGuiDesignerJSONTools:
                 return parent.getName().replace("canvas", "a2d")
             else:
                 return parent.getName()
+        if parent.element.guiId in self.guiElementsDict.keys():
+            return self.guiElementsDict[parent.element.guiId].name
         return parent.element.guiId
 
     def __getAllSubcomponents(self, componentName, component, componentPath):
@@ -115,9 +116,13 @@ class DirectGuiDesignerJSONTools:
                 if key in name:
                     for option, value in self.functionMapping[key].items():
                         if callable(getattr(element, value)):
-                            elementJson[name + option] = reprFunc(getattr(element, value)())
+                            optionValue = reprFunc(getattr(element, value)())
                         else:
-                            elementJson[name + option] = reprFunc(getattr(element, value))
+                            optionValue = reprFunc(getattr(element, value))
+
+                        if option in self.specialPropMapping.keys():
+                            optionValue = self.specialPropMapping[option][optionValue]
+                        elementJson[name + option] = optionValue
 
             if not hasattr(element, "options"): continue
 
