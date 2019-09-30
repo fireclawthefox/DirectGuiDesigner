@@ -31,7 +31,7 @@ class DirectGuiDesignerJSONTools:
         "DirectCheckButton":["indicator_text"],
         "DirectRadioButton":["indicator_text"],
     }
-    ignoreFunction = ["state"]
+    ignoreFunction = ["state", "width"]
     ignoreOptions = ["guiId", "enableEdit"]
     ignoreRepr = ["command"]
 
