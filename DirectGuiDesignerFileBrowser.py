@@ -461,4 +461,5 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             screenWidthPx = base.getSize()[0]
             screenHeightPx = base.getSize()[1]
 
-            self.mainFrame.setPos(screenWidthPx/2, 0, -screenHeightPx/2)
+            if not self.mainFrame.isEmpty:
+                self.mainFrame.setPos(screenWidthPx/2, 0, -screenHeightPx/2)

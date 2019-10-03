@@ -1,12 +1,14 @@
 from panda3d.core import TransparencyAttrib
 
+from direct.showbase.DirectObject import DirectObject
+
 from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectCheckBox import DirectCheckBox
 
-class DirectGuiDesignerMenuBar:
+class DirectGuiDesignerMenuBar(DirectObject):
     def __init__(self, tooltip, grid):
         self.tt = tooltip
         self.grid = grid
@@ -189,11 +191,23 @@ class DirectGuiDesignerMenuBar:
         btn.bind(DGG.ENTER, self.tt.show, ["Show Designer Settings"])
         btn.bind(DGG.EXIT, self.tt.hide)
 
+        self.accept("setVisualEditorParent", self.setVisualEditorParent)
+
     def toggleGrid(self, selection):
         base.messenger.send("toggleGrid", [selection])
 
     def toggleVisualEditorParent(self, selection):
         base.messenger.send("toggleVisualEditorParent")
+
+    def setVisualEditorParent(self, toPixel2D):
+        self.cb_scale["isChecked"] = not toPixel2D
+
+        if self.cb_scale['isChecked']:
+            self.cb_scale['image'] = self.cb_scale['checkedImage']
+        else:
+            self.cb_scale['image'] = self.cb_scale['uncheckedImage']
+
+        self.cb_scale.setImage()
 
     def resizeFrame(self):
         screenWidthPx = base.getSize()[0]

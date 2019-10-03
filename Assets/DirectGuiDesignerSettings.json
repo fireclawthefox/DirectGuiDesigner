@@ -1,0 +1,236 @@
+{
+  "ProjectVersion": "0.2a",
+  "EditorConfig": {
+    "usePixel2D":true,
+    "canvasSize":"(-1000, 1000, -1000, 1000)"
+  },
+  "ComponentList": {
+    "frmMain": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(1, 1, 1, 1)",
+        "frameSize": "(-300.0, 300.0, -250.0, 250.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(0, 0, 0)"
+      },
+      "type": "DirectFrame",
+      "parent": "root",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "frmHeader": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.25, 0.25, 0.25, 1.0)",
+        "frameSize": "(-300.0, 300.0, -20.0, 20.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(0, 0, 230)"
+      },
+      "type": "DirectFrame",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "lblHeader": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.8, 0.8, 0.8, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(-295, 0, -5)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Settings'",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(16.0, 16.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(1, 1, 1, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectLabel",
+      "parent": "frmHeader",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "btnOk": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameSize": "(-45.0, 45.0, -6.0, 14.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(120, 0, -220)",
+        "relief": "1",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'OK'",
+        "text_align": "TextNode.A_center",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectButton",
+      "parent": "frmMain",
+      "command": "messenger.send",
+      "extraArgs": "\"Settings_OK\"",
+      "extraOptions": {}
+    },
+    "btnCancel": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameSize": "(-45.0, 45.0, -6.0, 14.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(230, 0, -220)",
+        "relief": "1",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Cancel'",
+        "text_align": "TextNode.A_center",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectButton",
+      "parent": "frmMain",
+      "command": "messenger.send",
+      "extraArgs": "\"Settings_CANCEL\"",
+      "extraOptions": {}
+    },
+    "lblCustomWidgets": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.8, 0.8, 0.8, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(-260, 0, 50)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Custom widgets path:'",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectLabel",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "txtCustomWidgetsPath": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "overflow": "1",
+        "pos": "LPoint3f(-50, 0, 50)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "width": "25.0",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectEntry",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "lblAskForQuit": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.8, 0.8, 0.8, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(-260, 0, 140)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Ask before quit:'",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectLabel",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "cbAskForQuit": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(1.0, 1.0, 1.0, 1.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(110, 0, 145)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "''",
+        "indicator_borderWidth": "(2, 2)",
+        "indicator_hpr": "LVecBase3f(0, 0, 0)",
+        "indicator_pos": "LPoint3f(-11, 0, -7.2)",
+        "indicator_relief": "'sunken'",
+        "indicator_text_align": "TextNode.A_center",
+        "indicator_text_scale": "(24, 24)",
+        "indicator_text_pos": "(0, -0.2)",
+        "indicator_text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "indicator_text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectCheckButton",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "lblExecutableScripts": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.8, 0.8, 0.8, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(-260, 0, 95)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Create executable Scripts:'",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectLabel",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "cbExecutableScripts": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(110, 0, 100)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "''",
+        "indicator_borderWidth": "(2, 2)",
+        "indicator_hpr": "LVecBase3f(0, 0, 0)",
+        "indicator_pos": "LPoint3f(-11, 0, -7.2)",
+        "indicator_relief": "'sunken'",
+        "indicator_text_align": "TextNode.A_center",
+        "indicator_text_scale": "(24, 24)",
+        "indicator_text_pos": "(0, -0.2)",
+        "indicator_text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "indicator_text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "text_align": "TextNode.A_center",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+      },
+      "type": "DirectCheckButton",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    }
+  }
+}

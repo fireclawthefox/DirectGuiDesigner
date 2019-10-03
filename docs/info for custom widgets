@@ -1,0 +1,11 @@
+What do custom widgets need
+
+1. A custom widget class containing the DirectGui style widget
+2. A custom widget configuration (*.widget maybe?)
+
+
+What does the widget configuration need to hold?
+1. Widget display name
+2. Widget class name
+3. widget class file path
+

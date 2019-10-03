@@ -19,8 +19,10 @@ from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
 
 class DirectGuiDesignerExporterProject:
-    def __init__(self, guiElementsDict, exceptionSave=False, tooltip=None):
+    def __init__(self, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
+        self.getEditorFrame = getEditorFrame
+        self.usePixel2D = usePixel2D
 
         if exceptionSave:
             self.excSave()
@@ -76,7 +78,7 @@ class DirectGuiDesignerExporterProject:
         if not overwrite: return
 
         jsonTools = DirectGuiDesignerJSONTools()
-        jsonElements = jsonTools.getProjectJSON(self.guiElementsDict)
+        jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, self.getEditorFrame, self.usePixel2D)
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)
 

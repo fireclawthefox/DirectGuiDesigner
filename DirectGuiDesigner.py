@@ -165,6 +165,7 @@ class DirectGuiDesigner(ShowBase):
         self.editorFrame.setElementHandler(self.elementHandler)
 
         self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
+        self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
         self.dlgSettings.frmMain.hide()
 
         self.registerKeyboardEvents()
@@ -184,6 +185,8 @@ class DirectGuiDesigner(ShowBase):
         self.accept("setParentOfElement", self.setParentOfElement)
         self.accept("toggleGrid", self.editorFrame.toggleGrid)
         self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
+        self.accept("setVisualEditorParent", self.editorFrame.setVisualEditorParent)
+        self.accept("setVisualEditorCanvasSize", self.editorFrame.setVisualEditorCanvasSize)
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
         self.accept("showSettings", self.showSettings)
@@ -241,10 +244,13 @@ class DirectGuiDesigner(ShowBase):
     def getEditorPlacer(self, placerName):
         return self.editorFrame.getEditorPlacer(placerName)
 
+    def getEditorFrame(self):
+        return self.editorFrame.visualEditor
+
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
 
-        DirectGuiDesignerExporterProject(self.elementDict, exceptionSave=True)
+        DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
     def registerKeyboardEvents(self):
         self.accept("escape", self.selectElement, extraArgs=[self.visualEditorInfo, None])
@@ -374,6 +380,8 @@ class DirectGuiDesigner(ShowBase):
                 self.dlgQuit.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
                 self.dlgQuitShadow["frameSize"] = (0, base.getSize()[0], -base.getSize()[1], 0)
 
+            self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
+
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.clearPropertySelection()
         self.propertiesFrame.propertyList["frameColor"] = True
@@ -392,8 +400,8 @@ class DirectGuiDesigner(ShowBase):
         if hasattr(self.elementHandler, funcName):
             elementInfo = getattr(self.elementHandler, funcName)(parent)
         else:
-            # Try custom elements
-            elementInfo = self.elementHandler.createCustomElement(funcName, parent)
+            logging.error("Undefined control: {}".format(element))
+            return
 
         if elementInfo is None: return
         if type(elementInfo) is tuple:
@@ -668,11 +676,11 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterProject(self.elementDict, tooltip=self.tt)
+        DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(self.elementDict, self.tt, not self.editorFrame.visEditorInAspect2D)
+        DirectGuiDesignerExporterPy(self.elementDict, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)

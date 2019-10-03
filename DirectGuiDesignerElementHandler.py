@@ -86,21 +86,6 @@ class DirectGuiDesignerElementHandler:
         elementInfo.element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
         elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
 
-    def loadCustomElements(self, path):
-        modules = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".py")]
-        '''
-        spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
-        foo = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(foo)
-        foo.MyClass()
-        todo: fill dict with info about custom element modules
-        {name: class, other stuff like import path and such if that's not in the class itself}
-        '''
-        print(modules)
-
-    def createCustomElement(self, function, parent=None):
-        pass
-
     def createDirectButton(self, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)

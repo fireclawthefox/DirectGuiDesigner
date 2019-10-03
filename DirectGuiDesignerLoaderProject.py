@@ -28,7 +28,7 @@ class DirectGuiDesignerLoaderProject:
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
-    setAsOption = ["frameSize", "barColor", "barRelief", "range", "value"]
+    setAsOption = ["frameSize", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize"]
     ignoreMap = ["state"]
     ignoreComponentSplit = ["text"]
 
@@ -42,6 +42,7 @@ class DirectGuiDesignerLoaderProject:
         self.visualEditorInfo = visualEditorInfo
         self.visualEditor = visualEditorInfo.element
         self.getEditorPlacer = getEditorPlacer
+        self.hasErrors = False
         if exceptionLoading:
             self.excLoad()
         else:
@@ -69,8 +70,15 @@ class DirectGuiDesignerLoaderProject:
         del self.dlgPathSelect
 
     def __executeLoad(self, path):
+        fileContent = None
         with open(path, 'r') as infile:
-            fileContent = json.load(infile)
+            try:
+                fileContent = json.load(infile)
+            except Exception as e:
+                logging.error("Couldn't load project file {}".format(infile))
+                logging.exception(e)
+                base.messenger.send("showWarning", ["Error while loading Project!\nPlease check output logs for more information."])
+                return
         if fileContent is None:
             logging.error("Problems reading Project file: {}".format(infile))
             return
@@ -80,7 +88,13 @@ class DirectGuiDesignerLoaderProject:
             "a2dTopLeft","a2dTopRight","a2dBottomLeft","a2dBottomRight"]
         self.createdParents = ["root"] + self.canvasParents
         self.postponedElements = {}
-        for name, elementInfo in fileContent.items():
+        if fileContent["ProjectVersion"] != "0.2a":
+            logging.warning("Unsupported Project Version")
+            base.messenger.send("showWarning", ["Unsupported Project Version"])
+            return
+        base.messenger.send("setVisualEditorParent", [fileContent["EditorConfig"]["usePixel2D"]])
+        base.messenger.send("setVisualEditorCanvasSize", [eval(fileContent["EditorConfig"]["canvasSize"])])
+        for name, elementInfo in fileContent["ComponentList"].items():
             self.__createElement(name, elementInfo)
 
         for elementInfo, option in self.radiobuttonOthersDict.items():
@@ -90,6 +104,8 @@ class DirectGuiDesignerLoaderProject:
                     elementList.append(info.element)
             elementInfo.element["others"] = elementList
 
+        if self.hasErrors:
+            base.messenger.send("showWarning", ["Errors occured while loading the project!\nProject may not be fully loaded\nSee output log for more information."])
 
     def __createElement(self, name, info):
         if info["parent"] not in self.createdParents:
@@ -177,29 +193,33 @@ class DirectGuiDesignerLoaderProject:
             options = self.extraOptions + elementInfo.element.options()
             if name in self.ignoreMap: return
             if name in options:
-                if name in self.funcMap.keys():
-                    funcName = self.funcMap[name]
-                    if hasattr(elementInfo.element, funcName):
-                        getattr(elementInfo.element, funcName)(eval(value))
-                elif elementInfo.element.isinitoption(name):
-                    funcName = "set{}{}".format(name[0].upper(), name[1:])
-                    if hasattr(elementInfo.element, funcName):
-                        getattr(elementInfo.element, funcName)(eval(value))
-                else:
-                    elementInfo.element[name] = eval(value)
+                self.__setPropValue(name, elementInfo.element, value)
             else:
                 components = name.split("_")
-                if len(components) > 1 and components[0] not in self.ignoreComponentSplit:
-                    component = components[0]
-                    elementInfo.element.component(component)[components[1]] = eval(value)
+                found = False
+                for comp in components:
+                    if comp in self.ignoreComponentSplit:
+                        found = True
+                if len(components) > 1 and not found:
+                    componentName = components[0]
+                    component = elementInfo.element.component(componentName)
+                    optionName = components[-1]
+                    #TODO: We may need to call __setProp recursively to go thru all sub components
+                    self.__setPropValue(optionName, component, value)
                 else:
-                    funcName = "set{}{}".format(name[0].upper(), name[1:])
-                    if name in self.setAsOption:
-                        elementInfo.element[name] = eval(value)
-                    elif hasattr(elementInfo.element, funcName):
-                        getattr(elementInfo.element, funcName)(eval(value))
-                    else:
-                        elementInfo.element[name] = eval(value)
+                    self.__setPropValue(name, elementInfo.element, value)
         except Exception as e:
             logging.exception("Couldn't set Property with Name '{}' to {}".format(name, value))
+            self.hasErrors = True
 
+    def __setPropValue(self, optionName, component, value):
+        funcName = "set{}{}".format(optionName[0].upper(), optionName[1:])
+        if optionName in self.setAsOption:
+            component[optionName] = eval(value)
+        elif optionName in self.funcMap.keys():
+            funcName = self.funcMap[optionName]
+            getattr(component, funcName)(eval(value))
+        elif hasattr(component, funcName):
+            getattr(component, funcName)(eval(value))
+        else:
+            component[optionName] = eval(value)

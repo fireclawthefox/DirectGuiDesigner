@@ -26,11 +26,11 @@ class DirectGuiDesignerExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, guiElementsDict, tooltip, usePixel2D):
+    def __init__(self, guiElementsDict, getEditorFrame, tooltip, usePixel2D):
         self.guiElementsDict = guiElementsDict
 
         jsonTools = DirectGuiDesignerJSONTools()
-        self.jsonElements = jsonTools.getProjectJSON(self.guiElementsDict)
+        self.jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame)
 
         self.createdParents = ["root"]
         self.postponedElements = {}

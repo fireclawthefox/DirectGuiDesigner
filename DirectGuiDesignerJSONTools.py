@@ -37,12 +37,17 @@ class DirectGuiDesignerJSONTools:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr"]
 
-    def getProjectJSON(self, guiElementsDict):
+    def getProjectJSON(self, guiElementsDict, getEditorFrame, usePixel2D):
         self.guiElementsDict = guiElementsDict
         jsonElements = {}
+        jsonElements["ProjectVersion"] = "0.2a"
+        jsonElements["EditorConfig"] = {}
+        jsonElements["EditorConfig"]["usePixel2D"] = usePixel2D
+        jsonElements["EditorConfig"]["canvasSize"] = repr(getEditorFrame()["canvasSize"])
+        jsonElements["ComponentList"] = {}
         for name, elementInfo in self.guiElementsDict.items():
             try:
-                jsonElements[elementInfo.name] = self.__createJSONEntry(elementInfo)
+                jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
             except Exception as e:
                 logging.exception("error while writing {}:".format(elementInfo.name))
                 base.messenger.send("showWarning", ["error while writing {}:".format(elementInfo.name)])

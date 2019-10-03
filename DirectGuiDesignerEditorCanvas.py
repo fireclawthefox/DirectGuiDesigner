@@ -129,6 +129,15 @@ class DirectGuiDesignerEditorCanvas():
     def setElementHandler(self, elementHandler):
         self.elementHandler = elementHandler
 
+    def setVisualEditorCanvasSize(self, newCanvasSize):
+        self.visualEditor["canvasSize"] = newCanvasSize
+
+    def setVisualEditorParent(self, toPixel2D):
+        if self.currentVisEditorParent == base.a2dLeftCenter and toPixel2D:
+            self.toggleVisualEditorParent()
+        elif self.currentVisEditorParent != base.a2dLeftCenter and not toPixel2D:
+            self.toggleVisualEditorParent()
+
     def toggleVisualEditorParent(self):
         screenWidthPx = base.getSize()[0]
         screenHeightPx = base.getSize()[1]
