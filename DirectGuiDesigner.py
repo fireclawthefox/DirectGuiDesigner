@@ -17,6 +17,7 @@ from panda3d.core import (
     loadPrcFileData,
     WindowProperties,
     ConfigVariableBool,
+    ConfigVariableString,
     TextNode,
     TextProperties,
     TextPropertiesManager
@@ -45,6 +46,9 @@ from DirectGuiDesignerExporterProject import DirectGuiDesignerExporterProject
 from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
 from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
 from DirectGuiDesignerSettings import GUI as DirectGuiDesignerSettings
+from DirectGuiDesignerCustomWidgets import DirectGuiDesignerCustomWidgets
+from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+
 from DirectGuiDesignerTooltip import Tooltip
 
 
@@ -69,16 +73,16 @@ else:
         prcFile.write("skip-ask-for-quit #f\n")
         prcFile.write("create-executable-scripts #f\n")
 
-    if platform.system() == "Windows":
-        from ctypes import WinDLL
-        from stat import FILE_ATTRIBUTE_HIDDEN
-        from os import stat
+    #if platform.system() == "Windows":
+    #    from ctypes import WinDLL
+    #    from stat import FILE_ATTRIBUTE_HIDDEN
+    #    from os import stat
 
-        # Change the current files attributes to contain the "hidden" attribute
-        kernel32 = WinDLL("kernel32")
-        attrs = stat(prcFileName).st_file_attributes
-        attrs = attrs | FILE_ATTRIBUTE_HIDDEN
-        kernel32.SetFileAttributesW(prcFileName, attrs)
+    #    # Change the current files attributes to contain the "hidden" attribute
+    #    kernel32 = WinDLL("kernel32")
+    #    attrs = stat(prcFileName).st_file_attributes
+    #    attrs = attrs | FILE_ATTRIBUTE_HIDDEN
+    #    kernel32.SetFileAttributesW(prcFileName, attrs)
 
 
 class DirectGuiDesigner(ShowBase):
@@ -110,6 +114,9 @@ class DirectGuiDesigner(ShowBase):
         self.dlgHelp = None
         self.dlgHelpShadow = None
 
+        self.dlgSettings = None
+        self.dlgSettingsShadow = None
+
         self.dlgQuit = None
         self.dlgQuitShadow = None
 
@@ -121,6 +128,8 @@ class DirectGuiDesigner(ShowBase):
 
         self.dlgNewProject = None
         self.dlgNewProjectShadow = None
+
+        self.openDialogCloseFunctions = []
 
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
@@ -164,9 +173,7 @@ class DirectGuiDesigner(ShowBase):
         self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
         self.editorFrame.setElementHandler(self.elementHandler)
 
-        self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
-        self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
-        self.dlgSettings.frmMain.hide()
+        self.customWidgetsHandler = DirectGuiDesignerCustomWidgets(self.toolboxFrame, self.elementHandler)
 
         self.registerKeyboardEvents()
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
@@ -213,6 +220,9 @@ class DirectGuiDesigner(ShowBase):
 
         self.win.setCloseRequestEvent("quitApp")
 
+        # Load user custom widgets
+        self.customWidgetsHandler.loadCustomWidgets()
+
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
@@ -252,8 +262,15 @@ class DirectGuiDesigner(ShowBase):
 
         DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
+    def inteligentEscape(self):
+        dlgList = [self.dlgHelp, self.dlgSettings, self.dlgQuit, self.dlgWarning, self.dlgInfo, self.dlgNewProject]
+        if not all(dlg is None for dlg in dlgList):
+            self.openDialogCloseFunctions[-1](None)
+        else:
+            self.selectElement(self.visualEditorInfo, None)
+
     def registerKeyboardEvents(self):
-        self.accept("escape", self.selectElement, extraArgs=[self.visualEditorInfo, None])
+        self.accept("escape", self.inteligentEscape)
         self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
         self.accept("mouse2", self.editorFrame.dragEditorFrame, extraArgs=[True])
         self.accept("mouse2-up", self.editorFrame.dragEditorFrame, extraArgs=[False])
@@ -373,14 +390,13 @@ class DirectGuiDesigner(ShowBase):
             self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
 
             # Reposition dialogs and resize thier shadows
-            if self.dlgHelp is not None:
-                self.dlgHelp.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
-                self.dlgHelpShadow.setPos(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10)
-            if self.dlgQuit is not None:
-                self.dlgQuit.setPos(base.getSize()[0]/2, 0, -base.getSize()[1]/2)
-                self.dlgQuitShadow["frameSize"] = (0, base.getSize()[0], -base.getSize()[1], 0)
+            for dialog in [self.dlgHelp, self.dlgSettings, self.dlgQuit, self.dlgWarning, self.dlgInfo, self.dlgNewProject]:
+                if dialog is not None:
+                    dialog.setPos(base.getSize()[0]//2, 0, -base.getSize()[1]//2)
 
-            self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
+            for shadow in [self.dlgHelpShadow, self.dlgSettingsShadow, self.dlgQuitShadow, self.dlgWarningShadow, self.dlgInfoShadow, self.dlgNewProjectShadow]:
+                if shadow is not None:
+                    shadow["frameSize"] = (0, base.getSize()[0], -base.getSize()[1], 0)
 
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.clearPropertySelection()
@@ -698,10 +714,10 @@ class DirectGuiDesigner(ShowBase):
             self.dlgQuitShadow.destroy()
             self.dlgQuit = None
             self.dlgQuitShadow = None
+            del self.openDialogCloseFunctions[-1]
 
     def quitApp(self):
         if self.dlgQuit is not None: return
-
         if ConfigVariableBool("skip-ask-for-quit", False).getValue() or self.dirty == False:
             self.__quit(1)
             return
@@ -720,40 +736,76 @@ class DirectGuiDesigner(ShowBase):
             parent=base.pixel2d)
         self.dlgQuitShadow = DirectFrame(
             state=DGG.NORMAL,
-            pos=(0.025, 0, -0.025),
+            sortOrder=0,
+            frameColor=(0,0,0,0.5),
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
+            parent=base.pixel2d)
+        self.openDialogCloseFunctions.append(self.__quit)
+
+    def showSettings(self):
+        if self.dlgSettings is not None:
+            return
+        self.dlgSettingsShadow = DirectFrame(
+            state=DGG.NORMAL,
             sortOrder=0,
             frameColor=(0,0,0,0.5),
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
 
-    def showSettings(self):
-        self.dlgSettings.frmMain.show()
-        self.dlgSettings.cbAskForQuit["indicatorValue"] = ConfigVariableBool("skip-ask-for-quit", False).getValue()
+        self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
+        self.dlgSettings.setPos = self.dlgSettings.frmMain.setPos
+        self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
+        self.dlgSettings.cbAskForQuit["indicatorValue"] = not ConfigVariableBool("skip-ask-for-quit", False).getValue()
         self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
+        self.dlgSettings.txtCustomWidgetsPath.enterText(ConfigVariableString("custom-widgets-path", "").getValue())
+
+        def selectPath(confirm):
+            if confirm:
+                self.dlgSettings.txtCustomWidgetsPath.enterText(self.browser.get())
+            self.browser.hide()
+            self.browser = None
+        def showBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), self.tt)
+            self.browser.show()
+        self.dlgSettings.btnBrowseWidgetPath["command"] = showBrowser
+
+        self.openDialogCloseFunctions.append(self.hideSettings)
 
     def hideSettings(self, accept):
         if accept:
             with open(prcFileName, "w") as prcFile:
-                prcFile.write("skip-ask-for-quit {}\n".format("#f" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#t"))
+                prcFile.write("skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f"))
                 prcFile.write("create-executable-scripts {}\n".format("#f" if self.dlgSettings.cbExecutableScripts["indicatorValue"] == 0 else "#t"))
                 prcFile.write("custom-widgets-path {}\n".format(self.dlgSettings.txtCustomWidgetsPath.get()))
 
-            if platform.system() == "Windows":
-                from ctypes import WinDLL
-                from stat import FILE_ATTRIBUTE_HIDDEN
-                from os import stat
+                #TODO: request changes for the changed properties!
 
-                # Change the current files attributes to contain the "hidden" attribute
-                kernel32 = WinDLL("kernel32")
-                attrs = stat(prcFileName).st_file_attributes
-                attrs = attrs | FILE_ATTRIBUTE_HIDDEN
-                kernel32.SetFileAttributesW(prcFileName, attrs)
+            # This somehow results in files that can't be changed by the code above anymore
+            # So... no hidden config files for windows.
+            #if platform.system() == "Windows":
+            #    from ctypes import WinDLL
+            #    from stat import FILE_ATTRIBUTE_HIDDEN
+            #    from os import stat
+
+            #    # Change the current files attributes to contain the "hidden" attribute
+            #    kernel32 = WinDLL("kernel32")
+            #    attrs = stat(prcFileName).st_file_attributes
+            #    attrs = attrs | FILE_ATTRIBUTE_HIDDEN
+            #    kernel32.SetFileAttributesW(prcFileName, attrs)
 
 
         self.dlgSettings.frmMain.hide()
+        del self.dlgSettings
+        self.dlgSettings = None
+
+        self.dlgSettingsShadow.destroy()
+        self.dlgSettingsShadow = None
+        del self.openDialogCloseFunctions[-1]
 
     def showHelp(self):
-        if self.dlgHelp is not None: return
+        if self.dlgHelp is not None:
+            self.hideHelp(None)
+            return
 
 
         tpMgr = TextPropertiesManager.getGlobalPtr()
@@ -816,18 +868,19 @@ Note: If the grid is shown elements will automatically snap to it when moved
             command=self.hideHelp,
             parent=base.pixel2d)
         self.dlgHelpShadow = DirectFrame(
-            pos=(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10),
+            state=DGG.NORMAL,
             sortOrder=0,
             frameColor=(0,0,0,0.5),
-            frameSize=(self.dlgHelp.bounds[0]*300, self.dlgHelp.bounds[1]*300,
-                       self.dlgHelp.bounds[2]*300, self.dlgHelp.bounds[3]*300),
+            frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
+        self.openDialogCloseFunctions.append(self.hideHelp)
 
     def hideHelp(self, args):
         self.dlgHelp.destroy()
         self.dlgHelpShadow.destroy()
         self.dlgHelp = None
         self.dlgHelpShadow = None
+        del self.openDialogCloseFunctions[-1]
 
     def showWarning(self, text):
         if self.dlgWarning is not None: return
@@ -846,17 +899,18 @@ Note: If the grid is shown elements will automatically snap to it when moved
             parent=base.pixel2d)
         self.dlgWarningShadow = DirectFrame(
             state=DGG.NORMAL,
-            pos=(0,0,0),
             sortOrder=0,
             frameColor=(0.25,0,0,0.5),
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
+        self.openDialogCloseFunctions.append(self.hideWarning)
 
     def hideWarning(self, args):
         self.dlgWarning.destroy()
         self.dlgWarningShadow.destroy()
         self.dlgWarning = None
         self.dlgWarningShadow = None
+        del self.openDialogCloseFunctions[-1]
 
     def showInfo(self, text):
         if self.dlgInfo is not None: return
@@ -875,17 +929,18 @@ Note: If the grid is shown elements will automatically snap to it when moved
             parent=base.pixel2d)
         self.dlgInfoShadow = DirectFrame(
             state=DGG.NORMAL,
-            pos=(0,0,0),
             sortOrder=0,
             frameColor=(0.15,0.15,0.25,0.5),
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
+        self.openDialogCloseFunctions.append(self.hideInfo)
 
     def hideInfo(self, args):
         self.dlgInfo.destroy()
         self.dlgInfoShadow.destroy()
         self.dlgInfo = None
         self.dlgInfoShadow = None
+        del self.openDialogCloseFunctions[-1]
 
 designer=DirectGuiDesigner()
 designer.run()

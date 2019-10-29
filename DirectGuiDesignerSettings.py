@@ -6,8 +6,8 @@
 from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
-from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectLabel import DirectLabel
+from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectCheckButton import DirectCheckButton
 from panda3d.core import (
@@ -19,7 +19,7 @@ from panda3d.core import (
 
 class GUI:
     def __init__(self, rootParent=None):
-
+        
         self.frmMain = DirectFrame(
             borderWidth=(2, 2),
             frameColor=(1, 1, 1, 1),
@@ -105,14 +105,14 @@ class GUI:
         )
 
         self.txtCustomWidgetsPath = DirectEntry(
-            borderWidth=(2, 2),
+            borderWidth=(0.167, 0.167),
             hpr=LVecBase3f(0, 0, 0),
             overflow=1,
             pos=LPoint3f(-50, 0, 50),
-            scale=LVecBase3f(1, 1, 1),
-            width=25.0,
+            scale=LVecBase3f(12, 1, 12),
+            width=18.0,
             text_align=TextNode.A_left,
-            text_scale=(12.0, 12.0),
+            text_scale=(1.0, 1.0),
             text_pos=(0, 0),
             text_fg=LVecBase4f(0, 0, 0, 1),
             text_bg=LVecBase4f(0, 0, 0, 0),
@@ -188,6 +188,22 @@ class GUI:
             indicator_text_pos=(0, -0.2),
             indicator_text_fg=LVecBase4f(0, 0, 0, 1),
             indicator_text_bg=LVecBase4f(0, 0, 0, 0),
+            text_align=TextNode.A_center,
+            text_scale=(12.0, 12.0),
+            text_pos=(0, 0),
+            text_fg=LVecBase4f(0, 0, 0, 1),
+            text_bg=LVecBase4f(0, 0, 0, 0),
+            parent=self.frmMain,
+        )
+
+        self.btnBrowseWidgetPath = DirectButton(
+            borderWidth=(2, 2),
+            frameSize=(-45.25, 45.25, -6.0, 14.0),
+            hpr=LVecBase3f(0, 0, 0),
+            pos=LPoint3f(230, 0, 50),
+            relief=1,
+            scale=LVecBase3f(1, 1, 1),
+            text='Browse',
             text_align=TextNode.A_center,
             text_scale=(12.0, 12.0),
             text_pos=(0, 0),

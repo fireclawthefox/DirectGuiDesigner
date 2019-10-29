@@ -383,10 +383,10 @@ class DirectGuiDesignerProperties():
             self.__createTextProperty("Initial Text", self.startPos, propFrame, element, "initialText")
             self.moveNext()
         if self.propertyList["width"]:
-            self.__createFloatInput("Textfield Width", self.startPos, propFrame, element, "width")
+            self.__createFloatInput("Textfield Width", self.startPos, propFrame, element, "width", True)
             self.moveNext()
         if self.propertyList["numLines"]:
-            self.__createIntegerInput("Number of Lines", self.startPos, propFrame, element, "numLines")
+            self.__createIntegerInput("Number of Lines", self.startPos, propFrame, element, "numLines", True)
             self.moveNext()
         if self.propertyList["overflow"]:
             self.__createBoolProperty("Enable Overflow", self.startPos, propFrame, element, "overflow")
@@ -1009,7 +1009,7 @@ class DirectGuiDesignerProperties():
         b.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         b.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-    def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute):
+    def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute, resetFrameSize=False):
         def update(text):
             base.messenger.send("setDirtyFlag")
             value = 0.0
@@ -1027,6 +1027,8 @@ class DirectGuiDesignerProperties():
                         getattr(control, self.subControlInitOpDict[updateAttribute][1])(value)
             else:
                 updateElement[updateAttribute] = value
+            if resetFrameSize:
+                updateElement.resetFrameSize()
         x = startPos.getX()
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
@@ -1057,7 +1059,7 @@ class DirectGuiDesignerProperties():
         entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-    def __createIntegerInput(self, description, startPos, parent, updateElement, updateAttribute):
+    def __createIntegerInput(self, description, startPos, parent, updateElement, updateAttribute, resetFrameSize=False):
         def update(text):
             base.messenger.send("setDirtyFlag")
             value = 0
@@ -1075,6 +1077,8 @@ class DirectGuiDesignerProperties():
                         getattr(control, self.subControlInitOpDict[updateAttribute][1])(value)
             else:
                 updateElement[updateAttribute] = (value)
+            if resetFrameSize:
+                updateElement.resetFrameSize()
         x = startPos.getX()
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)

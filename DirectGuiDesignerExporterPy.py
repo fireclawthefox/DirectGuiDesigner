@@ -30,7 +30,8 @@ class DirectGuiDesignerExporterPy:
         self.guiElementsDict = guiElementsDict
 
         jsonTools = DirectGuiDesignerJSONTools()
-        self.jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame)
+        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, usePixel2D)
+        self.jsonElements = self.jsonFileContent["ComponentList"]
 
         self.createdParents = ["root"]
         self.postponedElements = {}

@@ -1,3 +1,7 @@
+import os
+import logging
+import json
+import importlib
 from panda3d.core import ConfigVariableString
 
 class CustomWidget():
@@ -16,24 +20,36 @@ class CustomWidget():
 
 class DirectGuiDesignerCustomWidgets():
     def __init__(self, toolbox, elementHandler):
-        self.toolboxExtensionList = ["~Custom Widgets~"]
+        self.toolboxExtensionList = [["~Custom Widgets~"]]
         self.toolbox = toolbox
         self.elementHandler = elementHandler
+        self.customWidgetsDict = {}
 
     def loadCustomWidgets(self):
-        path = ConfigVariableString("custom-widgets-path", []).getValue()
+        path = ConfigVariableString("custom-widgets-path", "").getValue()
+        print(path)
+        if path == "": return
+        if not os.path.exists(path):
+            if path != "":
+                logging.error("custom widgets path doesn't exist!")
+                return
+
         configFiles = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")]
 
         for configFile in configFiles:
             configFileContent = None
-            with open(configFile, 'r') as infile:
+            with open(os.path.join(path, configFile), 'r') as infile:
                 configFileContent = json.load(infile)
             if configFileContent is None:
                 logging.error("Problems reading widget config file: {}".format(infile))
                 return
-
-            spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], configFileContent["classfilePath"])
+            print(configFileContent)
+            pythonFilePath = os.path.join(path, configFileContent["classfilePath"])
+            print(pythonFilePath)
+            spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
+            print(spec)
             module = importlib.util.module_from_spec(spec)
+            print(module)
             spec.loader.exec_module(module)
             #module.MyClass()
             #todo: fill dict with info about custom element modules
@@ -45,6 +61,9 @@ class DirectGuiDesignerCustomWidgets():
                 configFileContent["classfilePath"],
                 configFileContent["enabledProperties"],
                 module)
+            self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
+        self.extendToolbox()
+        self.extendElementHandler()
 
         #modules = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".py")]
         '''
@@ -58,33 +77,14 @@ class DirectGuiDesignerCustomWidgets():
         #print(modules)
 
     def extendToolbox(self):
-        self.toolbox.toolboxEntries.append(self.toolboxExtensionList)
+        self.toolbox.toolboxEntries += self.toolboxExtensionList
+        print(self.toolbox.toolboxEntries)
         self.toolbox.createEntries()
 
     def extendElementHandler(self):
-        for widgetName, widget in self.widgetList.items():
+        for widgetName, widget in self.customWidgetsDict.items():
             self.__createNewElement(widgetName, widget)
 
-    def __createNewElement(self, widgetName, widget)
-        self.toolboxExtensionList.append(widget.displayName, widgetName)
+    def __createNewElement(self, widgetName, widget):
+        self.elementHandler.createCustomWidgetMethods(widget)
 
-        # TODO: Maybe we need to go from the elementHandler back to the customWidgets class to gather information about the widget
-        def propertiesMethod(self, element, elementDict):
-            widget = customWidgets.getWidget(element)
-            for propName in widget.enabledProperties:
-                self.propertiesFrame.propertyList[propName] = True
-            self.propertiesFrame.setupProperties("{} Properties".widget.displayName, element, elementDict)
-
-        def createMethod(self, parent=None):
-            widget = customWidgets.getWidget(element)
-            parent = self.getEditorRootCanvas() if parent is None else parent
-            pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
-            element = getattr(widget.module, widget.className)(
-                parent=parent,
-                pos=pos)
-            elementInfo = ElementInfo(element, elementName)
-            self.setupBind(elementInfo)
-            return elementInfo
-
-        setattr(self.elementHandler, widget.getPropFunctionName(), propertiesMethod)
-        setattr(self.elementHandler, widget.getCreateFunctionName(), createMethod)

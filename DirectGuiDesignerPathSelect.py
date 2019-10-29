@@ -126,6 +126,7 @@ class DirectGuiDesignerPathSelect(DirectObject):
         # handle window resizing
         self.prevScreenSize = base.getSize()
         self.accept("window-event", self.windowEventHandler)
+        self.accept("escape", command, extraArgs=[0])
 
     def browse(self):
         self.browser.show()

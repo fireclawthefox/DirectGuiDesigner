@@ -156,6 +156,8 @@ class DirectGuiDesignerEditorCanvas():
             self.visualEditor.verticalScroll["value"] = 0
             self.visualEditor.horizontalScroll["value"] = 0
             self.currentVisEditorParent = base.pixel2d
+            # Speed up the setGridSpacing call by setting the size to 1
+            self.grid.setGridSize(1)
             self.grid.setGridSpacing(20)
             self.grid.setGridSize(1920)
             self.visEditorInAspect2D = False
@@ -175,6 +177,8 @@ class DirectGuiDesignerEditorCanvas():
             self.visualEditor.verticalScroll["value"] = 0.5
             self.visualEditor.horizontalScroll["value"] = 0.5
             self.currentVisEditorParent = base.a2dLeftCenter
+            # Speed up the setGridSpacing call by setting the size to 1
+            self.grid.setGridSize(1)
             self.grid.setGridSpacing(0.05)
             self.grid.setGridSize(50)
             self.visEditorInAspect2D = True
