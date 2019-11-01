@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from panda3d.core import Point3
+from panda3d.core import Point3, ConfigVariableBool
 
 from direct.gui import DirectGuiGlobals as DGG
 
@@ -24,7 +24,7 @@ class DirectGuiDesignerEditorCanvas():
         self.canvasBottom = -2
         self.canvasLeft = -2
         self.canvasRight = 2
-        self.topMargin=48 / screenHeightPx * 2
+        self.topMargin=((48 + 24) if ConfigVariableBool("show-toolbar", True).getValue() else 24) / screenHeightPx * 2
         self.visualEditor = DirectScrolledFrame(
             frameColor=(0, 0, 0, 0),
             frameSize=(0,screenWidth*(0.75),
@@ -143,12 +143,13 @@ class DirectGuiDesignerEditorCanvas():
         screenHeightPx = base.getSize()[1]
         screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
         if self.currentVisEditorParent == base.a2dLeftCenter:
+            self.topMargin=-48-24 if ConfigVariableBool("show-toolbar", True).getValue() else -24
             # change to pixel2d
             self.canvasTop = 0
             self.canvasBottom = -1080
             self.canvasLeft = 0
             self.canvasRight = 1920
-            self.visualEditor["frameSize"] = (0,screenWidthPx*0.75,-screenHeightPx,-48)
+            self.visualEditor["frameSize"] = (0,screenWidthPx*0.75,-screenHeightPx,self.topMargin)
             self.visualEditor.setPos(screenWidthPx/4, 0, 0)
             self.visualEditor["scrollBarWidth"] = 20
             self.visualEditor["canvasSize"] = (self.canvasLeft, self.canvasRight, self.canvasBottom, self.canvasTop)
@@ -165,6 +166,7 @@ class DirectGuiDesignerEditorCanvas():
             self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
         else:
             # change to aspect2d
+            self.topMargin=((48 + 24) if ConfigVariableBool("show-toolbar", True).getValue() else 24) / screenHeightPx * 2
             self.canvasTop = 2
             self.canvasBottom = -2
             self.canvasLeft = -2
@@ -198,13 +200,14 @@ class DirectGuiDesignerEditorCanvas():
         screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
         screenWidthPx = base.getSize()[0]
         screenHeightPx = base.getSize()[1]
-        self.topMargin=48 / screenHeightPx * 2
         if self.visEditorInAspect2D:
+            self.topMargin=((48 + 24) if ConfigVariableBool("show-toolbar", True).getValue() else 24) / screenHeightPx * 2
             self.visualEditor["frameSize"] = (0,screenWidth*(0.75),base.a2dBottom,base.a2dTop-self.topMargin)
             self.visualEditor.setPos(screenWidth*(0.25), 0, 0)
             self.visualEditor["scrollBarWidth"] = self.calcScrollBarWidth()
         else:
-            self.visualEditor["frameSize"] = (0,screenWidthPx*0.75,-screenHeightPx,-48)
+            self.topMargin=-48-24 if ConfigVariableBool("show-toolbar", True).getValue() else -24
+            self.visualEditor["frameSize"] = (0,screenWidthPx*0.75,-screenHeightPx,self.topMargin)
             self.visualEditor.setPos(screenWidthPx/4, 0, 0)
             self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
         self.setCanvasPlacers()

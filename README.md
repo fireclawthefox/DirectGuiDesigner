@@ -50,16 +50,42 @@ To export as a python script that can directly be used in projects, either hit C
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
 
-
 ### Configuration
+To change configurations, simply use the editors settings dialog available through the menubar Tools>Options or the cogwheel in the toolbar.
+
 These custom configuration variables have been introduced for the editor.
 
 |Name|Type|Description|
 |---|---|---|
 |skip-ask-for-quit|bool|If set to True, the dialog to ask for confirmation when quitting the Designer will not be shown. Defaults to False|
 |create-executable-scripts|bool|If set to True, the saved python scripts will contain everything to directly run. Defaults to False|
+|show-toolbar|bool|If set to True, the toolbar over the editor area will be shown, otherwise only the menubar will be displayed. Defaults to True|
+|custom-widgets-path|String|The path to a folder which will contain custom designed DirectGui widgets.|
 
 The Designer will create a hidden configuration file called .DirectGuiDesigner.prc in the users Home directory. It will contain all custom configurations from the list above with their default values and can be changed/extended with other Panda3D configurations.
+
+### Custom Widgets
+To add your own DirectGui elements to the editor you must make sure the following points are given.
+
+1. Put all your widgets in one dedicated folder and make sure it's through the custom-widgets-path configuration.
+2. Widgets have to adhere to the usual DirectGui coding style
+3. All widgets need a .widget definition file. See below for further information
+
+#### Widget Definition files
+A .widget definition file is necessary to add support for your custom widget in the designer. Those files are simple json files containing information about your element like display name, class name and so on. An example of such a file can be found in the customWidgetSample folder. Here's a list of keys that should be given in the definition file:
+
+|Name|Type|Description|Optional|
+|---|---|---|---|
+|name|String|The unique name or ID of this widget|No|
+|moduleName|String|The name of the python module|No|
+|displayName|String|The name of the widget as it will be displayed in the toolbox|No|
+|className|String|The class name in the module which should be used|No|
+|classfilePath|String|Path to the python file which should be imported|No|
+|enabledProperties|List|A list of properties that should be enabled for the widget in the properties editor|No|
+|addItemFunctionName|String|A special function name which should be called when other elements get parented to this widget|Yes|
+|removeItemFunctionName|String|A special function name which should be called when other elements get removed from this widget|Yes|
+|importPath|String|The import statement which should be added to exported python file|No|
+
 
 ## Known Bugs and missing features
 - Some element specific options aren't available in the properties editor yet

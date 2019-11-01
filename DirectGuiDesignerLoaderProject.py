@@ -32,13 +32,14 @@ class DirectGuiDesignerLoaderProject:
     ignoreMap = ["state"]
     ignoreComponentSplit = ["text"]
 
-    def __init__(self, visualEditorInfo, elementHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
+    def __init__(self, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
         self.radiobuttonOthersDict = {}
         self.elementDict = {}
         self.elementHandler = elementHandler
+        self.customWidgetHandler = customWidgetHandler
         self.visualEditorInfo = visualEditorInfo
         self.visualEditor = visualEditorInfo.element
         self.getEditorPlacer = getEditorPlacer
@@ -132,8 +133,12 @@ class DirectGuiDesignerLoaderProject:
             parent = None
             if parentName in self.parentMap.keys():
                 parent = self.elementDict[self.parentMap[parentName]]
+            widget = self.customWidgetHandler.getWidget(jsonElementInfo["type"])
             if funcName == "createDirectEntryScroll":
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None, False)
+            elif widget is not None:
+                # Custom widget add
+                elementInfo = getattr(self.elementHandler, funcName)(widget, parent.element if parent is not None else None)
             else:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None)
 
@@ -153,6 +158,12 @@ class DirectGuiDesignerLoaderProject:
                 elif parent is not None and "DirectEntryScroll" == parent.type:
                     parent.element.setEntry(elementInfo[0].element)
                     parent.extraOptions["entry"] = "self." + elementInfo[0].name
+                parentWidget = self.customWidgetHandler.getWidget(parent.type if parent is not None else "")
+                if parentWidget is not None:
+                    if parentWidget.addItemFunction is not None:
+                        # call custom widget add function
+                        getattr(parent.element, parentWidget.addItemFunction)(elementInfo[0].element)
+
                 for entry in elementInfo:
                     entry.parent = parent
                     # TODO: Check how this works! ESP. Saving TOO
@@ -166,6 +177,11 @@ class DirectGuiDesignerLoaderProject:
                 elif parent is not None and "DirectEntryScroll" == parent.type:
                     parent.element.setEntry(elementInfo.element)
                     parent.extraOptions["entry"] = "self." + elementInfo.name
+                parentWidget = self.customWidgetHandler.getWidget(parent.type if parent is not None else "")
+                if parentWidget is not None:
+                    if parentWidget.addItemFunction is not None:
+                        # call custom widget add function
+                        getattr(parent.element, parentWidget.addItemFunction)(elementInfo.element)
                 self.__setProperties(elementInfo, jsonElementInfo)
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId

@@ -5,12 +5,15 @@ import importlib
 from panda3d.core import ConfigVariableString
 
 class CustomWidget():
-    def __init__(self, dispName, clsName, clsFile, enabledProps, module):
+    def __init__(self, dispName, clsName, clsFile, enabledProps, module, addItemFunction, removeItemFunction, importPath):
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile
         self.enabledProperties = enabledProps
         self.module = module
+        self.addItemFunction = addItemFunction
+        self.removeItemFunction = removeItemFunction
+        self.importPath = importPath
 
     def getPropFunctionName(self):
         return "properties{}".format(self.className)
@@ -27,7 +30,6 @@ class DirectGuiDesignerCustomWidgets():
 
     def loadCustomWidgets(self):
         path = ConfigVariableString("custom-widgets-path", "").getValue()
-        print(path)
         if path == "": return
         if not os.path.exists(path):
             if path != "":
@@ -43,43 +45,32 @@ class DirectGuiDesignerCustomWidgets():
             if configFileContent is None:
                 logging.error("Problems reading widget config file: {}".format(infile))
                 return
-            print(configFileContent)
             pythonFilePath = os.path.join(path, configFileContent["classfilePath"])
-            print(pythonFilePath)
             spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
-            print(spec)
             module = importlib.util.module_from_spec(spec)
-            print(module)
             spec.loader.exec_module(module)
-            #module.MyClass()
-            #todo: fill dict with info about custom element modules
-            #{name: class, other stuff like import path and such if that's not in the class itself}
 
             self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
                 configFileContent["displayName"],
                 configFileContent["className"],
                 configFileContent["classfilePath"],
                 configFileContent["enabledProperties"],
-                module)
+                module,
+                configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
+                configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
+                configFileContent["importPath"])
             self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
         self.extendToolbox()
         self.extendElementHandler()
 
-        #modules = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".py")]
-        '''
-        spec = importlib.util.spec_from_file_location("module.name", "/path/to/file.py")
-        foo = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(foo)
-        foo.MyClass()
-        todo: fill dict with info about custom element modules
-        {name: class, other stuff like import path and such if that's not in the class itself}
-        '''
-        #print(modules)
-
     def extendToolbox(self):
         self.toolbox.toolboxEntries += self.toolboxExtensionList
-        print(self.toolbox.toolboxEntries)
         self.toolbox.createEntries()
+
+    def getWidget(self, widgetName):
+        if widgetName in self.customWidgetsDict.keys():
+            return self.customWidgetsDict[widgetName]
+        return None
 
     def extendElementHandler(self):
         for widgetName, widget in self.customWidgetsDict.items():

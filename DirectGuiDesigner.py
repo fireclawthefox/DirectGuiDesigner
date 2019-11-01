@@ -72,6 +72,7 @@ else:
     with open(prcFileName, "w") as prcFile:
         prcFile.write("skip-ask-for-quit #f\n")
         prcFile.write("create-executable-scripts #f\n")
+        prcFile.write("show-toolbar #t\n")
 
     #if platform.system() == "Windows":
     #    from ctypes import WinDLL
@@ -149,17 +150,18 @@ class DirectGuiDesigner(ShowBase):
         self.visualEditorInfo = ElementInfo(self.editorFrame.visualEditor, "Editor")
 
         self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.editorFrame.grid)
+        self.toolbarHeight = 24
 
         # 1/4 wide toolbox, properties and structure frame
         self.toolsFrame = DirectFrame(
             frameColor=(0.25, 0.25, 0.25, 1),
-            frameSize=(0, self.screenWidthPx/4, -self.screenHeightPx, 0),
+            frameSize=(0, self.screenWidthPx/4, -self.screenHeightPx, -self.toolbarHeight),
             pos=(self.screenWidth/8,0,0),
             parent=base.pixel2d)
 
-        self.toolFrameHeight = -self.screenHeightPx / 3
+        self.toolFrameHeight = -self.screenHeightPx / 3 + (self.toolbarHeight/3)
 
-        self.nextToolFrameY = 0
+        self.nextToolFrameY = -self.toolbarHeight
 
         self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
         self.nextToolFrameY += self.toolFrameHeight
@@ -226,7 +228,7 @@ class DirectGuiDesigner(ShowBase):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
-            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.getEditorPlacer, True)
+            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
             base.messenger.send("setDirtyFlag")
@@ -375,14 +377,13 @@ class DirectGuiDesigner(ShowBase):
             self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
             self.screenWidthPx = base.getSize()[0]
             self.screenHeightPx = base.getSize()[1]
-            self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, 0)
-            self.toolsFrame.setPos(0,0,0)
+            self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, -self.toolbarHeight)
 
             # Resize all editor frames
             self.editorFrame.resizeFrame()
             self.menuBar.resizeFrame()
-            self.toolFrameHeight = -self.screenHeightPx / 3
-            self.nextToolFrameY = 0
+            self.toolFrameHeight = -self.screenHeightPx / 3 + (self.toolbarHeight / 3)
+            self.nextToolFrameY = -self.toolbarHeight
             self.toolboxFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
             self.nextToolFrameY += self.toolFrameHeight
             self.propertiesFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
@@ -411,10 +412,14 @@ class DirectGuiDesigner(ShowBase):
         funcName = "create{}".format(element)
         parent = None
         elementInfo = None
+        widget = self.customWidgetsHandler.getWidget(element)
         if self.selectedElement is not None:
             parent = self.selectedElement.element
         if hasattr(self.elementHandler, funcName):
-            elementInfo = getattr(self.elementHandler, funcName)(parent)
+            if widget is None:
+                elementInfo = getattr(self.elementHandler, funcName)(parent)
+            else:
+                elementInfo = getattr(self.elementHandler, funcName)(widget, parent)
         else:
             logging.error("Undefined control: {}".format(element))
             return
@@ -423,6 +428,11 @@ class DirectGuiDesigner(ShowBase):
         if type(elementInfo) is tuple:
             if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
                 self.selectedElement.element.addItem(elementInfo[0].element)
+            widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
+            if widget is not None:
+                if widget.addItemFunction is not None:
+                    # call custom widget add function
+                    getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo[0].element)
             for entry in elementInfo:
                 if self.selectedElement is not None and entry.parent is None:
                     entry.parent = self.selectedElement
@@ -432,6 +442,11 @@ class DirectGuiDesigner(ShowBase):
                 elementInfo.parent = self.selectedElement
                 if self.selectedElement.type == "DirectScrolledList":
                     self.selectedElement.element.addItem(elementInfo.element)
+                widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
+                if widget is not None:
+                    if widget.addItemFunction is not None:
+                        # call custom widget add function
+                        getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo.element)
             self.elementDict[elementInfo.element.guiId] = elementInfo
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
@@ -460,10 +475,14 @@ class DirectGuiDesigner(ShowBase):
     def refreshProperties(self, elementInfo):
         self.propertiesFrame.clear()
         propFuncName = "properties{}".format(elementInfo.type)
+        widget = self.customWidgetsHandler.getWidget(elementInfo.type)
         if elementInfo.type == "Editor":
             getattr(self, propFuncName)(elementInfo)
         if hasattr(self.elementHandler, propFuncName):
-            getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict)
+            if widget is None:
+                getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict)
+            else:
+                getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict, widget)
 
     def dragStart(self, elementInfo, event):
         self.selectElement(elementInfo, event)
@@ -574,6 +593,11 @@ class DirectGuiDesigner(ShowBase):
                 and self.elementDict[name].parent.getName() not in self.canvasParents \
                 and self.elementDict[name].parent.type == "DirectScrolledList":
                     self.elementDict[name].parent.element.removeItem(workOn)
+                widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type if self.elementDict[name].parent is not None else "")
+                if widget is not None:
+                    if widget.removeItemFunction is not None:
+                        # call custom widget remove function
+                        getattr(self.elementDict[name].parent.element, widget.removeItemFunction)(workOn)
                 del self.elementDict[name]
         workOn.destroy()
 
@@ -696,11 +720,11 @@ class DirectGuiDesigner(ShowBase):
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(self.elementDict, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
+        DirectGuiDesignerExporterPy(self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
-        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.getEditorPlacer, False, self.tt, self.new)
+        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)
@@ -757,6 +781,7 @@ class DirectGuiDesigner(ShowBase):
         self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
         self.dlgSettings.cbAskForQuit["indicatorValue"] = not ConfigVariableBool("skip-ask-for-quit", False).getValue()
         self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
+        self.dlgSettings.cbShowToolbar["indicatorValue"] = ConfigVariableBool("show-toolbar", True).getValue()
         self.dlgSettings.txtCustomWidgetsPath.enterText(ConfigVariableString("custom-widgets-path", "").getValue())
 
         def selectPath(confirm):
@@ -776,6 +801,7 @@ class DirectGuiDesigner(ShowBase):
             with open(prcFileName, "w") as prcFile:
                 prcFile.write("skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f"))
                 prcFile.write("create-executable-scripts {}\n".format("#f" if self.dlgSettings.cbExecutableScripts["indicatorValue"] == 0 else "#t"))
+                prcFile.write("show-toolbar {}\n".format("#f" if self.dlgSettings.cbShowToolbar["indicatorValue"] == 0 else "#t"))
                 prcFile.write("custom-widgets-path {}\n".format(self.dlgSettings.txtCustomWidgetsPath.get()))
 
                 #TODO: request changes for the changed properties!
@@ -812,7 +838,6 @@ class DirectGuiDesigner(ShowBase):
 
         tpHeader = TextProperties()
         tpHeader.setTextScale(1.5)
-        #tpHeader.setAlign(TextProperties.A_center)
         tpHeader.setUnderscore(True)
         tpHeader.setGlyphShift(1)
         font = loader.loadFont("fonts/DejaVuSansMono-Bold.ttf")

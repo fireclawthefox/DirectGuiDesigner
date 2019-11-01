@@ -33,7 +33,7 @@ from direct.gui.DirectDialog import RetryCancelDialog
 from panda3d.core import TextNode
 
 class ElementInfo:
-    def __init__(self, element, elementType, name = None, parent = None, extraOptions = None, createAfter = None):
+    def __init__(self, element, elementType, name=None, parent=None, extraOptions=None, createAfter=None, customImportPath=None):
         # The actual GUI element
         self.element = element
 
@@ -63,6 +63,8 @@ class ElementInfo:
         else:
             self.createAfter = []
 
+        self.customImportPath = customImportPath
+
 class DirectGuiDesignerElementHandler:
     def __init__(self, propertiesFrame, getEditorRootCanvas):
         self.propertiesFrame = propertiesFrame
@@ -86,31 +88,25 @@ class DirectGuiDesignerElementHandler:
         elementInfo.element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
         elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
 
-    def createMethod(self, parent=None): #, widget=widget):
-        #TODO: We somehow need to get the widget passed in here
-        print("self is:", self)
-        print("Widget is:", widget)
+    def createMethod(self, widget, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         element = getattr(widget.module, widget.className)(
             parent=parent,
             pos=pos)
-        elementInfo = ElementInfo(element, widget.className)
+        elementInfo = ElementInfo(element, widget.className, customImportPath=widget.importPath)
         self.setupBind(elementInfo)
         return elementInfo
 
-    def propertiesMethod(self, element, elementDict):#, widget=widget):
-        #TODO: We somehow need to get the widget passed in here
-        #widget = customWidgets.getWidget(element)
+    def propertiesMethod(self, element, elementDict, widget):
+        self.propertiesFrame.defaultPropertySelection()
         for propName in widget.enabledProperties:
             self.propertiesFrame.propertyList[propName] = True
-        self.propertiesFrame.setupProperties("{} Properties".widget.displayName, element, elementDict)
+        self.propertiesFrame.setupProperties("{} Properties".format(widget.displayName), element, elementDict)
 
     def createCustomWidgetMethods(self, widget):
-        pass
-        #TODO: Activate those as soon as they are ready
-        #setattr(self, widget.getPropFunctionName(), self.propertiesMethod)
-        #setattr(self, widget.getCreateFunctionName(), self.createMethod)
+        setattr(self, widget.getPropFunctionName(), self.propertiesMethod)
+        setattr(self, widget.getCreateFunctionName(), self.createMethod)
 
     def createDirectButton(self, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
@@ -521,7 +517,6 @@ class DirectGuiDesignerElementHandler:
 
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectScrolledList")
-        #element["incButton_pos"] = (-0.35, 0, 0.03)
         self.setupBind(elementInfo)
         return elementInfo
 

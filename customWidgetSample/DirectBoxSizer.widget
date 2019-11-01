@@ -1,0 +1,11 @@
+{
+    "name":"DirectBoxSizer",
+    "moduleName":"DirectBoxSizer",
+    "displayName":"Box Sizer",
+    "className":"DirectBoxSizer",
+    "classfilePath":"DirectBoxSizer.py",
+    "enabledProperties":["orientation"],
+    "addItemFunctionName":"addItem",
+    "removeItemFunctionName":"removeItem",
+    "importPath":"from customWidgetSample.DirectBoxSizer import DirectBoxSizer"
+}

@@ -26,8 +26,9 @@ class DirectGuiDesignerExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, guiElementsDict, getEditorFrame, tooltip, usePixel2D):
+    def __init__(self, guiElementsDict, customWidgetHandler, getEditorFrame, tooltip, usePixel2D):
         self.guiElementsDict = guiElementsDict
+        self.customWidgetHandler = customWidgetHandler
 
         jsonTools = DirectGuiDesignerJSONTools()
         self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, usePixel2D)
@@ -37,6 +38,7 @@ class DirectGuiDesignerExporterPy:
         self.postponedElements = {}
         self.postSetupCalling = []
         self.radiobuttonDict = {}
+        self.customWidgetAddDict = {}
 
         importStatements = {
             "DirectButton":"from direct.gui.DirectButton import DirectButton",
@@ -71,7 +73,10 @@ from direct.gui import DirectGuiGlobals as DGG
         usedImports = []
         for name, elementInfo in self.guiElementsDict.items():
             if elementInfo.type not in usedImports:
-                self.content = "{}\n{}".format(self.content, importStatements[elementInfo.type])
+                if elementInfo.type in importStatements:
+                    self.content = "{}\n{}".format(self.content, importStatements[elementInfo.type])
+                else:
+                    self.content = "{}\n{}".format(self.content, elementInfo.customImportPath)
                 usedImports.append(elementInfo.type)
         self.content += """
 from panda3d.core import (
@@ -105,6 +110,13 @@ class GUI:
             for other in others:
                 self.content += other + ","
             self.content += "])\n"
+
+        for name, elementInfo in self.jsonElements.items():
+            widget = self.customWidgetHandler.getWidget(elementInfo["type"])
+            if widget is not None:
+                for element in self.customWidgetAddDict[name]:
+                    self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
+
         if ConfigVariableBool("create-executable-scripts", False).getValue():
             self.content += """
 # Create a ShowBase instance to make this gui directly runnable
@@ -203,6 +215,13 @@ app = ShowBase()\n"""
             if elementInfo["parent"] in self.jsonElements and self.jsonElements[elementInfo["parent"]]["type"] == "DirectScrollFrame":
                 # use the canvas as parent
                 elementOptions += indent + "parent=self." + elementInfo["parent"] + ".getCanvas(),\n"
+            elif elementInfo["parent"] in self.jsonElements and self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"]) is not None:
+                widget = self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"])
+                if widget.addItemFunction is not None:
+                    if elementInfo["parent"] in self.customWidgetAddDict:
+                        self.customWidgetAddDict[elementInfo["parent"]].append("self.{}".format(name))
+                    else:
+                        self.customWidgetAddDict[elementInfo["parent"]] = ["self.{}".format(name)]
             elif elementInfo["parent"] in self.canvasParents:
                 elementOptions += indent + "parent=base." + elementInfo["parent"] + ",\n"
             else:

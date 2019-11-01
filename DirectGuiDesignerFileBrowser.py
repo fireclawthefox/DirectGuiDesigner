@@ -33,26 +33,29 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         self.currentPath = os.path.expanduser("~")
         self.previousPath = self.currentPath
 
+        self.screenWidthPx = base.getSize()[0]
+        self.screenWidthPxHalf = self.screenWidthPx * 0.5
+        self.screenHeightPx = base.getSize()[1]
+        self.screenHeightPxHalf = self.screenHeightPx * 0.5
+
         self.mainFrame = DirectFrame(
             relief=1,
-            frameSize=(-300,300,-200,200),
+            frameSize=(-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf),
             frameColor=(1, 1, 1, 1),
             pos=LPoint3f(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
             parent=base.pixel2d,
         )
 
-        self.show = self.mainFrame.show
-        self.hide = self.mainFrame.hide
-        self.destroy = self.mainFrame.destroy
+        self.pathEntryWidth = self.screenWidthPx - 125
 
         self.pathEntry = DirectEntry(
             parent=self.mainFrame,
             relief=DGG.SUNKEN,
             frameColor=(1, 1, 1, 1),
             pad=(0.2, 0.2),
-            pos=LPoint3f(-285, 0, 175),
+            pos=LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25),
             scale=12,
-            width=475/12,
+            width=self.pathEntryWidth/12,
             overflow=True,
             command=self.entryAccept,
             initialText=self.currentPath,
@@ -61,8 +64,8 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
         )
-        x = 475/2-28
-        btn = DirectButton(
+        x = self.pathEntryWidth/2-28
+        self.btnReload = DirectButton(
             parent=self.mainFrame,
             relief=1,
             frameColor = (
@@ -71,19 +74,17 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, 175),
-            #text = "( )",
-            #text_scale=12,
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderReload,
             image="icons/Reload.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Reload Folder"])
-        btn.bind(DGG.EXIT, self.tt.hide)
+        self.btnReload.setTransparency(TransparencyAttrib.M_multisample)
+        self.btnReload.bind(DGG.ENTER, self.tt.show, ["Reload Folder"])
+        self.btnReload.bind(DGG.EXIT, self.tt.hide)
         x += 28
-        btn = DirectButton(
+        self.btnFolderUp = DirectButton(
             parent=self.mainFrame,
             relief=1,
             frameColor = (
@@ -92,19 +93,17 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, 175),
-            text = "^",
-            text_scale=12,
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderUp,
             image="icons/FolderUp.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Move up one level"])
-        btn.bind(DGG.EXIT, self.tt.hide)
+        self.btnFolderUp.setTransparency(TransparencyAttrib.M_multisample)
+        self.btnFolderUp.bind(DGG.ENTER, self.tt.show, ["Move up one level"])
+        self.btnFolderUp.bind(DGG.EXIT, self.tt.hide)
         x += 28
-        btn = DirectButton(
+        self.btnFolderNew = DirectButton(
             parent=self.mainFrame,
             relief=1,
             frameColor = (
@@ -113,17 +112,15 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-14, 14, -10, 18),
-            pos=LPoint3f(x, 0, 175),
-            text = "+",
-            text_scale=12,
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
             command=self.folderNew,
             image="icons/FolderNew.png",
             image_scale=14,
             image_pos=(0,0,4),
         )
-        btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Create new folder"])
-        btn.bind(DGG.EXIT, self.tt.hide)
+        self.btnFolderNew.setTransparency(TransparencyAttrib.M_multisample)
+        self.btnFolderNew.bind(DGG.ENTER, self.tt.show, ["Create new folder"])
+        self.btnFolderNew.bind(DGG.EXIT, self.tt.hide)
 
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
@@ -131,10 +128,11 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             (0.8, 0.8, 1, 1), # Hover
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.container = DirectScrolledFrame(
-            relief=DGG.SUNKEN,
+            relief=DGG.RIDGE,
+            borderWidth=(2, 2),
             frameColor=(1, 1, 1, 1),
-            frameSize=(-290, 290, -150, 150),
-            canvasSize=(-269, 290, -150, 150),
+            frameSize=(-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
+            canvasSize=(-self.screenWidthPxHalf+31, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50),
             pos=LPoint3f(0, 0, 0),
             parent=self.mainFrame,
             scrollBarWidth=20,
@@ -156,7 +154,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         self.container.bind(DGG.MWDOWN, self.scroll, [0.01])
         self.container.bind(DGG.MWUP, self.scroll, [-0.01])
 
-        DirectButton(
+        self.btnOk = DirectButton(
             parent=self.mainFrame,
             relief=1,
             frameColor = (
@@ -165,13 +163,13 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-45, 45, -6, 14),
-            pos=LPoint3f(140, 0, -185),
+            pos=LPoint3f(self.screenWidthPxHalf-160, 0, -self.screenHeightPxHalf+25),
             text = "ok",
             text_scale=12,
             command=command,
             extraArgs=[1],
         )
-        DirectButton(
+        self.btnCancel = DirectButton(
             parent=self.mainFrame,
             relief=1,
             frameColor = (
@@ -180,53 +178,54 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-45, 45, -6, 14),
-            pos=LPoint3f(245, 0, -185),
+            pos=LPoint3f(self.screenWidthPxHalf-55, 0, -self.screenHeightPxHalf+25),
             text = "Cancel",
             text_scale=12,
             command=command,
             extraArgs=[0]
         )
 
-        self.txtFileName = DirectEntry(
-            parent=self.mainFrame,
-            relief=DGG.SUNKEN,
-            frameColor=(1, 1, 1, 1),
-            pad=(0.2, 0.2),
-            pos=LPoint3f(-275, 0, -185),
-            scale=12,
-            width=200/12,
-            overflow=True,
-            command=self.filenameAccept,
-            initialText=defaultFilename,
-            focusInCommand=base.messenger.send,
-            focusInExtraArgs=["unregisterKeyboardEvents"],
-            focusOutCommand=base.messenger.send,
-            focusOutExtraArgs=["reregisterKeyboardEvents"],
-        )
+        if self.showFiles:
+            self.txtFileName = DirectEntry(
+                parent=self.mainFrame,
+                relief=DGG.SUNKEN,
+                frameColor=(1, 1, 1, 1),
+                pad=(0.2, 0.2),
+                pos=LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25),
+                scale=12,
+                width=200/12,
+                overflow=True,
+                command=self.filenameAccept,
+                initialText=defaultFilename,
+                focusInCommand=base.messenger.send,
+                focusInExtraArgs=["unregisterKeyboardEvents"],
+                focusOutCommand=base.messenger.send,
+                focusOutExtraArgs=["reregisterKeyboardEvents"],
+            )
 
         self.newFolderFrame = DirectFrame(
             parent=self.mainFrame,
             relief=1,
-            frameSize=(-290,290,-20,20),
-            pos=LPoint3f(0, 0, 145),
+            frameSize=(-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20),
+            pos=LPoint3f(0, 0, self.screenHeightPxHalf-55),
             frameColor=(0.5,0.5,0.5,1),
         )
-        txtNewFolderName = DirectLabel(
+        self.txtNewFolderName = DirectLabel(
             parent=self.newFolderFrame,
             text="New Folder Name",
             text_scale=12,
             frameColor=(0,0,0,0),
             text_align=TextNode.ALeft,
-            pos=(-285, 0, -3),
+            pos=(-self.screenWidthPxHalf+15, 0, -3),
         )
         self.folderName = DirectEntry(
             parent=self.newFolderFrame,
             relief=DGG.SUNKEN,
             frameColor=(1, 1, 1, 1),
             pad=(0.2, 0.2),
-            pos=LPoint3f(-275 + txtNewFolderName.getWidth(), 0, -4),
+            pos=LPoint3f(-self.screenWidthPxHalf+25 + self.txtNewFolderName.getWidth(), 0, -4),
             scale=12,
-            width=(275*2-txtNewFolderName.getWidth() - 100)/12,
+            width=((self.screenWidthPxHalf-25)*2-self.txtNewFolderName.getWidth() - 100)/12,
             overflow=True,
             command=self.entryAccept,
             initialText="New Folder",
@@ -235,7 +234,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             focusOutCommand=base.messenger.send,
             focusOutExtraArgs=["reregisterKeyboardEvents"],
         )
-        DirectButton(
+        self.btnCreate = DirectButton(
             parent=self.newFolderFrame,
             relief=1,
             frameColor = (
@@ -244,7 +243,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
                 (0.8, 0.8, 1, 1), # Hover
                 (0.5, 0.5, 0.5, 1)), # Disabled
             frameSize=(-45, 45, -6, 14),
-            pos=LPoint3f(235, 0, -4),
+            pos=LPoint3f(self.screenWidthPxHalf-65, 0, -4),
             text = "Create",
             text_scale=12,
             command=self.folderCreate,
@@ -257,6 +256,18 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         # handle window resizing
         self.prevScreenSize = base.getSize()
         self.accept("window-event", self.windowEventHandler)
+
+    def show(self):
+        self.mainFrame.show()
+        self.accept("window-event", self.windowEventHandler)
+
+    def hide(self):
+        self.ignore("window-event")
+        self.mainFrame.hide()
+
+    def destroy(self):
+        self.ignore("window-event")
+        self.mainFrame.destroy()
 
     def scroll(self, scrollStep, event):
         self.container.verticalScroll.scrollStep(scrollStep)
@@ -292,8 +303,9 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             self.folderReload()
             return
 
-        xPos = -280 + 50 - 110
-        zPos = 140-40
+        # start position for the folders and files
+        xPos = -self.screenWidthPxHalf + 20 + 50 - 110
+        zPos = self.screenHeightPxHalf-60-40
 
         dirList = []
         fileList = []
@@ -311,10 +323,12 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             nonlocal xPos
             nonlocal zPos
             if entry.is_dir() or self.showFiles:
-                if xPos + 110 > 290:
-                    xPos = -280 + 50
+                if xPos + 110 > self.screenWidthPxHalf - 45:
+                    # move to the next line if we hit the right border (incl. scrollbar size)
+                    xPos = -self.screenWidthPxHalf + 20 + 50
                     zPos -= 110
                 else:
+                    # move right the next position
                     xPos += 110
 
         def getKey(item):
@@ -330,7 +344,8 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             moveNext(entry)
             self.__createUnknown(entry.name, xPos, zPos)
 
-        self.container["canvasSize"] = (-269, 290, zPos-90, 150)
+        # recalculate the canvas size
+        self.container["canvasSize"] = (-self.screenWidthPxHalf+31, self.screenWidthPxHalf-15, zPos-90, self.screenHeightPxHalf-50)
         self.container.setCanvasSize()
 
     def folderUp(self):
@@ -358,7 +373,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         try:
             os.makedirs(os.path.join(self.currentPath, self.folderName.get(True)))
         except:
-            print("Can't create folder")
+            base.messenger.send("showWarning", ["Can't create folder"])
         self.newFolderFrame.hide()
         self.folderReload()
 
@@ -458,8 +473,35 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             if self.prevScreenSize == base.getSize():
                 return
             self.prevScreenSize = base.getSize()
-            screenWidthPx = base.getSize()[0]
-            screenHeightPx = base.getSize()[1]
+            self.screenWidthPx = base.getSize()[0]
+            self.screenWidthPxHalf = self.screenWidthPx * 0.5
+            self.screenHeightPx = base.getSize()[1]
+            self.screenHeightPxHalf = self.screenHeightPx * 0.5
 
-            if not self.mainFrame.isEmpty:
-                self.mainFrame.setPos(screenWidthPx/2, 0, -screenHeightPx/2)
+            # reposition and resize all gui elements
+            self.mainFrame.setPos(self.screenWidthPx/2, 0, -self.screenHeightPx/2)
+            self.mainFrame["frameSize"] = (-self.screenWidthPxHalf,self.screenWidthPxHalf,-self.screenHeightPxHalf,self.screenHeightPxHalf)
+            self.pathEntryWidth = self.screenWidthPx - 125
+            self.pathEntry.setPos(LPoint3f(-self.screenWidthPxHalf + 15, 0, self.screenHeightPxHalf - 25))
+            self.pathEntry["width"] = self.pathEntryWidth/12
+            x = self.pathEntryWidth/2-28
+            self.btnReload.setPos(LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            x += 28
+            self.btnFolderUp.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            x += 28
+            self.btnFolderNew.setPos(pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25))
+            self.container["frameSize"] = (-self.screenWidthPxHalf+10, self.screenWidthPxHalf-10, -self.screenHeightPxHalf+50, self.screenHeightPxHalf-50)
+            # Note: canvas size of the container will be reset in the
+            #       folder Reload call at the end of this function
+            self.btnOk.setPos(LPoint3f(self.screenWidthPxHalf-160, 0, -self.screenHeightPxHalf+25))
+            self.btnCancel.setPos(LPoint3f(self.screenWidthPxHalf-55, 0, -self.screenHeightPxHalf+25))
+            if self.showFiles:
+                self.txtFileName.setPos(LPoint3f(-self.screenWidthPxHalf+25, 0, -self.screenHeightPxHalf+25))
+            self.newFolderFrame.setPos(LPoint3f(0, 0, self.screenHeightPxHalf-55))
+            self.newFolderFrame["frameSize"] = (-self.screenWidthPxHalf+10,self.screenWidthPxHalf-10,-20,20)
+            self.txtNewFolderName.setPos(-self.screenWidthPxHalf+15, 0, -3)
+            self.folderName.setPos(LPoint3f(-self.screenWidthPxHalf+25 + self.txtNewFolderName.getWidth(), 0, -4))
+            self.folderName["width"]=((self.screenWidthPxHalf-25)*2-self.txtNewFolderName.getWidth() - 100)/12
+            self.btnCreate.setPos(LPoint3f(self.screenWidthPxHalf-65, 0, -4))
+
+            self.folderReload()
