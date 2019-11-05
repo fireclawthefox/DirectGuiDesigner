@@ -25,6 +25,13 @@ from direct.gui.DirectCheckButton import DirectCheckButton
 
 from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
 
+class PropertyInfo:
+    def __init__(self, displayName, propertyName, propertyType, customCommandName):
+        self.displayName = displayName
+        self.propertyName = propertyName
+        self.propertyType = propertyType
+        self.customCommandName = customCommandName
+
 class DirectGuiDesignerProperties():
 
     propertyList = {
@@ -190,6 +197,8 @@ class DirectGuiDesignerProperties():
     scrollSpeedDown = 0.001
 
     def __init__(self, parent, posZ, height, getEditorRootCanvas, getEditorPlacer, tooltip):
+        # A list containing the prooperty information
+        self.customProperties = []
         self.tooltip = tooltip
         self.parent = parent
         self.maxElementWidth = 0
@@ -268,6 +277,7 @@ class DirectGuiDesignerProperties():
     def clearPropertySelection(self):
         for key in self.propertyList.keys():
             self.propertyList[key] = False
+        self.customProperties = []
 
     def moveNext(self):
         self.startPos.setZ(self.startPos.getZ() - 15)
@@ -333,7 +343,7 @@ class DirectGuiDesignerProperties():
         if self.propertyList["frameSize"]:
             self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
             self.moveNext()
-            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, element)
+            self.__createResetFramesize(self.startPos, propFrame, element)
             self.startPos.setZ(self.startPos.getZ() - 30)
             self.frameSize += 30
         if self.propertyList["frameColor"]:
@@ -446,7 +456,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("incButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "incButton_frameSize")
             self.moveNext()
             incBtn = element.incButton
-            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, incBtn)
+            self.__createResetFramesize(self.startPos, propFrame, incBtn)
             self.startPos.setZ(self.startPos.getZ() - 30)
             self.frameSize += 30
 
@@ -470,7 +480,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("decButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "decButton_frameSize")
             self.moveNext()
             decBtn = element.decButton
-            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, decBtn)
+            self.__createResetFramesize(self.startPos, propFrame, decBtn)
             self.startPos.setZ(self.startPos.getZ() - 30)
             self.frameSize += 30
 
@@ -494,7 +504,7 @@ class DirectGuiDesignerProperties():
             self.__createBase4Input("thumb Frame Size (L/R/B/T)", self.startPos, propFrame, element, "thumb_frameSize")
             self.moveNext()
             decBtn = element.thumb
-            self.__createResetFramesize("Update Frame Size", self.startPos, propFrame, decBtn)
+            self.__createResetFramesize(self.startPos, propFrame, decBtn)
             self.startPos.setZ(self.startPos.getZ() - 30)
             self.frameSize += 30
 
@@ -510,7 +520,7 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["boxPlacement"]:
             # boxPlacement maps left, above, right, below
-            self.__createBoxPlacementProperty("Box Placement", self.startPos, propFrame, element, "boxPlacement")
+            self.__createPlacementProperty("Box Placement", self.startPos, propFrame, element, "boxPlacement")
             self.moveNext()
         if self.propertyList["boxImage"]:
             self.__createImageProperty("Box Image", self.startPos, propFrame, element, "boxImage")
@@ -561,7 +571,7 @@ class DirectGuiDesignerProperties():
             self.__createBase3Input("Popup Marker Position (X/Y/Z)", self.startPos, propFrame, element, "popupMarker_pos")
             self.moveNext()
         if self.propertyList["popupMenuLocation"]:
-            self.__createBoxPlacementProperty("Popup Menu Location", self.startPos, propFrame, element, "popupMenuLocation")
+            self.__createPlacementProperty("Popup Menu Location", self.startPos, propFrame, element, "popupMenuLocation")
             self.moveNext()
         if self.propertyList["highlightColor"]:
             self.__createBase4Input("Highlight Color", self.startPos, propFrame, element, "highlightColor")
@@ -626,6 +636,52 @@ class DirectGuiDesignerProperties():
             self.__createFloatInput("Value", self.startPos, propFrame, element, "value")
             self.moveNext()
 
+        #
+        # Custom properties
+        #
+        if len(self.customProperties) > 0:
+            self.__createInbetweenHeader("Custom Properties", self.startPos, propFrame)
+        for prop in self.customProperties:
+            if prop.propertyType.lower() == "int":
+                self.__createIntegerInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "float":
+                self.__createFloatInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "vbase2":
+                self.__createBase2Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "vbase3":
+                self.__createBase3Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "vbase4":
+                self.__createBase4Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "text":
+                self.__createTextProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "image":
+                self.__createImageProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "bool":
+                self.__createBoolProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "orientation":
+                self.__createOrientationProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "relief":
+                self.__createReliefProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "placement":
+                self.__createPlacementProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                self.moveNext()
+            elif prop.propertyType.lower() == "command":
+                self.__createCustomCommand(prop.displayName, self.startPos, propFrame, element, prop.customCommandName)
+                self.moveNext()
+
+        #
+        # Reset propFrame frame size
+        #
         propFrame["frameSize"] = (
             self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1]-20,
             -self.frameSize, 0.0)
@@ -691,6 +747,10 @@ class DirectGuiDesignerProperties():
                     comp = updateElement.component(componentName)
                     if hasattr(comp, self.getAsPropDict[updateAttribute]):
                         return getattr(comp, self.getAsPropDict[updateAttribute])
+
+    #
+    # General input elements
+    #
 
     def __createBase4Input(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
@@ -1109,38 +1169,6 @@ class DirectGuiDesignerProperties():
         entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-    def __createNameProperty(self, startPos, parent, updateElementInfo):
-        def update(text):
-            base.messenger.send("setDirtyFlag")
-            name = updateElementInfo.element.guiId.replace("-", "")
-            if text != "":
-                name = text
-            base.messenger.send("setName", [updateElementInfo, name])
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader("Name", z, parent)
-        z = startPos.getZ()
-
-        text = updateElementInfo.name
-        width = (parent.bounds[1]-10)
-        entryWidth = width / 13
-        entry = DirectEntry(
-            initialText=text,
-            relief=DGG.SUNKEN,
-            frameColor=(1,1,1,1),
-            pos=(x+10, 0, z),
-            scale=12,
-            width=entryWidth,
-            overflow=True,
-            command=update,
-            focusInCommand=base.messenger.send,
-            focusInExtraArgs=["unregisterKeyboardEvents"],
-            focusOutCommand=base.messenger.send,
-            focusOutExtraArgs=["reregisterKeyboardEvents"],
-            parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-
     def __createTextProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(text):
             base.messenger.send("setDirtyFlag")
@@ -1164,6 +1192,186 @@ class DirectGuiDesignerProperties():
             text = self.__getValues(updateElement, updateAttribute)
         elif updateElement[updateAttribute] is not None:
             text = updateElement[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
+        entry = DirectEntry(
+            initialText=text,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
+            overflow=True,
+            command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
+            parent=parent)
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+    def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
+        def update(value):
+            base.messenger.send("setDirtyFlag")
+            if updateAttribute in self.callFunc.keys():
+                if hasattr(updateElement, self.callFunc[updateAttribute][0]):
+                    getattr(updateElement, self.callFunc[updateAttribute][0])(self.callFunc[updateAttribute][1])
+                    return
+            if updateAttribute in self.initOpDict:
+                if hasattr(updateElement, self.initOpDict[updateAttribute]):
+                    getattr(updateElement, self.initOpDict[updateAttribute])(value)
+            elif updateAttribute in self.subControlInitOpDict:
+                if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
+                    control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
+                    if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
+                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(value)
+            else:
+                updateElement[updateAttribute] = value
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
+        valueA = 0
+        if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+            valueA = self.__getValues(updateElement, updateAttribute)
+        elif updateElement[updateAttribute] is not None:
+            valueA = updateElement[updateAttribute]
+        btn = DirectCheckButton(
+            pos=(x+10, 0, z),
+            indicatorValue=valueA,
+            boxPlacement="right",
+            scale=12,
+            text_align=TextNode.ALeft,
+            command=update,
+            parent=parent)
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+    def __createImageProperty(self, description, startPos, parent, updateElement, updateAttribute="image"):
+        def update(text):
+            base.messenger.send("setDirtyFlag")
+            try:
+                updateElement[updateAttribute] = text
+            except:
+                logging.exception("Couldn't load image: {}".format(text))
+                updateElement[updateAttribute] = None
+        def setImage(imgUrl):
+            entry.set(imgUrl)
+            update(imgUrl)
+
+        def selectPath(confirm):
+            if confirm:
+                setImage(self.browser.get())
+            self.browser.hide()
+        def showBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", self.tooltip)
+            self.browser.show()
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
+        image = updateElement[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 15
+        entry = DirectEntry(
+            initialText=image,
+            relief=DGG.SUNKEN,
+            frameColor=(1,1,1,1),
+            pos=(x+10, 0, z),
+            scale=12,
+            width=entryWidth,
+            overflow=True,
+            command=update,
+            focusInCommand=base.messenger.send,
+            focusInExtraArgs=["unregisterKeyboardEvents"],
+            focusOutCommand=base.messenger.send,
+            focusOutExtraArgs=["reregisterKeyboardEvents"],
+            parent=parent)
+        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+        btn = DirectButton(
+            text="Browse",
+            command=showBrowser,
+            pad=(0.25,0.25),
+            pos=(width - entryWidth, 0, z),
+            scale=12,
+            parent=parent
+            )
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+    def __createReliefProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
+        def update(selection):
+            base.messenger.send("setDirtyFlag")
+            updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
+        selectedElement = None
+        for key, value in DGG.FrameStyleDict.items():
+            if value == updateElement[updateAttribute]:
+                selectedElement = key
+                break
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            list(DGG.FrameStyleDict.keys()), selectedElement, update)
+
+    def __createOrientationProperty(self, description, startPos, parent, updateElement, updateAttribute):
+        orientationDict = {'horizontal': DGG.HORIZONTAL, 'vertical': DGG.VERTICAL, 'vertical_inverted': DGG.VERTICAL_INVERTED}
+        def update(selection):
+            base.messenger.send("setDirtyFlag")
+            updateElement[updateAttribute] = orientationDict[selection]
+        selectedElement = None
+        for key, value in orientationDict.items():
+            if value == updateElement[updateAttribute]:
+                selectedElement = key
+                break
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            list(orientationDict.keys()), selectedElement, update)
+
+    def __createPlacementProperty(self, description, startPos, parent, updateElement, updateAttribute):
+        placements = ["left", "above", "right", "below"]
+        def update(selection):
+            base.messenger.send("setDirtyFlag")
+            updateElement[updateAttribute] = selection
+        selectedElement = updateElement[updateAttribute]
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            placements, selectedElement, update)
+
+    def __createCustomCommand(self, description, startPos, parent, updateElement, customCommandName):
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
+        btn = DirectButton(
+            text=description,
+            pad=(0.25,0.25),
+            pos=(self.parent.getWidth() / 2, 0, z-3),
+            scale=12,
+            parent=parent,
+            command=getattr(updateElement, customCommandName)
+            )
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+    #
+    # Specific input fields
+    #
+
+    def __createNameProperty(self, startPos, parent, updateElementInfo):
+        def update(text):
+            base.messenger.send("setDirtyFlag")
+            name = updateElementInfo.element.guiId.replace("-", "")
+            if text != "":
+                name = text
+            base.messenger.send("setName", [updateElementInfo, name])
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader("Name", z, parent)
+        z = startPos.getZ()
+
+        text = updateElementInfo.name
         width = (parent.bounds[1]-10)
         entryWidth = width / 13
         entry = DirectEntry(
@@ -1245,43 +1453,6 @@ class DirectGuiDesignerProperties():
         entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-    def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
-        def update(value):
-            base.messenger.send("setDirtyFlag")
-            if updateAttribute in self.callFunc.keys():
-                if hasattr(updateElement, self.callFunc[updateAttribute][0]):
-                    getattr(updateElement, self.callFunc[updateAttribute][0])(self.callFunc[updateAttribute][1])
-                    return
-            if updateAttribute in self.initOpDict:
-                if hasattr(updateElement, self.initOpDict[updateAttribute]):
-                    getattr(updateElement, self.initOpDict[updateAttribute])(value)
-            elif updateAttribute in self.subControlInitOpDict:
-                if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
-                    control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
-                    if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
-                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(value)
-            else:
-                updateElement[updateAttribute] = value
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader(description, z, parent)
-        z = startPos.getZ()
-        valueA = 0
-        if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
-            valueA = self.__getValues(updateElement, updateAttribute)
-        elif updateElement[updateAttribute] is not None:
-            valueA = updateElement[updateAttribute]
-        btn = DirectCheckButton(
-            pos=(x+10, 0, z),
-            indicatorValue=valueA,
-            boxPlacement="right",
-            scale=12,
-            text_align=TextNode.ALeft,
-            command=update,
-            parent=parent)
-        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-
     def __createOthersSelectorProperty(self, startPos, parent, updateElement):
         def update(selected, selection):
             base.messenger.send("setDirtyFlag")
@@ -1309,7 +1480,6 @@ class DirectGuiDesignerProperties():
         innerZ = 0
         nextZ = 30
         for keys, radioButton in self.elementDict.items():
-            #if radioButton == updateElement: continue
             if radioButton.type != "DirectRadioButton": continue
             cb = DirectCheckButton(
                 text=radioButton.name,
@@ -1330,83 +1500,6 @@ class DirectGuiDesignerProperties():
         selectionFrame.setCanvasSize()
         self.startPos.setZ(self.startPos.getZ() - 60)
         self.frameSize += 60
-
-    def __createTransparencyProperty(self, startPos, parent, updateElement):
-        transparencyAttribs = [
-            "M_none",
-            "M_alpha",
-            "M_premultiplied_alpha",
-            "M_multisample",
-            "M_multisample_mask",
-            "M_binary",
-            "M_dual"]
-
-        def update(selection):
-            base.messenger.send("setDirtyFlag")
-            updateElement.setTransparency(getattr(TransparencyAttrib, selection))
-
-        for attrib in transparencyAttribs:
-            if getattr(TransparencyAttrib, attrib) == updateElement.getTransparency():
-                selectedElement = attrib
-
-        self.__createOptionMenuProperty(
-            "Transparency", startPos, parent, updateElement,
-            transparencyAttribs, selectedElement, update)
-
-    def __createImageProperty(self, description, startPos, parent, updateElement, updateAttribute="image"):
-        def update(text):
-            base.messenger.send("setDirtyFlag")
-            try:
-                updateElement[updateAttribute] = text
-            except:
-                logging.exception("Couldn't load image: {}".format(text))
-                updateElement[updateAttribute] = None
-        def setImage(imgUrl):
-            entry.set(imgUrl)
-            update(imgUrl)
-
-        def selectPath(confirm):
-            if confirm:
-                setImage(self.browser.get())
-            self.browser.hide()
-        def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", self.tooltip)
-            self.browser.show()
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader(description, z, parent)
-        z = startPos.getZ()
-        image = updateElement[updateAttribute]
-        width = (parent.bounds[1]-10)
-        entryWidth = width / 15
-        entry = DirectEntry(
-            initialText=image,
-            relief=DGG.SUNKEN,
-            frameColor=(1,1,1,1),
-            pos=(x+10, 0, z),
-            scale=12,
-            width=entryWidth,
-            overflow=True,
-            command=update,
-            focusInCommand=base.messenger.send,
-            focusInExtraArgs=["unregisterKeyboardEvents"],
-            focusOutCommand=base.messenger.send,
-            focusOutExtraArgs=["reregisterKeyboardEvents"],
-            parent=parent)
-        entry.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        entry.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-
-        btn = DirectButton(
-            text="Browse",
-            command=showBrowser,
-            pad=(0.25,0.25),
-            pos=(width - entryWidth, 0, z),
-            scale=12,
-            parent=parent
-            )
-        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
         x = startPos.getX()
@@ -1500,33 +1593,6 @@ class DirectGuiDesignerProperties():
             "Parent", startPos, parent, updateElement,
             self.parentList, selectedElement, update)
 
-    def __createReliefProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
-        def update(selection):
-            base.messenger.send("setDirtyFlag")
-            updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
-        selectedElement = None
-        for key, value in DGG.FrameStyleDict.items():
-            if value == updateElement[updateAttribute]:
-                selectedElement = key
-                break
-        self.__createOptionMenuProperty(
-            description, startPos, parent, updateElement,
-            list(DGG.FrameStyleDict.keys()), selectedElement, update)
-
-    def __createOrientationProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
-        orientationDict = {'horizontal': DGG.HORIZONTAL, 'vertical': DGG.VERTICAL, 'vertical_inverted': DGG.VERTICAL_INVERTED}
-        def update(selection):
-            base.messenger.send("setDirtyFlag")
-            updateElement[updateAttribute] = orientationDict[selection]
-        selectedElement = None
-        for key, value in orientationDict.items():
-            if value == updateElement[updateAttribute]:
-                selectedElement = key
-                break
-        self.__createOptionMenuProperty(
-            description, startPos, parent, updateElement,
-            list(orientationDict.keys()), selectedElement, update)
-
     def __createTextAlignProperty(self, startPos, parent, updateElement):
         alignments = {
             "Left":0,
@@ -1552,22 +1618,33 @@ class DirectGuiDesignerProperties():
             "Text Align", startPos, parent, updateElement,
             list(alignments.keys()), selectedElement, update)
 
-    def __createBoxPlacementProperty(self, description, startPos, parent, updateElement, updateAttribute):
-        placements = ["left", "above", "right", "below"]
+    def __createTransparencyProperty(self, startPos, parent, updateElement):
+        transparencyAttribs = [
+            "M_none",
+            "M_alpha",
+            "M_premultiplied_alpha",
+            "M_multisample",
+            "M_multisample_mask",
+            "M_binary",
+            "M_dual"]
+
         def update(selection):
             base.messenger.send("setDirtyFlag")
-            updateElement[updateAttribute] = selection
-        selectedElement = updateElement[updateAttribute]
-        self.__createOptionMenuProperty(
-            description, startPos, parent, updateElement,
-            placements, selectedElement, update)
+            updateElement.setTransparency(getattr(TransparencyAttrib, selection))
 
-    def __createResetFramesize(self, description, startPos, parent, updateElement):
+        for attrib in transparencyAttribs:
+            if getattr(TransparencyAttrib, attrib) == updateElement.getTransparency():
+                selectedElement = attrib
+
+        self.__createOptionMenuProperty(
+            "Transparency", startPos, parent, updateElement,
+            transparencyAttribs, selectedElement, update)
+
+    def __createResetFramesize(self, startPos, parent, updateElement):
         x = startPos.getX()
         z = startPos.getZ()
         btn = DirectButton(
-            text=description,
-            #text_align=0,
+            text="Update Frame Size",
             pad=(0.25,0.25),
             pos=(self.parent.getWidth() / 2, 0, z-15),
             scale=12,

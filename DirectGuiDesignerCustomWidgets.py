@@ -3,13 +3,15 @@ import logging
 import json
 import importlib
 from panda3d.core import ConfigVariableString
+from DirectGuiDesignerProperties import PropertyInfo
 
 class CustomWidget():
-    def __init__(self, dispName, clsName, clsFile, enabledProps, module, addItemFunction, removeItemFunction, importPath):
+    def __init__(self, dispName, clsName, clsFile, enabledProps, customProperties, module, addItemFunction, removeItemFunction, importPath):
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile
         self.enabledProperties = enabledProps
+        self.customProperties = customProperties
         self.module = module
         self.addItemFunction = addItemFunction
         self.removeItemFunction = removeItemFunction
@@ -50,11 +52,18 @@ class DirectGuiDesignerCustomWidgets():
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
+            customProperties = []
+            if "customProperties" in configFileContent:
+                for prop in configFileContent["customProperties"]:
+                    command = prop["customCommandName"] if "customCommandName" in prop else None
+                    customProperties.append(PropertyInfo(prop["displayName"], prop["propertyName"], prop["propertyType"], command))
+
             self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
                 configFileContent["displayName"],
                 configFileContent["className"],
                 configFileContent["classfilePath"],
                 configFileContent["enabledProperties"],
+                customProperties,
                 module,
                 configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
                 configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,

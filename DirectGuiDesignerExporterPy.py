@@ -114,8 +114,10 @@ class GUI:
         for name, elementInfo in self.jsonElements.items():
             widget = self.customWidgetHandler.getWidget(elementInfo["type"])
             if widget is not None:
+                if name not in self.customWidgetAddDict: continue
                 for element in self.customWidgetAddDict[name]:
-                    self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
+                    if widget.addItemFunction is not None:
+                        self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
 
         if ConfigVariableBool("create-executable-scripts", False).getValue():
             self.content += """

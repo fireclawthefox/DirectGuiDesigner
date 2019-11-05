@@ -48,7 +48,7 @@ This will save a Json file that can later be loaded by the designer again.
 To export as a python script that can directly be used in projects, either hit Ctrl-E or click the button in the toolbar.
 
 ### Use exported scripts
-The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization or edit the class and add a dedicated show/hide function.
+The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization. As you shouldn't edit the exported class due to edits being overwritten with a new export, you should create another python module which will handle the connection of the apps logic with the gui. This dedicated module could for example implement a show and hide method to easily change the visibility of the gui or set and gather values of the GUI without having to change the actual GUI design module code.
 
 ### Configuration
 To change configurations, simply use the editors settings dialog available through the menubar Tools>Options or the cogwheel in the toolbar.
@@ -82,10 +82,40 @@ A .widget definition file is necessary to add support for your custom widget in 
 |className|String|The class name in the module which should be used|No|
 |classfilePath|String|Path to the python file which should be imported|No|
 |enabledProperties|List|A list of properties that should be enabled for the widget in the properties editor|No|
+|customProperties|List|A list information for custom properties|No|
 |addItemFunctionName|String|A special function name which should be called when other elements get parented to this widget|Yes|
 |removeItemFunctionName|String|A special function name which should be called when other elements get removed from this widget|Yes|
 |importPath|String|The import statement which should be added to exported python file|No|
 
+#### Custom Properties
+The customProperties list can contain any custom options that are not available through the enabledProperties definition.
+This list consist of dictionaries of the following structure:
+{
+    "displayName":"The display name",
+    "propertyName":"thePropertiesName",
+    "propertyType":"type",
+    "customCommandName":"someOptionalCustomCommandName"
+}
+
+The displayName could be anything and will be used to display as header in the properties editor on top of that specific property.
+The propertyName is the actual name of the property by which it can be set on the widget
+The propertyType must be one of from the list below
+The customCommandName a name of a function that will be available through the getattr command on the widget (Note: "command" must be set as propertyType for this to have any effect)
+
+|Name|Description|
+|---|---|
+|int|Integer values|
+|float|Floating point values|
+|vbase2|Two floating point values|
+|vbase3|Three floating point values|
+|vbase4|Four floating point values|
+|text|A String entry|
+|image|An image path selection|
+|bool|A Bolean selection|
+|orientation|An orientation (Horizontal|Vertical|Inverted Vertical) selection|
+|relief|A selection for the relief value|
+|placement|A selection of top|left|right|bottom|
+|command|Used in combination with the customCommandName value to create a button that will call the command|
 
 ## Known Bugs and missing features
 - Some element specific options aren't available in the properties editor yet

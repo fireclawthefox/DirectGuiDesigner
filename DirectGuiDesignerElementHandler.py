@@ -102,6 +102,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         for propName in widget.enabledProperties:
             self.propertiesFrame.propertyList[propName] = True
+        for prop in widget.customProperties:
+            self.propertiesFrame.customProperties.append(prop)
         self.propertiesFrame.setupProperties("{} Properties".format(widget.displayName), element, elementDict)
 
     def createCustomWidgetMethods(self, widget):

@@ -1,0 +1,57 @@
+{
+    "name":"DirectSpinBox",
+    "moduleName":"DirectSpinBox",
+    "displayName":"Spinner",
+    "className":"DirectSpinBox",
+    "classfilePath":"DirectSpinBox.py",
+    "enabledProperties":[],
+    "customProperties":[
+    {
+        "displayName":"Step Size",
+        "propertyName":"stepSize",
+        "propertyType":"int"
+    },
+    {
+        "displayName":"Reset Position",
+        "propertyName":"",
+        "propertyType":"command",
+        "customCommandName":"resetPosition"
+    },
+    {
+        "displayName":"Recalculate Frame Size",
+        "propertyName":"",
+        "propertyType":"command",
+        "customCommandName":"recalcFrameSize"
+    },
+    {
+        "displayName":"Text format",
+        "propertyName":"textFormat",
+        "propertyType":"text"
+    },
+    {
+        "displayName":"Minimum value",
+        "propertyName":"minValue",
+        "propertyType":"int"
+    },
+    {
+        "displayName":"Maximum value",
+        "propertyName":"maxValue",
+        "propertyType":"int"
+    },
+    {
+        "displayName":"Button repeat delay",
+        "propertyName":"repeatdelay",
+        "propertyType":"float"
+    },
+    {
+        "displayName":"Button repeat start delay",
+        "propertyName":"repeatStartdelay",
+        "propertyType":"float"
+    },
+    {
+        "displayName":"Button Orientation",
+        "propertyName":"buttonOrientation",
+        "propertyType":"orientation"
+    }],
+    "importPath":"from customWidgetSample.DirectSpinBox import DirectSpinBox"
+}
