@@ -1265,7 +1265,7 @@ class DirectGuiDesignerProperties():
                 setImage(self.browser.get())
             self.browser.hide()
         def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", self.tooltip)
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", "", self.tooltip)
             self.browser.show()
         x = startPos.getX()
         z = startPos.getZ()

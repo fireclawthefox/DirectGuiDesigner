@@ -19,7 +19,7 @@ from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
 
 class DirectGuiDesignerExporterProject:
-    def __init__(self, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, tooltip=None):
+    def __init__(self, fileName, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
         self.getEditorFrame = getEditorFrame
         self.usePixel2D = usePixel2D
@@ -29,7 +29,7 @@ class DirectGuiDesignerExporterProject:
             return
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.save, "Save Project File", "Save file path", "Save", "~/export.json", tooltip)
+            self.save, "Save Project File", "Save file path", "Save", fileName, tooltip)
 
     def excSave(self):
         self.dlgOverwrite = None
@@ -69,6 +69,7 @@ class DirectGuiDesignerExporterProject:
                     parent=base.pixel2d)
             else:
                 self.__executeSave(True, path)
+            base.messenger.send("setLastPath", [path])
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect
 

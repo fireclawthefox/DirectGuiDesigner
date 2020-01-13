@@ -90,17 +90,17 @@ A .widget definition file is necessary to add support for your custom widget in 
 #### Custom Properties
 The customProperties list can contain any custom options that are not available through the enabledProperties definition.
 This list consist of dictionaries of the following structure:
-{
-    "displayName":"The display name",
-    "propertyName":"thePropertiesName",
-    "propertyType":"type",
-    "customCommandName":"someOptionalCustomCommandName"
-}
+<code><pre>{
+&emsp;&emsp;&emsp;&emsp;"displayName":"The display name",
+&emsp;&emsp;&emsp;&emsp;"propertyName":"thePropertiesName",
+&emsp;&emsp;&emsp;&emsp;"propertyType":"type",
+&emsp;&emsp;&emsp;&emsp;"customCommandName":"someOptionalCustomCommandName"
+}</pre></code>
 
-The displayName could be anything and will be used to display as header in the properties editor on top of that specific property.
-The propertyName is the actual name of the property by which it can be set on the widget
-The propertyType must be one of from the list below
-The customCommandName a name of a function that will be available through the getattr command on the widget (Note: "command" must be set as propertyType for this to have any effect)
+The <code>displayName</code> could be anything and will be used to display as header in the properties editor on top of that specific property.<br />
+The <code>propertyName</code> is the actual name of the property by which it can be set on the widget<br />
+The <code>propertyType</code> must be one of from the list below<br />
+The <code>customCommandName</code> a name of a function that will be available through the getattr command on the widget (Note: "command" must be set as propertyType for this to have any effect)
 
 |Name|Description|
 |---|---|

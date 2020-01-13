@@ -23,14 +23,16 @@ from panda3d.core import (
 )
 
 class DirectGuiDesignerFileBrowser(DirectObject):
-    def __init__(self, command, fileBrowser=False, defaultFilename="export.json", tooltip=None):
+    def __init__(self, command, fileBrowser=False, defaultPath="~", defaultFilename="export.json", tooltip=None):
         self.tt = tooltip
         if tooltip is None:
             raise Exception("No Tooltip instance given for File Browser")
         self.command = command
         self.showFiles = fileBrowser
 
-        self.currentPath = os.path.expanduser("~")
+        self.currentPath = os.path.expanduser(defaultPath)
+        if not os.path.exists(self.currentPath):
+            self.currentPath = os.path.expanduser("~")
         self.previousPath = self.currentPath
 
         self.screenWidthPx = base.getSize()[0]

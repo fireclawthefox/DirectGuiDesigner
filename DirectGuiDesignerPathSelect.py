@@ -3,6 +3,8 @@
 
 # This file was created using the DirectGUI Designer
 
+import os
+
 from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
@@ -88,7 +90,7 @@ class DirectGuiDesignerPathSelect(DirectObject):
             text_scale=12,
             command=self.browse,
         )
-        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, filePath.split("/")[-1:][0], tooltip)
+        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, os.path.dirname(filePath), filePath.split("/")[-1:][0], tooltip)
         self.browser.hide()
 
         # Command Buttons

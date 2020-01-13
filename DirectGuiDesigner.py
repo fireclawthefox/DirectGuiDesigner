@@ -92,6 +92,9 @@ class DirectGuiDesigner(ShowBase):
 
         self.dirty = False
 
+        self.lastDirPath = "~"
+        self.lastFileNameWOExtension = "export"
+
         wp = WindowProperties()
         if platform.system() == "Windows":
             wp.setIconFilename("icons/DirectGuiDesigner.ico")
@@ -218,6 +221,8 @@ class DirectGuiDesigner(ShowBase):
         self.screenSize = base.getSize()
         self.accept("window-event", self.windowEventHandler)
 
+        self.accept("setLastPath", self.setLastPath)
+
         sys.excepthook = self.excHandler
 
         self.win.setCloseRequestEvent("quitApp")
@@ -249,6 +254,12 @@ class DirectGuiDesigner(ShowBase):
         base.win.requestProperties(wp)
 
         self.dirty = False
+
+    def setLastPath(self, path):
+        self.lastDirPath = os.path.dirname(path)
+        fn = os.path.splitext(os.path.basename(path))[0]
+        if fn != "":
+            self.lastFileNameWOExtension = os.path.splitext(os.path.basename(path))[0]
 
     def getEditorRootCanvas(self):
         return self.editorFrame.visualEditor.getCanvas()
@@ -593,7 +604,9 @@ class DirectGuiDesigner(ShowBase):
                 and self.elementDict[name].parent.getName() not in self.canvasParents \
                 and self.elementDict[name].parent.type == "DirectScrolledList":
                     self.elementDict[name].parent.element.removeItem(workOn)
-                widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type if self.elementDict[name].parent is not None else "")
+                widget = None
+                if hasattr(self.customWidgetsHandler.getWidget(self.elementDict[name].parent), "type"):
+                    widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type if self.elementDict[name].parent is not None else "")
                 if widget is not None:
                     if widget.removeItemFunction is not None:
                         # call custom widget remove function
@@ -716,15 +729,15 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
+        DirectGuiDesignerExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
+        DirectGuiDesignerExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
-        projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
+        projectLoader = DirectGuiDesignerLoaderProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)
@@ -790,7 +803,7 @@ class DirectGuiDesigner(ShowBase):
             self.browser.hide()
             self.browser = None
         def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), self.tt)
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), ConfigVariableString("custom-widgets-path", "").getValue(), self.tt)
             self.browser.show()
         self.dlgSettings.btnBrowseWidgetPath["command"] = showBrowser
 

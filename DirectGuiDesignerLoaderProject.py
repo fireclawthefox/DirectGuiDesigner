@@ -28,11 +28,11 @@ class DirectGuiDesignerLoaderProject:
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
-    setAsOption = ["frameSize", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize"]
+    setAsOption = ["frameSize", "canvasSize", "indicatorValue", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize"]
     ignoreMap = ["state"]
     ignoreComponentSplit = ["text"]
 
-    def __init__(self, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
+    def __init__(self, filePath, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
@@ -48,7 +48,7 @@ class DirectGuiDesignerLoaderProject:
             self.excLoad()
         else:
             self.dlgPathSelect = DirectGuiDesignerPathSelect(
-                self.Load, "Load Project File", "Load file path", "Load", "~/export.json", tooltip)
+                self.Load, "Load Project File", "Load file path", "Load", filePath, tooltip)
 
     def excLoad(self):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
@@ -65,6 +65,7 @@ class DirectGuiDesignerLoaderProject:
             path = os.path.expandvars(path)
 
             self.__executeLoad(path)
+            base.messenger.send("setLastPath", [path])
             base.messenger.send("updateElementDict-afterLoad", [self.elementDict])
 
         self.dlgPathSelect.destroy()

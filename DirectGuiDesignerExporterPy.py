@@ -26,7 +26,7 @@ class DirectGuiDesignerExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, guiElementsDict, customWidgetHandler, getEditorFrame, tooltip, usePixel2D):
+    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, tooltip, usePixel2D):
         self.guiElementsDict = guiElementsDict
         self.customWidgetHandler = customWidgetHandler
 
@@ -130,7 +130,7 @@ app = ShowBase()\n"""
             self.content += "app.run()\n"
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
-            self.save, "Save Python File", "Save file path", "Save", "~/export.py", tooltip)
+            self.save, "Save Python File", "Save file path", "Save", saveFile, tooltip)
 
     def save(self, doSave):
         if doSave:
@@ -162,6 +162,7 @@ app = ShowBase()\n"""
                     parent=base.pixel2d)
             else:
                 self.__executeSave(True, path)
+            base.messenger.send("setLastPath", [path])
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect
 
