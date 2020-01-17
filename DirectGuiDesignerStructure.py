@@ -16,6 +16,8 @@ from direct.gui.DirectCheckBox import DirectCheckBox
 
 class DirectGuiDesignerStructure():
     def __init__(self, parent, posZ, height, getEditorRootCanvas, elementDict, selectedElement):
+        self.collapsedElements = []
+
         self.parent = parent
         self.lblHeader = DirectLabel(
             text="Structure",
@@ -92,20 +94,23 @@ class DirectGuiDesignerStructure():
     def __fillStructureTree(self, root, level, z):
         if "DirectGrid" in root.getName(): return
         self.itemCounter += 1
+
+        elementInfo = None
+        if root.getName() in self.elementDict.keys():
+            elementInfo = self.elementDict[root.getName()]
+        elif len(root.getName().split("-")) > 1 and root.getName().split("-")[1] in self.elementDict.keys():
+            elementInfo = self.elementDict[root.getName().split("-")[1]]
+
         if level > 0:
-            self.__makeStructureFrameTreeItem(root, level, z)
-        if hasattr(root, "getChildren"):
+            self.__makeStructureFrameTreeItem(root, elementInfo, level, z)
+        if hasattr(root, "getChildren") \
+        and elementInfo not in self.collapsedElements:
             for child in root.getChildren():
                 z=-16*self.itemCounter
                 self.__fillStructureTree(child, level+1, z)
 
-    def __makeStructureFrameTreeItem(self, elementNP, parentsLevel, z):
-        elementInfo = None
-        if elementNP.getName() in self.elementDict.keys():
-            elementInfo = self.elementDict[elementNP.getName()]
-        elif len(elementNP.getName().split("-")) > 1 and elementNP.getName().split("-")[1] in self.elementDict.keys():
-            elementInfo = self.elementDict[elementNP.getName().split("-")[1]]
-        else:
+    def __makeStructureFrameTreeItem(self, elementNP, elementInfo, parentsLevel, z):
+        if elementInfo is None:
             lbl = DirectLabel(
                 text=elementNP.getName(),
                 text_align=TextNode.ALeft,
@@ -115,8 +120,31 @@ class DirectGuiDesignerStructure():
                 scale=16,
                 parent=self.structureFrame.getCanvas())
             self.maxWidth = max(self.maxWidth, lbl.getX() + lbl.getWidth()*lbl.getScale()[0])
+        else:
+            margin = 5
+            shift = 6
 
-        if elementInfo is not None:
+            if hasattr(elementNP, "getChildren"):
+                if len(elementNP.getChildren()) > 0:
+                    # Collapse Button
+                    btnC = DirectCheckBox(
+                        relief=DGG.FLAT,
+                        pos=(self.structureFrame["frameSize"][0] + 20*parentsLevel - 16 + margin, 0, z+shift),
+                        frameSize=(-8, 8, -8, 8),
+                        frameColor=(0,0,0,0),
+                        command=self.__collapseElement,
+                        extraArgs=[elementInfo],
+                        image="icons/Collapsed.png" if elementInfo in self.collapsedElements else "icons/Collapse.png",
+                        uncheckedImage="icons/Collapse.png",
+                        checkedImage="icons/Collapsed.png",
+                        image_scale=8,
+                        isChecked=elementInfo in self.collapsedElements,
+                        parent=self.structureFrame.getCanvas())
+                    btnC.setTransparency(TransparencyAttrib.M_alpha)
+                    btnC.bind(DGG.MWDOWN, self.scroll, [0.01])
+                    btnC.bind(DGG.MWUP, self.scroll, [-0.01])
+
+            # Element Name
             btn = DirectButton(
                 frameColor=(VBase4(1,1,1,1), #normal
                     VBase4(0.9,0.9,0.9,1), #click
@@ -135,10 +163,10 @@ class DirectGuiDesignerStructure():
             if self.selectedElement is not None and self.selectedElement == elementInfo:
                 btn.setColorScale(1,1,0,1)
 
-            margin = 5
+            # Delete Button
             btnX = DirectButton(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0], 0, z),
+                pos=(self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0], 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__removeElement,
@@ -149,9 +177,11 @@ class DirectGuiDesignerStructure():
             btnX.setTransparency(TransparencyAttrib.M_multisample)
             btnX.bind(DGG.MWDOWN, self.scroll, [0.01])
             btnX.bind(DGG.MWUP, self.scroll, [-0.01])
+
+            # Visibility Button
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z),
+                pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__toggleElementVisibility,
@@ -178,3 +208,11 @@ class DirectGuiDesignerStructure():
     def __toggleElementVisibility(self, toggle, elementInfo):
         if elementInfo is not None:
             base.messenger.send("toggleElementVisibility", [elementInfo.element])
+
+    def __collapseElement(self, collapse, elementInfo):
+        if elementInfo is not None:
+            if collapse:
+                self.collapsedElements.append(elementInfo)
+            else:
+                self.collapsedElements.remove(elementInfo)
+            base.messenger.send("refreshStructureTree")
