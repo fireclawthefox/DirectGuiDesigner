@@ -41,7 +41,6 @@ class DirectGuiDesignerProperties():
         "borderWidth":False, # base2
         "frameSize":False, # base4
         "frameColor":False, # base4
-        "canvasSize":False, # base4
         "pad":False, # base2
         "pos":False, # base3
         "hpr":False, # base3
@@ -65,6 +64,10 @@ class DirectGuiDesignerProperties():
         "numLines":False, # int
         "overflow":False, # bool
         "obscured":False, # bool
+
+        # Scrolled Frame specific
+        "canvasSize":False, # base4
+        "scrollBarWidth":False, # float
 
         # Scrolled Entry specific
         "clipSize":False, # base4
@@ -352,9 +355,6 @@ class DirectGuiDesignerProperties():
         if self.propertyList["enableTransparency"]:
             self.__createTransparencyProperty(self.startPos, propFrame, element)
             self.moveNext()
-        if self.propertyList["canvasSize"]:
-            self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
-            self.moveNext()
         if self.propertyList["pad"]:
             self.__createBase2Input("Padding", self.startPos, propFrame, element, "pad")
             self.moveNext()
@@ -403,6 +403,20 @@ class DirectGuiDesignerProperties():
             self.moveNext()
         if self.propertyList["obscured"]:
             self.__createBoolProperty("Obscured Text", self.startPos, propFrame, element, "obscured")
+            self.moveNext()
+
+        #
+        # Scrolled Frame specific
+        #
+        for prop in ["canvasSize", "scrollBarWidth"]:
+            if self.propertyList[prop]:
+                self.__createInbetweenHeader("Scrolled Frame Properties", self.startPos, propFrame)
+                break
+        if self.propertyList["canvasSize"]:
+            self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
+            self.moveNext()
+        if self.propertyList["scrollBarWidth"]:
+            self.__createFloatInput("Scroll Bar Width", self.startPos, propFrame, element, "scrollBarWidth", True)
             self.moveNext()
 
         #
@@ -1466,11 +1480,13 @@ class DirectGuiDesignerProperties():
         z = startPos.getZ()
         z -= (0.06)
 
+        height = 120
+
         selectionFrame = DirectScrolledFrame(
             pos=(x,0,z),
             frameColor=(1,1,1,1),
-            frameSize=(0,parent["frameSize"][1]-20,-60,0),
-            canvasSize=(0,parent["frameSize"][1]-20,-60,0),
+            frameSize=(0,parent["frameSize"][1]-20,-height,0),
+            canvasSize=(0,parent["frameSize"][1]-20,-height,0),
             scrollBarWidth=20,
             state=DGG.NORMAL,
             parent=parent,
@@ -1493,13 +1509,13 @@ class DirectGuiDesignerProperties():
                 parent=selectionFrame.getCanvas())
             cb.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
             cb.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-            innerZ -= 30
+            innerZ -= 20
         selectionFrame["canvasSize"] = (
             0,selectionFrame["frameSize"][1]-20,
             innerZ, 0)
         selectionFrame.setCanvasSize()
-        self.startPos.setZ(self.startPos.getZ() - 60)
-        self.frameSize += 60
+        self.startPos.setZ(self.startPos.getZ() - height)
+        self.frameSize += height
 
     def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
         x = startPos.getX()

@@ -147,10 +147,10 @@ class DirectGuiDesignerElementHandler:
         else:
             element = DirectEntry(
                 pos=pos,
-                text_scale=24,
-                borderWidth=(2, 2),
+                text_scale=1,
+                borderWidth=(2/24, 2/24),
                 parent=parent,
-                scale=1)
+                scale=24)
         elementInfo = ElementInfo(element, "DirectEntry")
         self.setupBind(elementInfo)
         return elementInfo
@@ -808,4 +808,5 @@ class DirectGuiDesignerElementHandler:
     def propertiesDirectScrolledFrame(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.propertyList["canvasSize"] = True
+        self.propertiesFrame.propertyList["scrollBarWidth"] = True
         self.propertiesFrame.setupProperties("Scrolled Frame Properties", element, elementDict)
