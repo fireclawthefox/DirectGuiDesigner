@@ -803,7 +803,7 @@ class DirectGuiDesigner(ShowBase):
             self.browser.hide()
             self.browser = None
         def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), ConfigVariableString("custom-widgets-path", "").getValue(), self.tt)
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), os.path.split(ConfigVariableString("custom-widgets-path", "").getValue())[1], self.tt)
             self.browser.show()
         self.dlgSettings.btnBrowseWidgetPath["command"] = showBrowser
 

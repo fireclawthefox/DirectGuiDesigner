@@ -90,7 +90,7 @@ class DirectGuiDesignerPathSelect(DirectObject):
             text_scale=12,
             command=self.browse,
         )
-        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, os.path.dirname(filePath), filePath.split("/")[-1:][0], tooltip)
+        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, os.path.dirname(filePath), os.path.split(filePath)[1], tooltip)
         self.browser.hide()
 
         # Command Buttons
