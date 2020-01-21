@@ -35,7 +35,7 @@ class DirectGuiDesignerJSONTools:
     ignoreOptions = ["guiId", "enableEdit"]
     ignoreRepr = ["command"]
 
-    explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr"]
+    explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth"]
 
     def getProjectJSON(self, guiElementsDict, getEditorFrame, usePixel2D):
         self.guiElementsDict = guiElementsDict

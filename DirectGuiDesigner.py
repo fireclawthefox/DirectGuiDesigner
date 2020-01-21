@@ -601,7 +601,7 @@ class DirectGuiDesigner(ShowBase):
                 name = name.split("-")[1]
             if name in self.elementDict.keys():
                 if self.elementDict[name].parent is not None \
-                and self.elementDict[name].parent.getName() not in self.canvasParents \
+                and (self.elementDict[name].parent.getName() if hasattr(self.elementDict[name].parent, "getName") else self.elementDict[name].parent.name) not in self.canvasParents \
                 and self.elementDict[name].parent.type == "DirectScrolledList":
                     self.elementDict[name].parent.element.removeItem(workOn)
                 widget = None

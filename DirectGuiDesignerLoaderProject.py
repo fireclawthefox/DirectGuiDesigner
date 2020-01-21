@@ -28,7 +28,7 @@ class DirectGuiDesignerLoaderProject:
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
-    setAsOption = ["frameSize", "canvasSize", "indicatorValue", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize"]
+    setAsOption = ["frameSize", "canvasSize", "indicatorValue", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize", "scrollBarWidth"]
     ignoreMap = ["state"]
     ignoreComponentSplit = ["text"]
 
