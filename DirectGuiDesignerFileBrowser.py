@@ -29,6 +29,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             raise Exception("No Tooltip instance given for File Browser")
         self.command = command
         self.showFiles = fileBrowser
+        self.showHidden = False
 
         self.currentPath = os.path.expanduser(defaultPath)
         if not os.path.exists(self.currentPath):
@@ -48,7 +49,7 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             parent=base.pixel2d,
         )
 
-        self.pathEntryWidth = self.screenWidthPx - 125
+        self.pathEntryWidth = self.screenWidthPx - 153
 
         self.pathEntry = DirectEntry(
             parent=self.mainFrame,
@@ -123,6 +124,25 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         self.btnFolderNew.setTransparency(TransparencyAttrib.M_multisample)
         self.btnFolderNew.bind(DGG.ENTER, self.tt.show, ["Create new folder"])
         self.btnFolderNew.bind(DGG.EXIT, self.tt.hide)
+        x += 28
+        self.btnFolderShowHidden = DirectButton(
+            parent=self.mainFrame,
+            relief=1,
+            frameColor = (
+                (0.8, 0.8, 0.8, 1), # Normal
+                (0.9, 0.9, 1, 1), # Click
+                (0.8, 0.8, 1, 1), # Hover
+                (0.5, 0.5, 0.5, 1)), # Disabled
+            frameSize=(-14, 14, -10, 18),
+            pos=LPoint3f(x, 0, self.screenHeightPxHalf - 25),
+            command=self.folderShowHidden,
+            image="icons/FolderShowHidden.png",
+            image_scale=14,
+            image_pos=(0,0,4),
+        )
+        self.btnFolderShowHidden.setTransparency(TransparencyAttrib.M_multisample)
+        self.btnFolderShowHidden.bind(DGG.ENTER, self.tt.show, ["Show/Hide hidden files and folders"])
+        self.btnFolderShowHidden.bind(DGG.EXIT, self.tt.hide)
 
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
@@ -314,6 +334,8 @@ class DirectGuiDesignerFileBrowser(DirectObject):
         unkList = []
 
         for entry in content:
+            if entry.name.startswith(".") and not self.showHidden:
+                continue
             if entry.is_dir():
                 dirList.append(entry)
             elif entry.is_file() and self.showFiles:
@@ -370,6 +392,10 @@ class DirectGuiDesignerFileBrowser(DirectObject):
             self.newFolderFrame.show()
         else:
             self.newFolderFrame.hide()
+
+    def folderShowHidden(self):
+        self.showHidden = not self.showHidden
+        self.folderReload()
 
     def folderCreate(self, path=""):
         try:

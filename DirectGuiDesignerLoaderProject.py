@@ -11,6 +11,7 @@ import json
 import logging
 import tempfile
 
+from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
 from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 
@@ -23,14 +24,14 @@ import importlib.util
 
 
 
-class DirectGuiDesignerLoaderProject:
+class DirectGuiDesignerLoaderProject(DirectObject):
     funcMap = {"initialText":"set"}
     # This prioList will be walked through if all other options not in
     # this list have already been set
     prioList = ["frameSize"]
-    setAsOption = ["frameSize", "canvasSize", "indicatorValue", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize", "scrollBarWidth"]
-    ignoreMap = ["state"]
-    ignoreComponentSplit = ["text"]
+    setAsOption = ["frameSize", "canvasSize", "indicatorValue", "frameColor", "barColor", "barRelief", "range", "value", "relief", "borderWidth", "clipSize", "scrollBarWidth", "state"]
+    ignoreMap = []#"state"]
+    ignoreComponentSplit = ["text", "image"]
 
     def __init__(self, filePath, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
@@ -59,14 +60,18 @@ class DirectGuiDesignerLoaderProject:
 
     def Load(self, doLoad):
         if doLoad:
-            self.newProjectCall()
             path = self.dlgPathSelect.getPath()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
 
-            self.__executeLoad(path)
-            base.messenger.send("setLastPath", [path])
-            base.messenger.send("updateElementDict-afterLoad", [self.elementDict])
+            if not os.path.exists(path):
+                base.messenger.send("showWarning", ["File \"{}\" does not exist.".format(path)])
+                return
+
+            if self.newProjectCall():
+                self.__executeLoad(path)
+            else:
+                self.accept("clearDirtyFlag", self.__executeLoad, [path])
 
         self.dlgPathSelect.destroy()
         del self.dlgPathSelect
@@ -108,6 +113,10 @@ class DirectGuiDesignerLoaderProject:
 
         if self.hasErrors:
             base.messenger.send("showWarning", ["Errors occured while loading the project!\nProject may not be fully loaded\nSee output log for more information."])
+            return
+
+        base.messenger.send("setLastPath", [path])
+        base.messenger.send("updateElementDict-afterLoad", [self.elementDict])
 
     def __createElement(self, name, info):
         if info["parent"] not in self.createdParents:
@@ -143,6 +152,8 @@ class DirectGuiDesignerLoaderProject:
             else:
                 elementInfo = getattr(self.elementHandler, funcName)(parent.element if parent is not None else None)
 
+            if elementInfo is None: return
+
             if parentName in self.canvasParents:
                 elementInfo.element.reparentTo(self.getEditorPlacer(parentName))
 
@@ -151,8 +162,9 @@ class DirectGuiDesignerLoaderProject:
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
             elementInfo.extraOptions = jsonElementInfo["extraOptions"]
             elementInfo.name = jsonElementName
+            if "transparency" in jsonElementInfo:
+                elementInfo.element.setTransparency(eval(jsonElementInfo["transparency"]))
 
-            if elementInfo is None: return
             if type(elementInfo) is tuple:
                 if parent is not None and "DirectScrolledList" == parent.type:
                     parent.element.addItem(elementInfo[0].element)
@@ -184,6 +196,8 @@ class DirectGuiDesignerLoaderProject:
                         # call custom widget add function
                         getattr(parent.element, parentWidget.addItemFunction)(elementInfo.element)
                 self.__setProperties(elementInfo, jsonElementInfo)
+                if elementInfo.type == "DirectScrolledFrame":
+                    elementInfo.element.setScrollBarWidth()
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId
             base.messenger.send("refreshStructureTree")

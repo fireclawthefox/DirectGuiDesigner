@@ -111,6 +111,7 @@ class GUI:
                 self.content += other + ","
             self.content += "])\n"
 
+        topLevelItems = []
         for name, elementInfo in self.jsonElements.items():
             widget = self.customWidgetHandler.getWidget(elementInfo["type"])
             if widget is not None:
@@ -119,6 +120,27 @@ class GUI:
                     if widget.addItemFunction is not None:
                         self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
 
+            if elementInfo["parent"] == "root":
+                topLevelItems.append(name)
+
+        # Create helper functions for toplevel elements
+        if len(topLevelItems) > 0:
+            self.content += "\n"
+            self.content += " "*4 + "def show(self):\n"
+            for name in topLevelItems:
+                self.content += " "*8 + "self.{}.show()\n".format(name)
+
+            self.content += "\n"
+            self.content += " "*4 + "def hide(self):\n"
+            for name in topLevelItems:
+                self.content += " "*8 + "self.{}.hide()\n".format(name)
+
+            self.content += "\n"
+            self.content += " "*4 + "def delete(self):\n"
+            for name in topLevelItems:
+                self.content += " "*8 + "self.{}.delete()\n".format(name)
+
+        # Make script executable if desired
         if ConfigVariableBool("create-executable-scripts", False).getValue():
             self.content += """
 # Create a ShowBase instance to make this gui directly runnable
@@ -187,6 +209,8 @@ app = ShowBase()\n"""
             " "*12 + "extraArgs=[{}],\n".format(elementInfo["extraArgs"]) if elementInfo["extraArgs"] is not None else "",
             extraOptions,
             )
+        if elementInfo["element"]["transparency"] != "M_none":
+            elementCode += " "*8 +"self.{}.setTransparency({})\n".format(name, elementInfo["element"]["transparency"])
 
         if elementInfo["type"] == "DirectScrolledListItem":
             self.postSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo["parent"], name))
@@ -206,6 +230,8 @@ app = ShowBase()\n"""
                 for other in optionValue:
                     others.append("self.{}".format(other))
                 self.radiobuttonDict["self.{}".format(name)] = others
+                continue
+            elif optionKey == "transparency":
                 continue
 
             elementOptions += indent + optionKey + "=" + optionValue + ",\n"

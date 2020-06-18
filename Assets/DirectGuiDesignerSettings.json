@@ -11,7 +11,8 @@
         "frameColor": "(1, 1, 1, 1)",
         "frameSize": "(-300.0, 300.0, -250.0, 250.0)",
         "hpr": "LVecBase3f(0, 0, 0)",
-        "pos": "LPoint3f(0, 0, 0)"
+        "pos": "LPoint3f(0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectFrame",
       "parent": "root",
@@ -25,7 +26,8 @@
         "frameColor": "(0.25, 0.25, 0.25, 1.0)",
         "frameSize": "(-300.0, 300.0, -20.0, 20.0)",
         "hpr": "LVecBase3f(0, 0, 0)",
-        "pos": "LPoint3f(0, 0, 230)"
+        "pos": "LPoint3f(0, 0, 230)",
+        "transparency": "0"
       },
       "type": "DirectFrame",
       "parent": "frmMain",
@@ -45,7 +47,8 @@
         "text_scale": "(16.0, 16.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(1, 1, 1, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectLabel",
       "parent": "frmHeader",
@@ -66,7 +69,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectButton",
       "parent": "frmMain",
@@ -87,7 +91,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectButton",
       "parent": "frmMain",
@@ -107,7 +112,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectLabel",
       "parent": "frmMain",
@@ -127,7 +133,8 @@
         "text_scale": "(1.0, 1.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectEntry",
       "parent": "frmMain",
@@ -147,7 +154,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectLabel",
       "parent": "frmMain",
@@ -176,7 +184,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectCheckButton",
       "parent": "frmMain",
@@ -196,7 +205,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectLabel",
       "parent": "frmMain",
@@ -224,7 +234,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectCheckButton",
       "parent": "frmMain",
@@ -245,7 +256,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectButton",
       "parent": "frmMain",
@@ -265,7 +277,8 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectLabel",
       "parent": "frmMain",
@@ -293,9 +306,75 @@
         "text_scale": "(12.0, 12.0)",
         "text_pos": "(0, 0)",
         "text_fg": "LVecBase4f(0, 0, 0, 1)",
-        "text_bg": "LVecBase4f(0, 0, 0, 0)"
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
       },
       "type": "DirectCheckButton",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "lblSearchPath": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(0.8, 0.8, 0.8, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(-260, 0, -40)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Search paths'",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectLabel",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "txtSearchPaths": {
+      "element": {
+        "borderWidth": "(0.167, 0.167)",
+        "frameSize": "(-0.167, 18.167, -0.463, 1.155)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "overflow": "1",
+        "pos": "LPoint3f(-50, 0, -45)",
+        "scale": "LVecBase3f(12, 1, 12)",
+        "width": "18.0",
+        "text_align": "TextNode.A_left",
+        "text_scale": "(1, 1)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectEntry",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "btnBrowseSearchPaths": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameSize": "(-45.25, 45.25, -6.0, 14.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(230, 0, -45)",
+        "relief": "1",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Browse'",
+        "text_align": "TextNode.A_center",
+        "text_scale": "(12.0, 12.0)",
+        "text_pos": "(0, 0)",
+        "text_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text_bg": "LVecBase4f(0, 0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectButton",
       "parent": "frmMain",
       "command": null,
       "extraArgs": null,

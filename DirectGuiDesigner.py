@@ -5,6 +5,7 @@ import sys
 import os
 import platform
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import tempfile
 
 from direct.showbase.ShowBase import ShowBase
@@ -18,6 +19,7 @@ from panda3d.core import (
     WindowProperties,
     ConfigVariableBool,
     ConfigVariableString,
+    ConfigVariableSearchPath,
     TextNode,
     TextProperties,
     TextPropertiesManager
@@ -65,9 +67,23 @@ loadPrcFileData(
 
 # check if we have a config file
 home = os.path.expanduser("~")
+
+
+logfile = os.path.join(home, "DirectGuiDesigner.log")
+handler = TimedRotatingFileHandler(logfile)
+logging.basicConfig(
+    level=logging.DEBUG,
+    handlers=[handler])
 prcFileName = os.path.join(home, ".DirectGuiDesigner.prc")
 if os.path.exists(prcFileName):
     loadPrcFile(Filename.fromOsSpecific(prcFileName))
+
+    # make sure to load our custom paths
+    pathsConfig = ConfigVariableSearchPath("custom-model-path", "").getValue()
+    for path in pathsConfig.getDirectories():
+        line = "model-path {}".format(str(path))
+        print(str(path))
+        loadPrcFileData("", line)
 else:
     with open(prcFileName, "w") as prcFile:
         prcFile.write("skip-ask-for-quit #f\n")
@@ -89,6 +105,7 @@ else:
 class DirectGuiDesigner(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
+        logging.debug("Start Designer")
 
         self.dirty = False
 
@@ -140,6 +157,7 @@ class DirectGuiDesigner(ShowBase):
         taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
 
     def setupGui(self):
+        logging.debug("Setup GUI")
         self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
         self.screenWidthPx = base.getSize()[0]
         self.screenHeightPx = base.getSize()[1]
@@ -240,6 +258,7 @@ class DirectGuiDesigner(ShowBase):
             base.messenger.send("showInfo", ["Loaded previously crashed session!"])
             os.remove(tmpPath)
             logging.info("Removed crash session file")
+        logging.debug("Startup complete")
 
     def setDirty(self):
         wp = WindowProperties()
@@ -272,6 +291,7 @@ class DirectGuiDesigner(ShowBase):
 
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
+        print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
 
         DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
@@ -439,11 +459,12 @@ class DirectGuiDesigner(ShowBase):
         if type(elementInfo) is tuple:
             if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
                 self.selectedElement.element.addItem(elementInfo[0].element)
-            widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
-            if widget is not None:
-                if widget.addItemFunction is not None:
-                    # call custom widget add function
-                    getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo[0].element)
+            elif self.selectedElement is not None:
+                widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
+                if widget is not None:
+                    if widget.addItemFunction is not None:
+                        # call custom widget add function
+                        getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo[0].element)
             for entry in elementInfo:
                 if self.selectedElement is not None and entry.parent is None:
                     entry.parent = self.selectedElement
@@ -486,14 +507,19 @@ class DirectGuiDesigner(ShowBase):
     def refreshProperties(self, elementInfo):
         self.propertiesFrame.clear()
         propFuncName = "properties{}".format(elementInfo.type)
-        widget = self.customWidgetsHandler.getWidget(elementInfo.type)
-        if elementInfo.type == "Editor":
-            getattr(self, propFuncName)(elementInfo)
-        if hasattr(self.elementHandler, propFuncName):
-            if widget is None:
-                getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict)
-            else:
-                getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict, widget)
+        try:
+            widget = self.customWidgetsHandler.getWidget(elementInfo.type)
+            if elementInfo.type == "Editor":
+                getattr(self, propFuncName)(elementInfo)
+            if hasattr(self.elementHandler, propFuncName):
+                if widget is None:
+                    getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict)
+                else:
+                    getattr(self.elementHandler, propFuncName)(elementInfo, self.elementDict, widget)
+        except:
+            e = sys.exc_info()[1]
+            base.messenger.send("showWarning", [str(e)])
+            logging.exception("Error while loading properties panel")
 
     def dragStart(self, elementInfo, event):
         self.selectElement(elementInfo, event)
@@ -519,9 +545,11 @@ class DirectGuiDesigner(ShowBase):
             if self.editorFrame.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
                 return t.cont
 
+            oldPos = t.elementInfo.element.getPos()
             t.elementInfo.element.setPos(render2d, newPos)
 
             if self.editorFrame.snapToGrid:
+
                 newPos = t.elementInfo.element.getPos()
                 modifier = 0.5
                 if self.is_down(self.key_lcontrol) or self.is_down(self.key_rcontrol):
@@ -533,6 +561,10 @@ class DirectGuiDesigner(ShowBase):
                     ROUND_TO(newPos[1], self.editorFrame.grid.getGridSpacing()*modifier),
                     ROUND_TO(newPos[2], self.editorFrame.grid.getGridSpacing()*modifier))
                 t.elementInfo.element.setPos(newPos)
+
+            # check if the item has actually moved
+            if not self.dirty and oldPos != t.elementInfo.element.getPos():
+                base.messenger.send("setDirtyFlag")
 
         return t.cont
 
@@ -711,8 +743,10 @@ class DirectGuiDesigner(ShowBase):
                 frameSize=self.dlgNewProject.bounds,
                 scale=300,
                 parent=base.pixel2d)
+            return False
         else:
             self.__newProject(1)
+            return True
 
     def __newProject(self, selection):
         if selection == 1:
@@ -782,6 +816,8 @@ class DirectGuiDesigner(ShowBase):
     def showSettings(self):
         if self.dlgSettings is not None:
             return
+
+        base.messenger.send("unregisterKeyboardEvents")
         self.dlgSettingsShadow = DirectFrame(
             state=DGG.NORMAL,
             sortOrder=0,
@@ -790,34 +826,75 @@ class DirectGuiDesigner(ShowBase):
             parent=base.pixel2d)
 
         self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
+
+        self.dlgSettings.lblSearchPath["state"] = DGG.NORMAL
+        self.dlgSettings.lblSearchPath.bind(DGG.ENTER, self.tt.show, ["A colon separated list of paths to search for models, images and other assets"])
+        self.dlgSettings.lblSearchPath.bind(DGG.EXIT, self.tt.hide)
+        self.dlgSettings.txtSearchPaths.bind(DGG.ENTER, self.tt.show, ["A colon separated list of paths to search for models, images and other assets"])
+        self.dlgSettings.txtSearchPaths.bind(DGG.EXIT, self.tt.hide)
+
         self.dlgSettings.setPos = self.dlgSettings.frmMain.setPos
-        self.dlgSettings.frmMain.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
+        self.dlgSettings.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
         self.dlgSettings.cbAskForQuit["indicatorValue"] = not ConfigVariableBool("skip-ask-for-quit", False).getValue()
         self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
         self.dlgSettings.cbShowToolbar["indicatorValue"] = ConfigVariableBool("show-toolbar", True).getValue()
         self.dlgSettings.txtCustomWidgetsPath.enterText(ConfigVariableString("custom-widgets-path", "").getValue())
 
-        def selectPath(confirm):
+        paths = ""
+        pathsConfig = ConfigVariableSearchPath("custom-model-path", "").getValue()
+        for path in pathsConfig.getDirectories():
+            if paths != "":
+                paths = "{}:{}".format(paths, path)
+            else:
+                print(path)
+                paths = str(path)
+        self.dlgSettings.txtSearchPaths.enterText(paths)
+
+        def selectWidgetsPath(confirm):
             if confirm:
                 self.dlgSettings.txtCustomWidgetsPath.enterText(self.browser.get())
             self.browser.hide()
             self.browser = None
-        def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), os.path.split(ConfigVariableString("custom-widgets-path", "").getValue())[1], self.tt)
+        def showWidgetsBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(selectWidgetsPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), os.path.split(ConfigVariableString("custom-widgets-path", "").getValue())[1], self.tt)
             self.browser.show()
-        self.dlgSettings.btnBrowseWidgetPath["command"] = showBrowser
+        self.dlgSettings.btnBrowseWidgetPath["command"] = showWidgetsBrowser
+
+        def addSearchPath(confirm):
+            if confirm:
+                prevPaths = self.dlgSettings.txtSearchPaths.get()
+                self.dlgSettings.txtSearchPaths.enterText("{}:{}".format(prevPaths, self.browser.get()))
+            self.browser.hide()
+            self.browser = None
+        def showSearchPathBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(addSearchPath, False, tooltip=self.tt)
+            self.browser.show()
+        self.dlgSettings.btnBrowseSearchPaths["command"] = showSearchPathBrowser
 
         self.openDialogCloseFunctions.append(self.hideSettings)
 
     def hideSettings(self, accept):
+        base.messenger.send("reregisterKeyboardEvents")
         if accept:
             with open(prcFileName, "w") as prcFile:
-                prcFile.write("skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f"))
-                prcFile.write("create-executable-scripts {}\n".format("#f" if self.dlgSettings.cbExecutableScripts["indicatorValue"] == 0 else "#t"))
-                prcFile.write("show-toolbar {}\n".format("#f" if self.dlgSettings.cbShowToolbar["indicatorValue"] == 0 else "#t"))
-                prcFile.write("custom-widgets-path {}\n".format(self.dlgSettings.txtCustomWidgetsPath.get()))
+                line = "skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f")
+                prcFile.write(line)
+                loadPrcFileData("", line)
 
-                #TODO: request changes for the changed properties!
+                line = "create-executable-scripts {}\n".format("#f" if self.dlgSettings.cbExecutableScripts["indicatorValue"] == 0 else "#t")
+                prcFile.write(line)
+                loadPrcFileData("", line)
+
+                line = "show-toolbar {}\n".format("#f" if self.dlgSettings.cbShowToolbar["indicatorValue"] == 0 else "#t")
+                prcFile.write(line)
+                loadPrcFileData("", line)
+
+                prcFile.write("custom-widgets-path {}\n".format(self.dlgSettings.txtCustomWidgetsPath.get()))
+                for path in self.dlgSettings.txtSearchPaths.get().split(":"):
+                    line = "custom-model-path {}\n".format(path)
+                    prcFile.write(line)
+                    line = "model-path {}\n".format(path)
+                    loadPrcFileData("", line)
 
             # This somehow results in files that can't be changed by the code above anymore
             # So... no hidden config files for windows.
@@ -890,9 +967,13 @@ class DirectGuiDesigner(ShowBase):
 
 Note: If the grid is shown elements will automatically snap to it when moved
 
+Log messages are written to:
+
+\1small\1{}\2
+
 
 \1small\1LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button\2
-"""
+""".format(logfile)
         self.dlgHelp = OkDialog(
             text=text,
             state=DGG.NORMAL,

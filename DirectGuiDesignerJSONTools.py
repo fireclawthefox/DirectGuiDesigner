@@ -16,6 +16,9 @@ class DirectGuiDesignerJSONTools:
         "base":{"initialText":"get"},
         "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg"}}
 
+    subOptionMapping = {
+        "image":{"scale":"scale", "pos":"pos"}}
+
     specialPropMapping = {
         "align":{
             "0":"TextNode.A_left",
@@ -98,6 +101,9 @@ class DirectGuiDesignerJSONTools:
         elementJson = {}
 
         self.componentsList = {element:""}
+        # Check if the component has any sub-components assigned, e.g.
+        # component0_subcomp0_subsubcomp0
+        # we want    ^   and  ^
         for subcomponentName in element.components():
             self.__getAllSubcomponents(subcomponentName, element.component(subcomponentName), "")
 
@@ -128,7 +134,11 @@ class DirectGuiDesignerJSONTools:
                         if option in self.specialPropMapping.keys():
                             optionValue = self.specialPropMapping[option][optionValue]
                         elementJson[name + option] = optionValue
-
+            for key in self.subOptionMapping.keys():
+                if key in name:
+                    for option, value in self.subOptionMapping[key].items():
+                        optionValue = reprFunc(element[value])
+                        elementJson[name + option] = optionValue
             if not hasattr(element, "options"): continue
 
             for option in element.options():
@@ -183,6 +193,9 @@ class DirectGuiDesignerJSONTools:
                     if otherElement in elementNameDict:
                         others.append("{}".format(elementNameDict[otherElement]))
                 elementJson["others"] = others
+
+        # transparency attribute
+        elementJson["transparency"] = reprFunc(elementInfo.element.getTransparency())
 
         if hasError:
             base.messenger.send("showWarning", ["Saved Project with errors! See log for more information"])

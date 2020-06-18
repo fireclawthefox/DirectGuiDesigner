@@ -135,6 +135,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):
@@ -246,6 +247,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["uncheckedImage"] = True
         self.propertiesFrame.propertyList["checkedImage"] = True
         self.propertiesFrame.propertyList["isChecked"] = True
@@ -279,6 +281,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["boxBorder"] = True
         self.propertiesFrame.propertyList["boxPlacement"] = True
         self.propertiesFrame.propertyList["boxImage"] = True
@@ -314,6 +317,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["popupMarkerBorder"] = True
         self.propertiesFrame.propertyList["popupMarker_pos"] = True
         self.propertiesFrame.propertyList["popupMenuLocation"] = True
@@ -352,6 +356,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["boxBorder"] = True
         self.propertiesFrame.propertyList["boxPlacement"] = True
         self.propertiesFrame.propertyList["boxImage"] = True
@@ -390,6 +395,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
 
         self.propertiesFrame.propertyList["SB-range"] = True
         self.propertiesFrame.propertyList["value"] = True
@@ -426,6 +432,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["text"] = True
         self.propertiesFrame.propertyList["text_align"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["SB-range"] = True
         self.propertiesFrame.propertyList["value"] = True
         self.propertiesFrame.propertyList["scrollSize"] = True
@@ -526,6 +533,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         for key in self.propertiesFrame.propertyList.keys():
             if key.startswith("incButton") or key.startswith("decButton"):
                 self.propertiesFrame.propertyList[key] = True
@@ -561,6 +569,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Scrolled List Item Properties", element, elementDict)
 
     def createDirectLabel(self, parent=None):
@@ -589,6 +598,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Label Properties", element, elementDict)
 
     def createDirectWaitBar(self, parent=None):
@@ -617,6 +627,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["range"] = True
         self.propertiesFrame.propertyList["value"] = True
         self.propertiesFrame.propertyList["barBorderWidth"] = True
@@ -649,6 +660,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
     def createOkCancelDialog(self, parent=None):
@@ -676,6 +688,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
     def createYesNoDialog(self, parent=None):
@@ -702,6 +715,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Dialog Properties", element, elementDict)
 
     def createYesNoCancelDialog(self, parent=None):
@@ -726,6 +740,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
     def createRetryCancelDialog(self, parent=None):
@@ -752,6 +767,7 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
         self.propertiesFrame.propertyList["image"] = True
+        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 
     def createDirectFrame(self, parent=None):
