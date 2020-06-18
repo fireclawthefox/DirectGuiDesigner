@@ -9,11 +9,12 @@ A Visual Editor for Panda3Ds Direct GUI
 - GUI structure viewer
 - Save and load projects as json files
 - Export to python script for easy integration
+- Support for custom DirectGui like elements
 
 ## Screenshots
 
 ![Editor Window after startup](/Screenshots/startup.png?raw=true "The Editor")
-![Editor in use, creating a LogIn screen](/Screenshots/simpleGUI.png?raw=true "A simple LogIn screen made in the app")
+![Editor in use, creating a simple chat window](/Screenshots/simpleGUI.png?raw=true "A simple chat window made with the editor")
 ![Export a created GUI](/Screenshots/export.png?raw=true "Export as python script")
 
 ## Requirements
@@ -46,9 +47,17 @@ To save The designed GUI as a DirectGuiDesigner project, hit Ctrl-S or the respe
 This will save a Json file that can later be loaded by the designer again.
 
 To export as a python script that can directly be used in projects, either hit Ctrl-E or click the button in the toolbar.
+If enabled in the settings, the python exporter will create scripts that can directly be run.
 
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization. As you shouldn't edit the exported class due to edits being overwritten with a new export, you should create another python module which will handle the connection of the apps logic with the gui. This dedicated module could for example implement a show and hide method to easily change the visibility of the gui or set and gather values of the GUI without having to change the actual GUI design module code.
+
+Here is a small example of how to load and instantiate a GUI. We expect the gui to be exported to a file called myGui.py:
+<code>
+from myGui import GUI as MyGui
+myGui = MyGui()
+</code>
+
 
 ### Configuration
 To change configurations, simply use the editors settings dialog available through the menubar Tools>Options or the cogwheel in the toolbar.
@@ -61,6 +70,7 @@ These custom configuration variables have been introduced for the editor.
 |create-executable-scripts|bool|If set to True, the saved python scripts will contain everything to directly run. Defaults to False|
 |show-toolbar|bool|If set to True, the toolbar over the editor area will be shown, otherwise only the menubar will be displayed. Defaults to True|
 |custom-widgets-path|String|The path to a folder which will contain custom designed DirectGui widgets.|
+|custom-model-path|String|A path to a folder containing textures, models and other assets required by your gui. You cann add this property more than once and each line should only contain one path.|
 
 The Designer will create a hidden configuration file called .DirectGuiDesigner.prc in the users Home directory. It will contain all custom configurations from the list above with their default values and can be changed/extended with other Panda3D configurations.
 
@@ -112,9 +122,9 @@ The <code>customCommandName</code> a name of a function that will be available t
 |text|A String entry|
 |image|An image path selection|
 |bool|A Bolean selection|
-|orientation|An orientation (Horizontal|Vertical|Inverted Vertical) selection|
+|orientation|An orientation (Horizontal/Vertical/Inverted Vertical) selection|
 |relief|A selection for the relief value|
-|placement|A selection of top|left|right|bottom|
+|placement|A selection of top/left/right/bottom|
 |command|Used in combination with the customCommandName value to create a button that will call the command|
 
 ## Known Bugs and missing features
