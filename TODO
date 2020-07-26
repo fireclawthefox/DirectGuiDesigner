@@ -1,0 +1,20 @@
+TODO:
+
+Mixed size features:
+add further missing features to properties editor:
+-> Values for multiple states
+-> Geom property
+-> Make sure base gui item properties are available/enabled broadly
+
+Larger features:
+add copy/paste gui elements functionality
+add copy design to other elements functionality (similar to the clone formatting in LibreOffice)
+add multi-select functionality
+add undo/redo (kill-ring like in emacs?) functionality
+editor tabs to edit multiple GUIs at once
+add project file
+-> Store specific settings
+    -> Store workspace path
+    -> Store asset path
+    -> Store custom widget path
+-> Store opened GUIs
