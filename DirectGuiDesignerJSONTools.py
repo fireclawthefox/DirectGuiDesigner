@@ -36,6 +36,8 @@ class DirectGuiDesignerJSONTools:
     }
     ignoreFunction = ["state", "width"]
     ignoreOptions = ["guiId", "enableEdit"]
+    ignoreOptionsWithSub = ["item_", "item0_"]
+    keepExactIgnoreOptionsWithSub = ["item_text"]
     ignoreRepr = ["command"]
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth"]
@@ -143,6 +145,15 @@ class DirectGuiDesignerJSONTools:
 
             for option in element.options():
                 if option[DGG._OPT_DEFAULT] in self.ignoreOptions: continue
+
+                containsIgnore = False
+                for ignoreOption in self.ignoreOptionsWithSub:
+                    if option[DGG._OPT_DEFAULT] in self.keepExactIgnoreOptionsWithSub: continue
+                    if option[DGG._OPT_DEFAULT].startswith(ignoreOption):
+                        containsIgnore
+                        break
+                if containsIgnore: continue
+
                 if elementInfo.type in self.ignoreMapping:
                     if name + option[DGG._OPT_DEFAULT] in self.ignoreMapping[elementInfo.type]:
                         continue

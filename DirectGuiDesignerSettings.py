@@ -19,7 +19,7 @@ from panda3d.core import (
 
 class GUI:
     def __init__(self, rootParent=None):
-
+        
         self.frmMain = DirectFrame(
             borderWidth=(2, 2),
             frameColor=(1, 1, 1, 1),
@@ -268,7 +268,7 @@ class GUI:
             borderWidth=(2, 2),
             frameColor=(0.8, 0.8, 0.8, 0.0),
             hpr=LVecBase3f(0, 0, 0),
-            pos=LPoint3f(-260, 0, -40),
+            pos=LPoint3f(-260, 0, -45),
             scale=LVecBase3f(1, 1, 1),
             text='Search paths',
             text_align=TextNode.A_left,
@@ -314,6 +314,56 @@ class GUI:
         )
         self.btnBrowseSearchPaths.setTransparency(0)
 
+        self.lblWorkDir = DirectLabel(
+            borderWidth=(2, 2),
+            frameColor=(0.8, 0.8, 0.8, 0.0),
+            hpr=LVecBase3f(0, 0, 0),
+            pos=LPoint3f(-260, 0, -95),
+            scale=LVecBase3f(1, 1, 1),
+            text='Default work directory',
+            text_align=TextNode.A_left,
+            text_scale=(12.0, 12.0),
+            text_pos=(0, 0),
+            text_fg=LVecBase4f(0, 0, 0, 1),
+            text_bg=LVecBase4f(0, 0, 0, 0),
+            parent=self.frmMain,
+        )
+        self.lblWorkDir.setTransparency(0)
+
+        self.txtWorkDir = DirectEntry(
+            borderWidth=(0.08333333333333333, 0.08333333333333333),
+            hpr=LVecBase3f(0, 0, 0),
+            overflow=1,
+            pos=LPoint3f(-50, 0, -95),
+            scale=LVecBase3f(12, 1, 12),
+            width=18.0,
+            text_align=TextNode.A_left,
+            text_scale=(1, 1),
+            text_pos=(0, 0),
+            text_fg=LVecBase4f(0, 0, 0, 1),
+            text_bg=LVecBase4f(0, 0, 0, 0),
+            parent=self.frmMain,
+        )
+        self.txtWorkDir.setTransparency(0)
+
+        self.btnBrowseWorkDir = DirectButton(
+            borderWidth=(2, 2),
+            frameSize=(-45.25, 45.25, -6.0, 14.0),
+            hpr=LVecBase3f(0, 0, 0),
+            pos=LPoint3f(230, 0, -95),
+            relief=1,
+            scale=LVecBase3f(1, 1, 1),
+            text='Browse',
+            text_align=TextNode.A_center,
+            text_scale=(12.0, 12.0),
+            text_pos=(0, 0),
+            text_fg=LVecBase4f(0, 0, 0, 1),
+            text_bg=LVecBase4f(0, 0, 0, 0),
+            parent=self.frmMain,
+            pressEffect=1,
+        )
+        self.btnBrowseWorkDir.setTransparency(0)
+
 
     def show(self):
         self.frmMain.show()
@@ -321,5 +371,5 @@ class GUI:
     def hide(self):
         self.frmMain.hide()
 
-    def delete(self):
-        self.frmMain.delete()
+    def destroy(self):
+        self.frmMain.destroy()

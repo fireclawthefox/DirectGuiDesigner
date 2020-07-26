@@ -8,7 +8,16 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 
 import logging, sys
 
-from panda3d.core import VBase4, TextNode, Point3, TextProperties, TransparencyAttrib, PGButton, MouseButton, NodePath
+from panda3d.core import (
+    VBase4,
+    TextNode,
+    Point3,
+    TextProperties,
+    TransparencyAttrib,
+    PGButton,
+    MouseButton,
+    NodePath,
+    ConfigVariableString)
 
 from direct.gui import DirectGuiGlobals as DGG
 DGG.BELOW = "below"
@@ -59,6 +68,9 @@ class DirectGuiDesignerProperties():
         "state":False, # option menu
 
         "command":False, # text
+
+        # Button specific
+        "pressEffect":False, # bool
 
         # Entry specific
         "initialText":False, # text
@@ -270,7 +282,7 @@ class DirectGuiDesignerProperties():
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
-        trueValues = ["name", "parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency", "state"]
+        trueValues = ["name", "parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency", "state","image"]
         for value in trueValues:
             self.propertyList[value] = True
 
@@ -391,6 +403,18 @@ class DirectGuiDesignerProperties():
                 def update(selection):
                     element["state"] = selection
                 self.__createOptionMenuProperty("State", self.startPos, propFrame, elementInfo, [DGG.NORMAL, DGG.DISABLED], element["state"], update)
+                self.moveNext()
+
+            #
+            # Button specific
+            #
+            for prop in ["pressEffect"]:
+                if self.propertyList[prop]:
+                    self.__createInbetweenHeader("Button Properties", self.startPos, propFrame)
+                    break
+            if self.propertyList["pressEffect"]:
+                #TODO: The pressEffect is currently not changeable after initialization!
+                self.__createPressEffectProperty("Show press effect", self.startPos, propFrame, elementInfo)
                 self.moveNext()
 
             #
@@ -1152,6 +1176,26 @@ class DirectGuiDesignerProperties():
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
+    def __createPressEffectProperty(self, description, startPos, parent, elementInfo):
+        def update(value):
+            base.messenger.send("setDirtyFlag")
+            elementInfo.extraOptions["pressEffect"] = value
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader("pressEffect", z, parent)
+        z = startPos.getZ()
+        value = elementInfo.extraOptions["pressEffect"] if "pressEffect" in elementInfo.extraOptions else 1
+        btn = DirectCheckButton(
+            pos=(x+10, 0, z),
+            indicatorValue=value,
+            boxPlacement="right",
+            scale=12,
+            text_align=TextNode.ALeft,
+            command=update,
+            parent=parent)
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
     def __createImageProperty(self, description, startPos, parent, updateElement, updateAttribute="image"):
         def update(text):
             base.messenger.send("setDirtyFlag")
@@ -1169,7 +1213,7 @@ class DirectGuiDesignerProperties():
                 setImage(self.browser.get())
             self.browser.hide()
         def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, "~", "", self.tooltip)
+            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, ConfigVariableString("work-dir-path", "~").getValue(), "", self.tooltip)
             self.browser.show()
         x = startPos.getX()
         z = startPos.getZ()

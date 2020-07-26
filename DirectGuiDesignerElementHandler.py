@@ -127,6 +127,7 @@ class DirectGuiDesignerElementHandler:
                 borderWidth=(2, 2),
                 scale=1)
         elementInfo = ElementInfo(element, "DirectButton")
+        elementInfo.extraOptions["pressEffect"] = element["pressEffect"]
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -134,8 +135,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
         self.propertiesFrame.propertyList["image_scale"] = True
+        self.propertiesFrame.propertyList["pressEffect"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):

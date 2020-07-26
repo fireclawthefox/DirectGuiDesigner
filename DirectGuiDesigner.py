@@ -109,7 +109,7 @@ class DirectGuiDesigner(ShowBase):
 
         self.dirty = False
 
-        self.lastDirPath = "~"
+        self.lastDirPath = ConfigVariableString("work-dir-path", "~").getValue()
         self.lastFileNameWOExtension = "export"
 
         wp = WindowProperties()
@@ -839,6 +839,7 @@ class DirectGuiDesigner(ShowBase):
         self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
         self.dlgSettings.cbShowToolbar["indicatorValue"] = ConfigVariableBool("show-toolbar", True).getValue()
         self.dlgSettings.txtCustomWidgetsPath.enterText(ConfigVariableString("custom-widgets-path", "").getValue())
+        self.dlgSettings.txtWorkDir.enterText(ConfigVariableString("work-dir-path", "").getValue())
 
         paths = ""
         pathsConfig = ConfigVariableSearchPath("custom-model-path", "").getValue()
@@ -871,6 +872,16 @@ class DirectGuiDesigner(ShowBase):
             self.browser.show()
         self.dlgSettings.btnBrowseSearchPaths["command"] = showSearchPathBrowser
 
+        def selectWorkDirPath(confirm):
+            if confirm:
+                self.dlgSettings.txtWorkDir.enterText(self.browser.get())
+            self.browser.hide()
+            self.browser = None
+        def showWorkDirBrowser():
+            self.browser = DirectGuiDesignerFileBrowser(selectWorkDirPath, False, ConfigVariableString("work-dir-path", "").getValue(), os.path.split(ConfigVariableString("work-dir-path", "").getValue())[1], self.tt)
+            self.browser.show()
+        self.dlgSettings.btnBrowseWorkDir["command"] = showWorkDirBrowser
+
         self.openDialogCloseFunctions.append(self.hideSettings)
 
     def hideSettings(self, accept):
@@ -895,6 +906,8 @@ class DirectGuiDesigner(ShowBase):
                     prcFile.write(line)
                     line = "model-path {}\n".format(path)
                     loadPrcFileData("", line)
+
+                prcFile.write("work-dir-path {}\n".format(self.dlgSettings.txtWorkDir.get()))
 
             # This somehow results in files that can't be changed by the code above anymore
             # So... no hidden config files for windows.

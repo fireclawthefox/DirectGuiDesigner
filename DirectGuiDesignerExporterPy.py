@@ -136,9 +136,9 @@ class GUI:
                 self.content += " "*8 + "self.{}.hide()\n".format(name)
 
             self.content += "\n"
-            self.content += " "*4 + "def delete(self):\n"
+            self.content += " "*4 + "def destroy(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.delete()\n".format(name)
+                self.content += " "*8 + "self.{}.destroy()\n".format(name)
 
         # Make script executable if desired
         if ConfigVariableBool("create-executable-scripts", False).getValue():
