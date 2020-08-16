@@ -59,13 +59,11 @@ myGui = MyGui()
 
 In a real world application you may want to create a handler class around your GUI class to cleanely abstract your data from the view. A simple example of such a class could look like the following.
 <code><pre>from myGui import GUI as MyGui
-
 class MyGuiHandler(MyGui):
-    def __init__(self):
-        MyGui.__init__(self)
-
-    def setData(self, someData):
-        self.someElemnt["text"] = someData.text
+&emsp;&emsp;&emsp;&emsp;def \_\_init\_\_(self):
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MyGui.\_\_init\_\_(self)
+&emsp;&emsp;&emsp;&emsp;def setData(self, someData):
+&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;self.someElemnt["text"] = someData.text
 </pre></code>
 
 
