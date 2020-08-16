@@ -152,6 +152,8 @@ class DirectGuiDesigner(ShowBase):
 
         self.openDialogCloseFunctions = []
 
+        self.copyOptionsElement = None
+
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
         taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
@@ -211,6 +213,10 @@ class DirectGuiDesigner(ShowBase):
         self.accept("refreshStructureTree", self.__refreshStructureTree)
         self.accept("selectElement", self.selectElement)
         self.accept("removeElement", self.removeElement)
+        self.accept("copyOptions", self.copyOptions)
+        self.accept("pasteOptions", self.pasteOptions)
+        self.accept("copyElement", self.copyElement)
+        self.accept("pasteElement", self.pasteElement)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
         self.accept("toggleGrid", self.editorFrame.toggleGrid)
@@ -315,6 +321,10 @@ class DirectGuiDesigner(ShowBase):
         self.accept("control-e", self.export)
         self.accept("control-o", self.load)
         self.accept("control-q", self.quitApp)
+        self.accept("control-c", self.copyElement)
+        self.accept("control-v", self.pasteElement)
+        self.accept("shift-control-c", self.copyOptions)
+        self.accept("shift-control-v", self.pasteOptions)
         self.accept("delete", self.removeElement)
         self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
         self.accept("control-h", self.toggleElementVisibility)
@@ -358,6 +368,10 @@ class DirectGuiDesigner(ShowBase):
         self.ignore("control-e")
         self.ignore("control-o")
         self.ignore("control-q")
+        self.ignore("control-c")
+        self.ignore("control-v")
+        self.ignore("shift-control-c")
+        self.ignore("shift-control-v")
         self.ignore("delete")
         self.ignore("control-g")
         self.ignore("control-h")
@@ -482,6 +496,8 @@ class DirectGuiDesigner(ShowBase):
             self.elementDict[elementInfo.element.guiId] = elementInfo
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
+
+        return elementInfo
 
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
@@ -618,6 +634,7 @@ class DirectGuiDesigner(ShowBase):
                 selectEditor = True
                 self.selectedElement = None
         elif self.selectedElement is not None:
+            taskMgr.remove("dragDropTask")
             selectEditor = True
             workOn = self.selectedElement.element
             self.selectedElement = None
@@ -721,6 +738,69 @@ class DirectGuiDesigner(ShowBase):
                 # This happens for elements that have a canvas or other sub NPs
                 parentElement = self.__findFirstGUIElement(parent)
             self.elementDict[element.guiId].parent = parentElement
+
+    def copyElement(self):
+        if self.selectedElement is None: return
+        self.copiedElement = self.selectedElement
+
+    def pasteElement(self):
+        if self.copiedElement is None: return
+        self.copyCreatedElementIds = []
+        self.__copyBranch(self.copiedElement, self.selectedElement)
+
+    def __copyBranch(self, startObject, parent=None):
+        if startObject == parent: return
+        for elementName, elementInfo in self.elementDict.copy().items():
+            if elementInfo.element.guiId in self.copyCreatedElementIds: continue
+            if elementInfo.parent == startObject or elementInfo == startObject:
+                newElement = self.__createControl(elementInfo.type)
+                if type(newElement) is tuple:
+                    newElement = newElement[0]
+                self.copyCreatedElementIds.append(elementInfo.element.guiId)
+                if parent is not None:
+                    newParent = self.getEditorRootCanvas().find("**/{}".format(parent.getName()))
+                    self.setParentOfElement(newElement.element, newParent)
+                    newElement.element.reparentTo(newParent)
+                self.__copyOptions(elementInfo.element, newElement.element, parent is not None)
+
+                self.__copyBranch(elementInfo, newElement.element)
+
+    def copyOptions(self):
+        if self.selectedElement is None: return
+        self.copyOptionsElement = self.selectedElement.element
+        print(self.copyOptionsElement)
+
+    def pasteOptions(self):
+        if self.copyOptionsElement is None: return
+        self.__copyOptions(self.copyOptionsElement, self.selectedElement.element)
+
+    def __copyOptions(self, elementFrom, elementTo, copyPosition=False):
+        if elementFrom is None or elementTo is None: return
+        try:
+            text = elementTo["text"]
+            text_fg = None
+            for compName in elementFrom.components():
+                comp = elementFrom.component(compName)
+                if hasattr(comp, "fg"):
+                    text_fg = comp.fg
+                    break
+
+            hpr = elementFrom.getHpr()
+            scale = elementFrom.getScale()
+            if copyPosition:
+                pos = elementFrom.getPos()
+            elementTo.copyOptions(elementFrom)
+            elementTo["text"] = text
+            if text_fg is not None:
+                elementTo["text_fg"] = text_fg
+            elementTo.setHpr(hpr)
+            elementTo.setScale(scale)
+            if copyPosition:
+                elementTo.setPos(pos)
+        except Exception as e:
+            logging.error("Couldn't copy element options")
+            logging.exception(e)
+            base.messenger.send("showWarning", ["Couldn't copy element options"])
 
     def new(self):
         if self.dirty:
@@ -970,6 +1050,10 @@ class DirectGuiDesigner(ShowBase):
 \1bold\1Ctrl-E  \2 - Export as Python File
 \1bold\1Ctrl-O  \2 - Load Project File
 \1bold\1Ctrl-Q  \2 - Quit Application
+\1bold\1Ctrl-C  \2 - Copy selected Element
+\1bold\1Ctrl-V  \2 - Paste copied Element
+\1bold\1Ctrl-Shift-C\2 - Copy selected Elements settings
+\1bold\1Ctrl-Shift-V\2 - Paste copied Element settings to selected element
 \1bold\1Ctrl-Del\2 - Delete selected Element
 \1bold\1Ctrl-H  \2 - Toggle selected Element visibility
 \1bold\1Ctrl-G  \2 - Toggle grid and snap to grid

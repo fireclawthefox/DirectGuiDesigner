@@ -5,10 +5,10 @@ add further missing features to properties editor:
 -> Values for multiple states
 -> Geom property
 -> Make sure base gui item properties are available/enabled broadly
+-> Missing properties for button, entries and text
+-> Make text entry for texts multiline
 
 Larger features:
-add copy/paste gui elements functionality
-add copy design to other elements functionality (similar to the clone formatting in LibreOffice)
 add multi-select functionality
 add undo/redo (kill-ring like in emacs?) functionality
 editor tabs to edit multiple GUIs at once

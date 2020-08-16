@@ -85,7 +85,7 @@ class DirectGuiDesignerMenuBar(DirectObject):
         self.tools = DirectOptionMenu(
             text_fg=(1,1,1,1),
             text_scale=0.8,
-            items=["Delete Element", "Options", "Help"],
+            items=["Delete Element", "Copy", "Paste", "Copy options", "Paste options", "Options", "Help"],
             pos=(x, 0, -5),
             frameSize=(0,65/21,-7/21,17/21),
             frameColor=color,
@@ -314,6 +314,14 @@ class DirectGuiDesignerMenuBar(DirectObject):
             base.messenger.send("removeElement")
         elif selection == "Options":
             base.messenger.send("showSettings")
+        elif selection == "Copy":
+            base.messenger.send("copyElement")
+        elif selection == "Paste":
+            base.messenger.send("pasteElement")
+        elif selection == "Copy options":
+            base.messenger.send("copyOptions")
+        elif selection == "Paste options":
+            base.messenger.send("pasteOptions")
         elif selection == "Help":
             base.messenger.send("showHelp")
 
