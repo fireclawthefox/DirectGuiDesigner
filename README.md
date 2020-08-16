@@ -57,6 +57,17 @@ Here is a small example of how to load and instantiate a GUI. We expect the gui 
 myGui = MyGui()
 </pre></code>
 
+In a real world application you may want to create a handler class around your GUI class to cleanely abstract your data from the view. A simple example of such a class could look like the following.
+<code><pre>from myGui import GUI as MyGui
+
+class MyGuiHandler(MyGui):
+    def __init__(self):
+        MyGui.__init__(self)
+
+    def setData(self, someData):
+        self.someElemnt["text"] = someData.text
+</pre></code>
+
 
 ### Configuration
 To change configurations, simply use the editors settings dialog available through the menubar Tools>Options or the cogwheel in the toolbar.
