@@ -135,7 +135,6 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.defaultPropertySelection()
         self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.propertyList["pressEffect"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
@@ -795,6 +794,10 @@ class DirectGuiDesignerElementHandler:
 
     def propertiesDirectFrame(self, element, elementDict):
         self.propertiesFrame.defaultPropertySelection()
+        if element.element['text'] == None:
+            self.propertiesFrame.propertyList["text"] = True
+        else:
+            self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.setupProperties("Frame Properties", element, elementDict)
 
     def createDirectScrolledFrame(self, parent=None):

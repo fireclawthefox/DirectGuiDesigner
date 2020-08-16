@@ -282,7 +282,9 @@ class DirectGuiDesignerProperties():
 
     def defaultPropertySelection(self):
         self.clearPropertySelection()
-        trueValues = ["name", "parent","relief","borderWidth","frameSize","frameColor","pad","pos","hpr","scale", "sortOrder", "enableTransparency", "state","image"]
+        trueValues = ["name", "parent", "relief", "borderWidth", "frameSize",
+            "frameColor", "pad", "pos", "hpr", "scale", "sortOrder",
+            "enableTransparency", "state", "image", "image_scale"]
         for value in trueValues:
             self.propertyList[value] = True
 
