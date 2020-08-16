@@ -233,10 +233,15 @@ class DirectGuiDesignerLoaderProject(DirectObject):
                         found = True
                 if len(components) > 1 and not found:
                     componentName = components[0]
-                    component = elementInfo.element.component(componentName)
-                    optionName = components[-1]
-                    #TODO: We may need to call __setProp recursively to go thru all sub components
-                    self.__setPropValue(optionName, component, value)
+                    if elementInfo.element.hascomponent(componentName):
+                        component = elementInfo.element.component(componentName)
+                        optionName = components[-1]
+                        self.__setPropValue(optionName, component, value)
+                    else:
+                        try:
+                            self.__setPropValue(name, elementInfo.element, value)
+                        except Exception as e:
+                            logging.exception("Unsupported Property or item {}".format(name))
                 else:
                     self.__setPropValue(name, elementInfo.element, value)
         except Exception as e:

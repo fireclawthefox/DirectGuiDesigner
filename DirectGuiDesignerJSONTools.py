@@ -50,13 +50,25 @@ class DirectGuiDesignerJSONTools:
         jsonElements["EditorConfig"]["usePixel2D"] = usePixel2D
         jsonElements["EditorConfig"]["canvasSize"] = repr(getEditorFrame()["canvasSize"])
         jsonElements["ComponentList"] = {}
-        for name, elementInfo in self.guiElementsDict.items():
-            try:
-                jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
-            except Exception as e:
-                logging.exception("error while writing {}:".format(elementInfo.name))
-                base.messenger.send("showWarning", ["error while writing {}:".format(elementInfo.name)])
+
+        self.writeSortedContent(None, jsonElements)
+
         return jsonElements
+
+    def writeSortedContent(self, root, jsonElements):
+        """To have everything in the right order, we're going to go through all
+        elements here and add them from top to bottom, first the parents, then
+        respectively their children."""
+        print("Looking for Root:", root)
+        for name, elementInfo in self.guiElementsDict.items():
+            print("CHECK IF CHILD", elementInfo.name, elementInfo.parent)
+            if elementInfo.parent == root:
+                try:
+                    jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
+                except Exception as e:
+                    logging.exception("error while writing {}:".format(elementInfo.name))
+                    base.messenger.send("showWarning", ["error while writing {}:".format(elementInfo.name)])
+                self.writeSortedContent(elementInfo, jsonElements)
 
     def __createJSONEntry(self, elementInfo):
         return {
