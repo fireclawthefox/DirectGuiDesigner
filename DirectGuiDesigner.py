@@ -57,12 +57,11 @@ from DirectGuiDesignerTooltip import Tooltip
 loadPrcFileData(
     "",
     """
-    #win-size 1920 1080
     textures-power-2 none
-    #fullscreen #f
     window-title DirectGUI Designer
     #show-frame-rate-meter #t
     #want-pstats #t
+    maximized #t
     """)
 
 # check if we have a config file
@@ -758,7 +757,11 @@ class DirectGuiDesigner(ShowBase):
                     newElement = newElement[0]
                 self.copyCreatedElementIds.append(elementInfo.element.guiId)
                 if parent is not None:
-                    newParent = self.getEditorRootCanvas().find("**/{}".format(parent.getName()))
+                    newParent = None
+                    if type(parent) is ElementInfo:
+                        newParent = self.getEditorRootCanvas().find("**/{}".format(parent.element.getName()))
+                    else:
+                        newParent = self.getEditorRootCanvas().find("**/{}".format(parent.getName()))
                     self.setParentOfElement(newElement.element, newParent)
                     newElement.element.reparentTo(newParent)
                 self.__copyOptions(elementInfo.element, newElement.element, parent is not None)
