@@ -61,6 +61,7 @@ class DirectGuiDesignerProperties():
         "text_pos":False, # base3
         "text_fg":False, # base4
         "text_bg":False, # base4
+        "text_wordwrap":False, # float
         "image":False, # text
         "image_scale":False, # base3
         "sortOrder":False, # int
@@ -353,6 +354,9 @@ class DirectGuiDesignerProperties():
                 self.moveNext()
             if self.propertyList["text_pos"]:
                 self.__createBase2Input("Text Position (X/Y)", self.startPos, propFrame, element, "text_pos")
+                self.moveNext()
+            if self.propertyList["text_wordwrap"]:
+                self.__createFloatInput("Word wrap", self.startPos, propFrame, element, "text_wordwrap")
                 self.moveNext()
             if self.propertyList["relief"]:
                 self.__createReliefProperty("Relief", self.startPos, propFrame, element)

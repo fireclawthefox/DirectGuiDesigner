@@ -14,7 +14,7 @@ from panda3d.core import NodePath
 class DirectGuiDesignerJSONTools:
     functionMapping = {
         "base":{"initialText":"get"},
-        "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg"}}
+        "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}}
 
     subOptionMapping = {
         "image":{"scale":"scale", "pos":"pos"}}
