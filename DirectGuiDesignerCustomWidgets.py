@@ -34,10 +34,10 @@ class DirectGuiDesignerCustomWidgets():
         path = ConfigVariableString("custom-widgets-path", "").getValue()
         if path == "": return
         if not os.path.exists(path):
-            if path != "":
-                logging.error("custom widgets path doesn't exist!")
-                return
+            logging.error("custom widgets path doesn't exist!")
+            return
 
+        # get a list of all .widget files
         configFiles = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")]
 
         for configFile in configFiles:
@@ -46,7 +46,7 @@ class DirectGuiDesignerCustomWidgets():
                 configFileContent = json.load(infile)
             if configFileContent is None:
                 logging.error("Problems reading widget config file: {}".format(infile))
-                return
+                continue
             pythonFilePath = os.path.join(path, configFileContent["classfilePath"])
             spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
             module = importlib.util.module_from_spec(spec)

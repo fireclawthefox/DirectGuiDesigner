@@ -256,7 +256,7 @@ class DirectGuiDesigner(ShowBase):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
-            projectLoader = DirectGuiDesignerLoaderProject(self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
+            projectLoader = DirectGuiDesignerLoaderProject(tmpPath, self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
             base.messenger.send("setDirtyFlag")
@@ -298,7 +298,7 @@ class DirectGuiDesigner(ShowBase):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
         print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
 
-        DirectGuiDesignerExporterProject(self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
+        DirectGuiDesignerExporterProject("", self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
     def inteligentEscape(self):
         dlgList = [self.dlgHelp, self.dlgSettings, self.dlgQuit, self.dlgWarning, self.dlgInfo, self.dlgNewProject]
@@ -652,10 +652,11 @@ class DirectGuiDesigner(ShowBase):
                 and (self.elementDict[name].parent.getName() if hasattr(self.elementDict[name].parent, "getName") else self.elementDict[name].parent.name) not in self.canvasParents \
                 and self.elementDict[name].parent.type == "DirectScrolledList":
                     self.elementDict[name].parent.element.removeItem(workOn)
-                widget = None
-                if hasattr(self.customWidgetsHandler.getWidget(self.elementDict[name].parent), "type"):
-                    widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type if self.elementDict[name].parent is not None else "")
-                if widget is not None:
+
+                # Check if our parent is a custom widget
+                if self.elementDict[name].parent is not None \
+                and self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type) is not None:
+                    widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type)
                     if widget.removeItemFunction is not None:
                         # call custom widget remove function
                         getattr(self.elementDict[name].parent.element, widget.removeItemFunction)(workOn)
