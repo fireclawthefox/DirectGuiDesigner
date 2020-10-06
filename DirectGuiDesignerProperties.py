@@ -98,16 +98,22 @@ class DirectGuiDesignerProperties():
         "incButton_scale":False,
         "incButton_frameColor":False,
         "incButton_frameSize":False,
+        "incButton_image":False,
+        "incButton_image_scale":False,
         "decButton_pos":False,
         "decButton_hpr":False,
         "decButton_scale":False,
         "decButton_frameColor":False,
         "decButton_frameSize":False,
+        "decButton_image":False,
+        "decButton_image_scale":False,
         "thumb_pos":False,
         "thumb_hpr":False,
         "thumb_scale":False,
         "thumb_frameColor":False,
         "thumb_frameSize":False,
+        "thumb_image":False,
+        "thumb_image_scale":False,
 
         # CheckButton specific
         "boxBorder":False,
@@ -514,6 +520,12 @@ class DirectGuiDesignerProperties():
                 self.__createResetFramesize(self.startPos, propFrame, incBtn)
                 self.startPos.setZ(self.startPos.getZ() - 30)
                 self.frameSize += 30
+            if self.propertyList["incButton_image"]:
+                self.__createImageProperty("incButton Image", self.startPos, propFrame, element, "incButton_image")
+                self.moveNext()
+            if self.propertyList["incButton_image_scale"]:
+                self.__createBase3Input("incButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "incButton_image_scale")
+                self.moveNext()
 
             for key in self.propertyList.keys():
                 if key.startswith("decButton") and self.propertyList[key]:
@@ -538,6 +550,12 @@ class DirectGuiDesignerProperties():
                 self.__createResetFramesize(self.startPos, propFrame, decBtn)
                 self.startPos.setZ(self.startPos.getZ() - 30)
                 self.frameSize += 30
+            if self.propertyList["decButton_image"]:
+                self.__createImageProperty("decButton Image", self.startPos, propFrame, element, "decButton_image")
+                self.moveNext()
+            if self.propertyList["decButton_image_scale"]:
+                self.__createBase3Input("decButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "decButton_image_scale")
+                self.moveNext()
 
             for key in self.propertyList.keys():
                 if key.startswith("thumb") and self.propertyList[key]:
@@ -562,6 +580,12 @@ class DirectGuiDesignerProperties():
                 self.__createResetFramesize(self.startPos, propFrame, decBtn)
                 self.startPos.setZ(self.startPos.getZ() - 30)
                 self.frameSize += 30
+            if self.propertyList["thumb_image"]:
+                self.__createImageProperty("thumb Image", self.startPos, propFrame, element, "thumb_image")
+                self.moveNext()
+            if self.propertyList["thumb_image_scale"]:
+                self.__createBase3Input("thumb Image Scale (X/Y/Z)", self.startPos, propFrame, element, "thumb_image_scale")
+                self.moveNext()
 
             #
             # CheckButton specific
@@ -959,7 +983,7 @@ class DirectGuiDesignerProperties():
             v = self.__getValues(updateElement, updateAttribute)
             if v is not None:
                 valueA, valueB, valueC = v
-        elif "image_" in updateAttribute:
+        elif updateAttribute.startswith("image_"):
             parts = updateAttribute.split("_")
             if updateElement[parts[0]] is not None:
                 valueA = updateElement[updateAttribute][0]

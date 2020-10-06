@@ -39,6 +39,8 @@ class ElementInfo:
 
         # Name of the element type
         self.type = elementType
+
+        # Visible Name (Node-Name) of the element
         if name is not None:
             self.name = name
         else:
@@ -408,6 +410,8 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["thumb_scale"] = True
         self.propertiesFrame.propertyList["thumb_frameColor"] = True
         self.propertiesFrame.propertyList["thumb_frameSize"] = True
+        self.propertiesFrame.propertyList["thumb_image"] = True
+        self.propertiesFrame.propertyList["thumb_image_scale"] = True
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
@@ -446,18 +450,24 @@ class DirectGuiDesignerElementHandler:
         self.propertiesFrame.propertyList["incButton_scale"] = True
         self.propertiesFrame.propertyList["incButton_frameColor"] = True
         self.propertiesFrame.propertyList["incButton_frameSize"] = True
+        self.propertiesFrame.propertyList["incButton_image"] = True
+        self.propertiesFrame.propertyList["incButton_image_scale"] = True
 
         self.propertiesFrame.propertyList["decButton_pos"] = True
         self.propertiesFrame.propertyList["decButton_hpr"] = True
         self.propertiesFrame.propertyList["decButton_scale"] = True
         self.propertiesFrame.propertyList["decButton_frameColor"] = True
         self.propertiesFrame.propertyList["decButton_frameSize"] = True
+        self.propertiesFrame.propertyList["decButton_image"] = True
+        self.propertiesFrame.propertyList["decButton_image_scale"] = True
 
         self.propertiesFrame.propertyList["thumb_pos"] = True
         self.propertiesFrame.propertyList["thumb_hpr"] = True
         self.propertiesFrame.propertyList["thumb_scale"] = True
         self.propertiesFrame.propertyList["thumb_frameColor"] = True
         self.propertiesFrame.propertyList["thumb_frameSize"] = True
+        self.propertiesFrame.propertyList["thumb_image"] = True
+        self.propertiesFrame.propertyList["thumb_image_scale"] = True
 
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
