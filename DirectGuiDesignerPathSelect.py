@@ -16,7 +16,7 @@ from panda3d.core import (
     LVecBase3f
 )
 
-from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 class DirectGuiDesignerPathSelect(DirectObject):
     def __init__(self, command, headerText, actionText, affirmText, filePath, tooltip):
@@ -90,7 +90,7 @@ class DirectGuiDesignerPathSelect(DirectObject):
             text_scale=12,
             command=self.browse,
         )
-        self.browser = DirectGuiDesignerFileBrowser(self.selectPath, True, os.path.dirname(filePath), os.path.split(filePath)[1], tooltip)
+        self.browser = DirectFolderBrowser(self.selectPath, True, os.path.dirname(filePath), os.path.split(filePath)[1], tooltip=tooltip)
         self.browser.hide()
 
         # Command Buttons

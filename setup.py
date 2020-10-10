@@ -24,6 +24,13 @@ setup(
                 #"macosx_10_6_x86_64",
                 #"win_amd64",
             ],
+
+            # make sure to contain the icon directory of the browser
+            "package_data_dirs": {
+                "DirectFolderBrowser": [
+                    ("DirectFolderBrowser/icons*", "", {}),
+                ],
+            },
         }
     }
 )

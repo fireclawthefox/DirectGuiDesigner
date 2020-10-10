@@ -49,7 +49,8 @@ from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
 from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
 from DirectGuiDesignerSettings import GUI as DirectGuiDesignerSettings
 from DirectGuiDesignerCustomWidgets import DirectGuiDesignerCustomWidgets
-from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 from DirectGuiDesignerTooltip import Tooltip
 
@@ -66,14 +67,35 @@ loadPrcFileData(
 
 # check if we have a config file
 home = os.path.expanduser("~")
+basePath = os.path.join(home, ".DirectGuiDesigner")
+if not os.path.exists(basePath):
+    os.makedirs(basePath)
+logPath = os.path.join(basePath, "logs")
+if not os.path.exists(logPath):
+    os.makedirs(logPath)
 
 
-logfile = os.path.join(home, "DirectGuiDesigner.log")
+# START Move old config and log files to the new folders
+# NOTE: This should be removed in a later version
+import shutil
+oldConfig = os.path.join(home, ".DirectGuiDesigner.prc")
+if os.path.exists(oldConfig):
+    shutil.move(oldConfig, os.path.join(basePath, ".DirectGuiDesigner.prc"))
+logfiles = []
+for f in os.listdir(home):
+    if os.path.isfile(os.path.join(home, f)) and f.startswith("DirectGuiDesigner.log"):
+        logfiles.append(f)
+for f in logfiles:
+    shutil.move(os.path.join(home, f), os.path.join(logPath, f))
+# END Move old files
+
+
+logfile = os.path.join(logPath, "DirectGuiDesigner.log")
 handler = TimedRotatingFileHandler(logfile)
 logging.basicConfig(
     level=logging.DEBUG,
     handlers=[handler])
-prcFileName = os.path.join(home, ".DirectGuiDesigner.prc")
+prcFileName = os.path.join(basePath, ".DirectGuiDesigner.prc")
 if os.path.exists(prcFileName):
     loadPrcFile(Filename.fromOsSpecific(prcFileName))
 
@@ -941,7 +963,7 @@ class DirectGuiDesigner(ShowBase):
             self.browser.hide()
             self.browser = None
         def showWidgetsBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectWidgetsPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), os.path.split(ConfigVariableString("custom-widgets-path", "").getValue())[1], self.tt)
+            self.browser = DirectFolderBrowser(selectWidgetsPath, False, ConfigVariableString("custom-widgets-path", "").getValue(), os.path.split(ConfigVariableString("custom-widgets-path", "").getValue())[1], tooltip=self.tt)
             self.browser.show()
         self.dlgSettings.btnBrowseWidgetPath["command"] = showWidgetsBrowser
 
@@ -952,7 +974,7 @@ class DirectGuiDesigner(ShowBase):
             self.browser.hide()
             self.browser = None
         def showSearchPathBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(addSearchPath, False, tooltip=self.tt)
+            self.browser = DirectFolderBrowser(addSearchPath, False, tooltip=self.tt)
             self.browser.show()
         self.dlgSettings.btnBrowseSearchPaths["command"] = showSearchPathBrowser
 
@@ -962,7 +984,7 @@ class DirectGuiDesigner(ShowBase):
             self.browser.hide()
             self.browser = None
         def showWorkDirBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectWorkDirPath, False, ConfigVariableString("work-dir-path", "").getValue(), os.path.split(ConfigVariableString("work-dir-path", "").getValue())[1], self.tt)
+            self.browser = DirectFolderBrowser(selectWorkDirPath, False, ConfigVariableString("work-dir-path", "").getValue(), os.path.split(ConfigVariableString("work-dir-path", "").getValue())[1], tooltip=self.tt)
             self.browser.show()
         self.dlgSettings.btnBrowseWorkDir["command"] = showWorkDirBrowser
 

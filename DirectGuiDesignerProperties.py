@@ -15,6 +15,7 @@ from panda3d.core import (
     TextProperties,
     TransparencyAttrib,
     PGButton,
+    PGFrameStyle,
     MouseButton,
     NodePath,
     ConfigVariableString)
@@ -32,7 +33,7 @@ from direct.gui.DirectButton import DirectButton
 from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectCheckButton import DirectCheckButton
 
-from DirectGuiDesignerFileBrowser import DirectGuiDesignerFileBrowser
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 class PropertyInfo:
     def __init__(self, displayName, propertyName, propertyType, customCommandName):
@@ -169,7 +170,7 @@ class DirectGuiDesignerProperties():
         "hpr":"getHpr",
         "scale":"getScale",
         "color":"getColor",
-        "frameSize":"getBounds",
+        #"frameSize":"getBounds",
 
         # Entry specific
         "initialText":"get",
@@ -371,6 +372,22 @@ class DirectGuiDesignerProperties():
                 self.__createBase2Input("Border Width", self.startPos, propFrame, element, "borderWidth")
                 self.moveNext()
             if self.propertyList["frameSize"]:
+                # make sure the frameSize is set correct
+                element.frameInitialiseFunc()
+                if element["frameSize"] is None:
+                    b = element.getBounds()
+                    frameType = element.getFrameType()
+                    if ((frameType != PGFrameStyle.TNone) and
+                        (frameType != PGFrameStyle.TFlat)):
+                        bw = element['borderWidth']
+                    else:
+                        bw = (0, 0)
+                    element["frameSize"] = (
+                        b[0] - bw[0],
+                        b[1] + bw[0],
+                        b[2] - bw[1],
+                        b[3] + bw[1])
+                print(element["frameSize"])
                 self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
                 self.moveNext()
                 self.__createResetFramesize(self.startPos, propFrame, element)
@@ -1243,7 +1260,7 @@ class DirectGuiDesignerProperties():
                 setImage(self.browser.get())
             self.browser.hide()
         def showBrowser():
-            self.browser = DirectGuiDesignerFileBrowser(selectPath, True, ConfigVariableString("work-dir-path", "~").getValue(), "", self.tooltip)
+            self.browser = DirectFolderBrowser(selectPath, True, ConfigVariableString("work-dir-path", "~").getValue(), "", tooltip=self.tooltip)
             self.browser.show()
         x = startPos.getX()
         z = startPos.getZ()
