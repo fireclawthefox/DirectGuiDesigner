@@ -1285,15 +1285,18 @@ class DirectGuiDesignerProperties():
     def __createReliefProperty(self, description, startPos, parent, updateElement, updateAttribute="relief"):
         def update(selection):
             base.messenger.send("setDirtyFlag")
-            updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
-        selectedElement = None
+            if selection == "None":
+                updateElement[updateAttribute] = PGFrameStyle.TNone
+            else:
+                updateElement[updateAttribute] = DGG.FrameStyleDict[selection]
+        selectedElement = "None"
         for key, value in DGG.FrameStyleDict.items():
             if value == updateElement[updateAttribute]:
                 selectedElement = key
                 break
         self.__createOptionMenuProperty(
             description, startPos, parent, updateElement,
-            list(DGG.FrameStyleDict.keys()), selectedElement, update)
+             ["None"] + list(DGG.FrameStyleDict.keys()), selectedElement, update)
 
     def __createOrientationProperty(self, description, startPos, parent, updateElement, updateAttribute):
         orientationDict = {'horizontal': DGG.HORIZONTAL, 'vertical': DGG.VERTICAL, 'vertical_inverted': DGG.VERTICAL_INVERTED}
