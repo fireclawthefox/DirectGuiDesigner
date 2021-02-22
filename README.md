@@ -20,6 +20,11 @@ A Visual Editor for Panda3Ds Direct GUI
 ## Requirements
 - Python 3.x
 - Panda3D 1.10.4.1+
+- DirectFolderBrowser
+- DirectGuiExtension
+
+To install them, using pip:
+<code>pip install -r requirements.txt</code>
 
 ## Manual
 Hit F1 to see the help screen
@@ -28,6 +33,13 @@ Hit F1 to see the help screen
 To start the DirectGUI Designer, simply run the DirectGuiDesigner.py script
 
 <code>python DirectGuiDesigner.py</code>
+
+### Build binaries
+To create binaries of the Designer, call the following
+
+<code>python setup.py build_apps</code>
+
+This will create a new folder called build with sub-directories for the various operating systems which will contain the binaries.
 
 ### Basic Editing
 1. Click on an element in the toolbox.<br />
