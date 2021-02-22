@@ -20,9 +20,9 @@ setup(
                 "pandagl",
             ],
             "platforms": [
-                "manylinux1_x86_64"
+                "manylinux1_x86_64",
                 #"macosx_10_6_x86_64",
-                #"win_amd64",
+                "win_amd64",
             ],
 
             # make sure to contain the icon directory of the browser
