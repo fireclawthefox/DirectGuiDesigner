@@ -1,2 +1,3 @@
 panda3d
 DirectFolderBrowser
+DirectGuiExtension
