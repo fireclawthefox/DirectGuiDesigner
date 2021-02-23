@@ -35,12 +35,16 @@ from direct.gui.DirectCheckButton import DirectCheckButton
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
+from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension import DirectGuiHelper as DGH
+
 class PropertyInfo:
-    def __init__(self, displayName, propertyName, propertyType, customCommandName):
+    def __init__(self, displayName, propertyName, propertyType, customCommandName, customSelectionDict):
         self.displayName = displayName
         self.propertyName = propertyName
         self.propertyType = propertyType
         self.customCommandName = customCommandName
+        self.customSelectionDict = customSelectionDict
 
 class DirectGuiDesignerProperties():
 
@@ -59,6 +63,7 @@ class DirectGuiDesignerProperties():
         "text":False, # text
         "text_align":False, # option menu
         "text_scale":False, # base4
+        "text_font":False, # text
         "text_pos":False, # base3
         "text_fg":False, # base4
         "text_bg":False, # base4
@@ -353,6 +358,9 @@ class DirectGuiDesignerProperties():
             if self.propertyList["text_scale"]:
                 self.__createBase2Input("Text Scale", self.startPos, propFrame, element, "text_scale")
                 self.moveNext()
+            if self.propertyList["text_font"]:
+                self.__createFontProperty("Font", self.startPos, propFrame, element)
+                self.moveNext()
             if self.propertyList["text_fg"]:
                 self.__createBase4Input("Text Color (r/g/b/a)", self.startPos, propFrame, element, "text_fg")
                 self.moveNext()
@@ -387,7 +395,6 @@ class DirectGuiDesignerProperties():
                         b[1] + bw[0],
                         b[2] - bw[1],
                         b[3] + bw[1])
-                print(element["frameSize"])
                 self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
                 self.moveNext()
                 self.__createResetFramesize(self.startPos, propFrame, element)
@@ -770,6 +777,15 @@ class DirectGuiDesignerProperties():
                     self.moveNext()
                 elif prop.propertyType.lower() == "placement":
                     self.__createPlacementProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                    self.moveNext()
+                elif prop.propertyType.lower() == "align":
+                    self.__createCustomAlignProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                    self.moveNext()
+                elif prop.propertyType.lower() == "selection":
+                    self.__createCustomSelectionProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName, prop.customSelectionDict)
+                    self.moveNext()
+                elif prop.propertyType.lower() == "commandproperty":
+                    self.__createCustomCommandProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName, elementInfo)
                     self.moveNext()
                 elif prop.propertyType.lower() == "command":
                     self.__createCustomCommand(prop.displayName, self.startPos, propFrame, element, prop.customCommandName)
@@ -1186,6 +1202,44 @@ class DirectGuiDesignerProperties():
         entryWidth = width / 13
         entry = self.__createTextEntry(text, x, z, entryWidth, update, parent)
 
+    def __createCustomCommandProperty(self, description, startPos, parent, updateElement, updateAttribute, elementInfo):
+        def update(text):
+            base.messenger.send("setDirtyFlag")
+            self.elementInfo.extraOptions[updateAttribute] = text
+
+            for elementId, self.elementInfo in self.elementDict.items():
+                if elementId in text:
+                    text = text.replace(elementId, "elementDict['{}'].element".format(elementId))
+                elif self.elementInfo.name in text:
+                    text = text.replace(self.elementInfo.name, "elementDict['{}'].element".format(elementId))
+
+            command = eval(text)
+
+            if updateAttribute in self.initOpDict:
+                if hasattr(updateElement, self.initOpDict[updateAttribute]):
+                    getattr(updateElement, self.initOpDict[updateAttribute])(command)
+            elif updateAttribute in self.subControlInitOpDict:
+                if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
+                    control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
+                    if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
+                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(command)
+            else:
+                updateElement[updateAttribute] = (command)
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
+        text = ""
+        if updateAttribute in elementInfo.extraOptions:
+            text = elementInfo.extraOptions[updateAttribute]
+        #if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+        #    text = self.__getValues(updateElement, updateAttribute)
+        #elif updateElement[updateAttribute] is not None:
+        #    text = updateElement[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 13
+        self.__createTextEntry(text, x, z, entryWidth, update, parent)
+
     def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(value):
             base.messenger.send("setDirtyFlag")
@@ -1270,6 +1324,49 @@ class DirectGuiDesignerProperties():
         width = (parent.bounds[1]-10)
         entryWidth = width / 15
         entry = self.__createTextEntry(image, x, z, entryWidth, update, parent)
+
+        btn = DirectButton(
+            text="Browse",
+            command=showBrowser,
+            pad=(0.25,0.25),
+            pos=(width - entryWidth, 0, z),
+            scale=12,
+            parent=parent
+            )
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+    def __createFontProperty(self, description, startPos, parent, updateElement, updateAttribute="text_font"):
+        def update(text):
+            base.messenger.send("setDirtyFlag")
+            try:
+                self.elementInfo.extraOptions[updateAttribute] = text
+                font = loader.loadFont(text)
+                updateElement[updateAttribute] = font
+            except:
+                logging.exception("Couldn't load font: {}".format(text))
+                updateElement[updateAttribute] = None
+        def setFont(fontUrl):
+            entry.set(fontUrl)
+            update(fontUrl)
+
+        def selectPath(confirm):
+            if confirm:
+                setFont(self.browser.get())
+            self.browser.hide()
+        def showBrowser():
+            self.browser = DirectFolderBrowser(selectPath, True, ConfigVariableString("work-dir-path", "~").getValue(), "", tooltip=self.tooltip)
+            self.browser.show()
+        x = startPos.getX()
+        z = startPos.getZ()
+        self.__createPropertyHeader(description, z, parent)
+        z = startPos.getZ()
+        font = ""
+        if updateAttribute in self.elementInfo.extraOptions:
+            font = self.elementInfo.extraOptions[updateAttribute]
+        width = (parent.bounds[1]-10)
+        entryWidth = width / 15
+        entry = self.__createTextEntry(font, x, z, entryWidth, update, parent)
 
         btn = DirectButton(
             text="Browse",
@@ -1441,7 +1538,20 @@ class DirectGuiDesignerProperties():
         self.startPos.setZ(self.startPos.getZ() - height)
         self.frameSize += height
 
-    def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command):
+    def __createCustomSelectionProperty(self, description, startPos, parent, updateElement, updateAttribute, menuValues):
+        def update(selection):
+            base.messenger.send("setDirtyFlag")
+            updateElement[updateAttribute] = menuValues[selection]
+        selectedElement = ""
+        for key, value in menuValues.items():
+            if value == updateElement[updateAttribute]:
+                selectedElement = key
+
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            list(menuValues.keys()), selectedElement, update, DGG.ABOVE)
+
+    def __createOptionMenuProperty(self, description, startPos, parent, updateElement, items, selectedElement, command, popupLocation=DGG.BELOW):
         x = startPos.getX()
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
@@ -1450,7 +1560,7 @@ class DirectGuiDesignerProperties():
             items=items,
             pos=(x+10, 0, z+0.0125),
             scale=12,
-            popupMenuLocation=DGG.BELOW,
+            popupMenuLocation=popupLocation,
             initialitem=selectedElement,
             command=command,
             parent=parent)
@@ -1533,6 +1643,31 @@ class DirectGuiDesignerProperties():
             "Parent", startPos, parent, updateElement,
             self.parentList, selectedElement, update)
 
+    def __createCustomAlignProperty(self, description, startPos, parent, updateElement, updateAttribute):
+        alignments = {
+            "Left":0,
+            "Right":1,
+            "Center":2,
+            "Boxed Left":3,
+            "Boxed Right":4,
+            "Boxed Center":5}
+        def update(selection):
+            base.messenger.send("setDirtyFlag")
+            updateElement[updateAttribute] = alignments[selection]
+        selectedElement = None
+
+        for componentName in updateElement.components():
+            if componentName.startswith("text"):
+                currentAlign = updateElement.component(componentName).align
+                for aName, aValue in alignments.items():
+                    if aValue == currentAlign:
+                        selectedElement = aName
+                        break
+                break
+        self.__createOptionMenuProperty(
+            description, startPos, parent, updateElement,
+            list(alignments.keys()), selectedElement, update, DGG.ABOVE)
+
     def __createTextAlignProperty(self, startPos, parent, updateElement):
         alignments = {
             "Left":0,
@@ -1581,15 +1716,104 @@ class DirectGuiDesignerProperties():
             transparencyAttribs, selectedElement, update)
 
     def __createResetFramesize(self, startPos, parent, updateElement):
-        x = startPos.getX()
-        z = startPos.getZ()
+        pos = startPos
+        pos.setX(pos.getX() + 10)
+        box = DirectBoxSizer(parent=parent, pos=startPos)
+
+        #
+        # Update Frame
+        #
         btn = DirectButton(
-            text="Update Frame Size",
+            text="Update",
             pad=(0.25,0.25),
-            pos=(self.parent.getWidth() / 2, 0, z-15),
             scale=12,
             parent=parent,
             command=updateElement.resetFrameSize
             )
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+        box.addItem(btn)
+
+        #
+        # Reset Frame
+        #
+        def recalcFrameGeom(updateElement):
+            # remove the frame size as otherwise it won't recalculate
+            updateElement["frameSize"] = None
+            # now force recalculation of the frame size
+            updateElement.setFrameSize(fClearFrame = 1)
+
+        btn = DirectButton(
+            text="Reset",
+            pad=(0.25,0.25),
+            scale=12,
+            parent=parent,
+            command=recalcFrameGeom,
+            extraArgs=[updateElement]
+            )
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+        box.addItem(btn)
+
+        #
+        # Fit frame to children
+        #
+        l, r, b, t = [None,None,None,None]
+
+        def getMaxSize(root, baseElement, l, r, b, t):
+            if hasattr(root, "getChildren"):
+                if len(root.getChildren()) > 0:
+                    for child in root.getChildren():
+
+                        elementInfo = None
+                        if child.getName() in self.elementDict.keys():
+                            elementInfo = self.elementDict[child.getName()]
+                        elif len(child.getName().split("-")) > 1 and child.getName().split("-")[1] in self.elementDict.keys():
+                            elementInfo = self.elementDict[child.getName().split("-")[1]]
+
+                        if elementInfo is None: continue
+
+                        element = elementInfo.element
+                        el = DGH.getRealLeft(element) + element.getX(baseElement)
+                        er = DGH.getRealRight(element) + element.getX(baseElement)
+                        eb = DGH.getRealBottom(element) + element.getZ(baseElement)
+                        et = DGH.getRealTop(element) + element.getZ(baseElement)
+
+                        if l is None:
+                            l = el
+                        if r is None:
+                            r = er
+                        if b is None:
+                            b = eb
+                        if t is None:
+                            t = DGH.getRealTop(element) + element.getZ()
+
+                        print("CUR SIZE:", l, r, b, t)
+
+                        l = min(l, el)
+                        r = max(r, er)
+                        b = min(b, eb)
+                        t = max(t, et)
+
+                        l,r,b,t = getMaxSize(child, baseElement, l, r, b, t)
+            return [l, r, b, t]
+
+        def fitToChildren(updateElement, l, r, b, t):
+            l, r, b, t = getMaxSize(updateElement, updateElement, l, r, b, t)
+            if l is None or r is None or b is None or t is None: return
+            updateElement["frameSize"] = [l, r, b, t]
+
+        btn = DirectButton(
+            text="Fit to children",
+            pad=(0.25,0.25),
+            scale=12,
+            parent=parent,
+            command=fitToChildren,
+            extraArgs=[updateElement, l, r, b, t]
+            )
+        btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+        box.addItem(btn)

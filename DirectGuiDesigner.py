@@ -103,7 +103,6 @@ if os.path.exists(prcFileName):
     pathsConfig = ConfigVariableSearchPath("custom-model-path", "").getValue()
     for path in pathsConfig.getDirectories():
         line = "model-path {}".format(str(path))
-        print(str(path))
         loadPrcFileData("", line)
 else:
     with open(prcFileName, "w") as prcFile:
@@ -794,7 +793,6 @@ class DirectGuiDesigner(ShowBase):
     def copyOptions(self):
         if self.selectedElement is None: return
         self.copyOptionsElement = self.selectedElement.element
-        print(self.copyOptionsElement)
 
     def pasteOptions(self):
         if self.copyOptionsElement is None: return
@@ -953,7 +951,6 @@ class DirectGuiDesigner(ShowBase):
             if paths != "":
                 paths = "{}:{}".format(paths, path)
             else:
-                print(path)
                 paths = str(path)
         self.dlgSettings.txtSearchPaths.enterText(paths)
 

@@ -1,12 +1,20 @@
 TODO:
 
+Small features:
+look for custom installed widgets in the default python pip install folder created for custom widgets if exist
+-> All custom widgets that can be installed via pip should add their .widget files there.
+
 Mixed size features:
 add further missing features to properties editor:
 -> Values for multiple states
 -> Geom property
 -> Make sure base gui item properties are available/enabled broadly
+--> Make properties that are defined in base (text, geom, image) available for all by default if the values are given (like text for frames)
 -> Missing properties for button, entries and text
+--> Missing text align for frames if they have text
 -> Make text entry for texts multiline
+-> Add None frame type
+-> Make Scrollbar Properties available for scrolled frames
 
 Larger features:
 add multi-select functionality
@@ -18,3 +26,6 @@ add project file
     -> Store asset path
     -> Store custom widget path
 -> Store opened GUIs
+
+Custom Widgets related:
+-> Add a way to handle special properties and functions when parenting/adding widgets to a custom widgets

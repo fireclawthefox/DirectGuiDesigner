@@ -2,6 +2,7 @@ import os
 import logging
 import json
 import importlib
+import pathlib
 from panda3d.core import ConfigVariableString
 from DirectGuiDesignerProperties import PropertyInfo
 
@@ -31,14 +32,18 @@ class DirectGuiDesignerCustomWidgets():
         self.customWidgetsDict = {}
 
     def loadCustomWidgets(self):
-        path = ConfigVariableString("custom-widgets-path", "").getValue()
-        if path == "": return
-        if not os.path.exists(path):
-            logging.error("custom widgets path doesn't exist!")
-            return
+        configFiles = []
+        defaultPath = str(pathlib.PurePosixPath(__file__).parent) + "/widgets"
+        if os.path.exists(defaultPath):
+            configFiles = [f for f in os.listdir(defaultPath) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")]
 
-        # get a list of all .widget files
-        configFiles = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")]
+        path = ConfigVariableString("custom-widgets-path", "").getValue()
+        if path != "" and os.path.exists(path):
+            # get a list of all .widget files
+            configFiles.extend([f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")])
+
+        logging.info("no custom widgets found.")
+
 
         for configFile in configFiles:
             configFileContent = None
@@ -48,7 +53,15 @@ class DirectGuiDesignerCustomWidgets():
                 logging.error("Problems reading widget config file: {}".format(infile))
                 continue
             pythonFilePath = os.path.join(path, configFileContent["classfilePath"])
-            spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
+            spec = None
+            if pythonFilePath.endswith(".py"):
+                spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
+            else:
+                spec = importlib.util.find_spec(configFileContent["classfilePath"])
+            if spec is None:
+                print("spec is None")
+                print(spec)
+                continue
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
@@ -56,7 +69,8 @@ class DirectGuiDesignerCustomWidgets():
             if "customProperties" in configFileContent:
                 for prop in configFileContent["customProperties"]:
                     command = prop["customCommandName"] if "customCommandName" in prop else None
-                    customProperties.append(PropertyInfo(prop["displayName"], prop["propertyName"], prop["propertyType"], command))
+                    selectionDict = prop["customSelectionDict"] if "customSelectionDict" in prop else None
+                    customProperties.append(PropertyInfo(prop["displayName"], prop["propertyName"], prop["propertyType"], command, selectionDict))
 
             self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
                 configFileContent["displayName"],

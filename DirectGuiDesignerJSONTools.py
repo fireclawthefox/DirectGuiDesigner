@@ -59,9 +59,7 @@ class DirectGuiDesignerJSONTools:
         """To have everything in the right order, we're going to go through all
         elements here and add them from top to bottom, first the parents, then
         respectively their children."""
-        print("Looking for Root:", root)
         for name, elementInfo in self.guiElementsDict.items():
-            print("CHECK IF CHILD", elementInfo.name, elementInfo.parent)
             if elementInfo.parent == root:
                 try:
                     jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
