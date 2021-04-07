@@ -54,6 +54,9 @@ To switch between those scales, just hit the button in the menu bar that has the
 ### Remove elements
 Click on the X in the structure view, hit Ctrl-Delete or use the respective button from the toolbar
 
+### Undo/Redo cycle
+Using the usual Ctrl-Z and Ctrl-Y you can undo and redo most of the changes done in the editor. There is no limit to the undo/redo steps and using Ctrl-Shift-Y you can cycle through different redo paths.
+
 ### Save and export
 To save The designed GUI as a DirectGuiDesigner project, hit Ctrl-S or the respective button in the toolbar.
 This will save a Json file that can later be loaded by the designer again.
