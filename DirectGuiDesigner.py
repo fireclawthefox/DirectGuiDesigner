@@ -49,6 +49,7 @@ from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
 from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
 from DirectGuiDesignerSettings import GUI as DirectGuiDesignerSettings
 from DirectGuiDesignerCustomWidgets import DirectGuiDesignerCustomWidgets
+from DirectGuiDesignerKillRing import KillRing
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
@@ -128,6 +129,7 @@ class DirectGuiDesigner(ShowBase):
         logging.debug("Start Designer")
 
         self.dirty = False
+        self.killRing = KillRing()
 
         self.lastDirPath = ConfigVariableString("work-dir-path", "~").getValue()
         self.lastFileNameWOExtension = "export"
@@ -252,6 +254,8 @@ class DirectGuiDesigner(ShowBase):
         self.accept("setDirtyFlag", self.setDirty)
         self.accept("clearDirtyFlag", self.setClean)
 
+        self.accept("addToKillRing", self.addToKillRing)
+
         self.accept("setName", self.setName)
         self.accept("setCommand", self.setCommand)
         self.accept("setExtraArgs", self.setExtraArgs)
@@ -299,6 +303,109 @@ class DirectGuiDesigner(ShowBase):
         base.win.requestProperties(wp)
 
         self.dirty = False
+
+    def addToKillRing(self, editObject, action, objectType, oldValue, newValue):
+        if action == "set" and oldValue.__eq__(newValue): return
+        logging.debug("Add to killring")
+        self.killRing.push(editObject, action, objectType, oldValue, newValue)
+
+    def undo(self):
+        # undo this action
+        workOn = self.killRing.pop()
+
+        if workOn is None: return
+
+        if workOn.action == "set":
+            if workOn.objectType == "pos":
+                workOn.editObject.element.setPos(workOn.oldValue)
+            elif workOn.objectType == "pressEffect":
+                workOn.editObject.extraOptions["pressEffect"] = workOn.oldValue
+            else:
+                try:
+                    if workOn.objectType == "text_fg": print("TEXT_FG", workOn.oldValue)
+                    workOn.editObject["text_fg"] = workOn.oldValue
+                except:
+                    print("property ", workOn.objectType, " currently not supported by undo/redo")
+
+        elif workOn.action == "add" and workOn.objectType == "element":
+            self.removeElement(workOn.editObject, False)
+
+        elif workOn.action == "kill" and workOn.objectType == "element":
+            workOn.editObject.unstash()
+            self.elementDict[workOn.oldValue[0]] = workOn.oldValue[1]
+            base.messenger.send("refreshStructureTree")
+
+        elif workOn.action == "copy":
+            if workOn.objectType == "element":
+                self.removeElement(workOn.editObject.element, False)
+            elif workOn.objectType == "properties":
+                for key, value in workOn.oldValue.items():
+                    if key == "pos":
+                        workOn.editObject.setPos(value)
+                    elif key == "hpr":
+                        workOn.editObject.setHpr(value)
+                    elif key == "scale":
+                        workOn.editObject.setScale(value)
+                    elif key == "text_fg":
+                        workOn.editObject["text_fg"] = value
+                    else:
+                        workOn.editObject[key] = value[1]
+
+        if self.selectedElement is not None:
+            self.refreshProperties(self.selectedElement)
+        base.messenger.send("setDirtyFlag")
+
+    def redo(self):
+        # redo this
+        workOn = self.killRing.pull()
+
+        if workOn is None: return
+
+        if workOn.action == "set":
+            if workOn.objectType == "pos":
+                workOn.editObject.element.setPos(workOn.newValue)
+            elif workOn.objectType == "pressEffect":
+                workOn.editObject.extraOptions["pressEffect"] = workOn.newValue
+            else:
+                try:
+                    workOn.editObject[workOn.objectType] = workOn.newValue
+                except:
+                    print("property ", workOn.objectType, " currently not supported by undo/redo")
+
+        elif workOn.action == "add" and workOn.objectType == "element":
+            workOn.editObject.unstash()
+            self.elementDict[workOn.oldValue[0]] = workOn.oldValue[1]
+            base.messenger.send("refreshStructureTree")
+
+        elif workOn.action == "kill" and workOn.objectType == "element":
+            self.removeElement(workOn.editObject, False)
+
+        elif workOn.action == "copy":
+            if workOn.objectType == "element":
+                workOn.editObject.element.unstash()
+                self.elementDict[workOn.oldValue[0]] = workOn.oldValue[1]
+                base.messenger.send("refreshStructureTree")
+            elif workOn.objectType == "properties":
+                for key, value in workOn.newValue.items():
+                    if key == "pos":
+                        workOn.editObject.setPos(value)
+                    elif key == "hpr":
+                        workOn.editObject.setHpr(value)
+                    elif key == "scale":
+                        workOn.editObject.setScale(value)
+                    elif key == "text_fg":
+                        workOn.editObject["text_fg"] = value
+                    else:
+                        workOn.editObject[key] = value[1]
+
+        if self.selectedElement is not None:
+            self.refreshProperties(self.selectedElement)
+        base.messenger.send("setDirtyFlag")
+
+    def cycleKillRing(self):
+        self.undo()
+        self.killRing.cycleChildren()
+        self.redo()
 
     def setLastPath(self, path):
         self.lastDirPath = os.path.dirname(path)
@@ -349,6 +456,9 @@ class DirectGuiDesigner(ShowBase):
         self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
         self.accept("control-h", self.toggleElementVisibility)
         self.accept("f1", self.showHelp)
+        self.accept("control-z", self.undo)
+        self.accept("control-y", self.redo)
+        self.accept("shift-control-y", self.cycleKillRing)
 
         self.accept("arrow_left", self.moveElement, extraArgs=["left"])
         self.accept("arrow_right", self.moveElement, extraArgs=["right"])
@@ -396,6 +506,9 @@ class DirectGuiDesigner(ShowBase):
         self.ignore("control-g")
         self.ignore("control-h")
         self.ignore("f1")
+        self.ignore("control-z")
+        self.ignore("control-y")
+        self.ignore("shift-control-y")
 
         self.ignore("arrow_left")
         self.ignore("arrow_right")
@@ -517,6 +630,13 @@ class DirectGuiDesigner(ShowBase):
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
 
+        if type(elementInfo) is tuple:
+            base.messenger.send("addToKillRing",
+                [elementInfo[0].element, "add", "element", (elementInfo[0].element.guiId, elementInfo[0]), None])
+        else:
+            base.messenger.send("addToKillRing",
+                [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
+
         return elementInfo
 
     def selectElement(self, elementInfo, args=None):
@@ -562,15 +682,18 @@ class DirectGuiDesigner(ShowBase):
         element = elementInfo.element
         taskMgr.remove("dragDropTask")
         parent = element.getParent()
+        sp = element.getPos()
         pos = element.getPos(parent)
         element.setPos(pos)
         vWidget2render2d = element.getPos(render2d)
         vMouse2render2d = Point3(event.getMouse()[0], 0, event.getMouse()[1])
         editVec = Vec3(vWidget2render2d - vMouse2render2d)
         t = taskMgr.add(self.dragTask, "dragDropTask")
+        t.startPos = sp
         t.elementInfo = elementInfo
         t.editVec = editVec
         t.mouseVec = vMouse2render2d
+        t.hasMoved = False
 
     def dragTask(self, t):
         mwn = base.mouseWatcherNode
@@ -601,6 +724,8 @@ class DirectGuiDesigner(ShowBase):
             # check if the item has actually moved
             if not self.dirty and oldPos != t.elementInfo.element.getPos():
                 base.messenger.send("setDirtyFlag")
+            if oldPos != t.elementInfo.element.getPos():
+                t.hasMoved = True
 
         return t.cont
 
@@ -617,6 +742,11 @@ class DirectGuiDesigner(ShowBase):
         if pos.z > self.editorFrame.visualEditor["canvasSize"][3]:
             t.elementInfo.element.setZ(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][3])
         self.refreshProperties(t.elementInfo)
+
+        if t.hasMoved:
+            base.messenger.send("addToKillRing",
+                [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
+
         taskMgr.remove("dragDropTask")
 
     def moveElement(self, direction, speedMult=1):
@@ -629,6 +759,8 @@ class DirectGuiDesigner(ShowBase):
         scale = workOn.getScale()
         moverScaleX = 1 / scale.getX()
         moverScaleZ = 1 / scale.getZ()
+
+        startPos = workOn.getPos()
 
         speed = 0.01
         if not self.editorFrame.visEditorInAspect2D:
@@ -644,8 +776,10 @@ class DirectGuiDesigner(ShowBase):
             workOn.setZ(workOn, -speed*moverScaleZ*speedMult)
         self.refreshProperties(self.selectedElement)
         base.messenger.send("setDirtyFlag")
+        base.messenger.send("addToKillRing",
+            [t.elementInfo, "set", "pos", startPos, workOn.getPos()])
 
-    def removeElement(self, element=None):
+    def removeElement(self, element=None, includeWithKillCycle=True):
         workOn = None
         selectEditor = False
         if element is not None:
@@ -661,7 +795,8 @@ class DirectGuiDesigner(ShowBase):
         else:
             return
 
-        if not workOn.isEmpty():
+        oldParent = None
+        if not workOn.isEmpty() and not workOn.isStashed():
             self.canvasParents = [
                 "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
                 "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
@@ -669,6 +804,11 @@ class DirectGuiDesigner(ShowBase):
             if name.split("-")[1] in self.elementDict.keys():
                 name = name.split("-")[1]
             if name in self.elementDict.keys():
+
+                if includeWithKillCycle:
+                    base.messenger.send("addToKillRing",
+                        [workOn, "kill", "element", (name, self.elementDict[name]), None])
+
                 if self.elementDict[name].parent is not None \
                 and (self.elementDict[name].parent.getName() if hasattr(self.elementDict[name].parent, "getName") else self.elementDict[name].parent.name) not in self.canvasParents \
                 and self.elementDict[name].parent.type == "DirectScrolledList":
@@ -682,11 +822,13 @@ class DirectGuiDesigner(ShowBase):
                         # call custom widget remove function
                         getattr(self.elementDict[name].parent.element, widget.removeItemFunction)(workOn)
                 del self.elementDict[name]
-        workOn.destroy()
+        workOn.stash()
+
+        #workOn.destroy()
 
         # cleanup
         for key, value in self.elementDict.copy().items():
-            if value is None or value.element.isEmpty():
+            if value is None or value.element.isEmpty() or value.element.isStashed():
                 del self.elementDict[key]
 
         if selectEditor:
@@ -766,8 +908,14 @@ class DirectGuiDesigner(ShowBase):
 
     def pasteElement(self):
         if self.copiedElement is None: return
+        # stores the ids of the source elements that have been copied already
         self.copyCreatedElementIds = []
+        self.newElementIds = []
         self.__copyBranch(self.copiedElement, self.selectedElement)
+
+        e = self.elementDict[self.newElementIds[0]]
+        base.messenger.send("addToKillRing",
+            [e, "copy", "element", (self.newElementIds[0], e), None])
 
     def __copyBranch(self, startObject, parent=None):
         if startObject == parent: return
@@ -777,6 +925,7 @@ class DirectGuiDesigner(ShowBase):
                 newElement = self.__createControl(elementInfo.type)
                 if type(newElement) is tuple:
                     newElement = newElement[0]
+                self.newElementIds.append(newElement.element.guiId)
                 self.copyCreatedElementIds.append(elementInfo.element.guiId)
                 if parent is not None:
                     newParent = None
@@ -801,6 +950,13 @@ class DirectGuiDesigner(ShowBase):
     def __copyOptions(self, elementFrom, elementTo, copyPosition=False):
         if elementFrom is None or elementTo is None: return
         try:
+            # store for undo
+            oldOptions = elementTo._optionInfo.copy()
+            oldOptions["hpr"] = elementTo.getHpr()
+            oldOptions["scale"] = elementTo.getScale()
+            oldOptions["pos"] = elementTo.getPos()
+            oldOptions["text_fg"] = None
+
             text = elementTo["text"]
             text_fg = None
             for compName in elementFrom.components():
@@ -816,11 +972,31 @@ class DirectGuiDesigner(ShowBase):
             elementTo.copyOptions(elementFrom)
             elementTo["text"] = text
             if text_fg is not None:
+
+                for compName in elementTo.components():
+                    comp = elementTo.component(compName)
+                    if hasattr(comp, "fg"):
+                        print("fg:", comp.fg)
+                        oldOptions["text_fg"] = comp.fg
+                        break
+
                 elementTo["text_fg"] = text_fg
             elementTo.setHpr(hpr)
             elementTo.setScale(scale)
+
+            # store for redo
+            newOptions = elementTo._optionInfo.copy()
+            newOptions["hpr"] = elementTo.getHpr()
+            newOptions["scale"] = elementTo.getScale()
+            newOptions["pos"] = elementTo.getPos()
+            newOptions["text_fg"] = text_fg
+
             if copyPosition:
                 elementTo.setPos(pos)
+                newOptions["pos"] = elementTo.getPos()
+
+            base.messenger.send("addToKillRing",
+                [elementTo, "copy", "properties", oldOptions, newOptions])
         except Exception as e:
             logging.error("Couldn't copy element options")
             logging.exception(e)
@@ -1080,6 +1256,9 @@ class DirectGuiDesigner(ShowBase):
 \1bold\1Ctrl-Del\2 - Delete selected Element
 \1bold\1Ctrl-H  \2 - Toggle selected Element visibility
 \1bold\1Ctrl-G  \2 - Toggle grid and snap to grid
+\1bold\1Ctrl-Z  \2 - Undo
+\1bold\1Ctrl-Y  \2 - Redo
+\1bold\1Ctrl-Shift-Y\2 - Cycle through redos
 
 \1bold\1Arrow Keys\2 - Move the selected Element (use Shift and Ctrl to change distance)
 

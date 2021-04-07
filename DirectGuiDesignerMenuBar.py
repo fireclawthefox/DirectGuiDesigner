@@ -33,6 +33,7 @@ class DirectGuiDesignerMenuBar(DirectObject):
             frameSize=(0,screenWidthPx,-12, 12),
             autoUpdateFrameSize=False,
             pos=(0, 0, -12),
+            itemMargin=(10,10,10,10),
             parent=base.pixel2d)
 
         fileEntries = [
@@ -277,7 +278,7 @@ class DirectGuiDesignerMenuBar(DirectObject):
 
         self.view["items"] = viewEntries
         # HACK: this shouldn't be needed
-        '''
+        #'''
         self.view["item_text_fg"]=(1,1,1,1)
         self.view["item_text_scale"]=0.8
         self.view["item_relief"]=DGG.FLAT
@@ -285,7 +286,7 @@ class DirectGuiDesignerMenuBar(DirectObject):
         self.view["itemFrameColor"]=color
         self.view["popupMenu_itemMargin"]=(0,0,-.1,-.1)
         self.view["popupMenu_frameColor"]=color
-        '''
+        #'''
         self.accept("setVisualEditorParent", self.setVisualEditorParent)
 
     def toggleGrid(self, selection):

@@ -70,6 +70,7 @@ class DirectGuiDesignerProperties():
         "text_wordwrap":False, # float
         "image":False, # text
         "image_scale":False, # base3
+        "image_pos":False, # base3
         "sortOrder":False, # int
         "enableTransparency":False, # bool
         "state":False, # option menu
@@ -297,7 +298,7 @@ class DirectGuiDesignerProperties():
         self.clearPropertySelection()
         trueValues = ["name", "parent", "relief", "borderWidth", "frameSize",
             "frameColor", "pad", "pos", "hpr", "scale", "sortOrder",
-            "enableTransparency", "state", "image", "image_scale"]
+            "enableTransparency", "state", "image", "image_scale", "image_pos"]
         for value in trueValues:
             self.propertyList[value] = True
 
@@ -426,6 +427,9 @@ class DirectGuiDesignerProperties():
                 self.moveNext()
             if self.propertyList["image_scale"]:
                 self.__createBase3Input("Image Scale", self.startPos, propFrame, element, "image_scale")
+                self.moveNext()
+            if self.propertyList["image_pos"]:
+                self.__createBase3Input("Image Position (X/Y/Z)", self.startPos, propFrame, element, "image_pos")
                 self.moveNext()
             if self.propertyList["sortOrder"]:
                 self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
@@ -888,210 +892,84 @@ class DirectGuiDesignerProperties():
     # General input elements
     #
 
-    def __createBase4Input(self, description, startPos, parent, updateElement, updateAttribute):
+
+    def __createBaseNInput(self, description, startPos, parent, updateElement, updateAttribute, n):
         def update(text):
             base.messenger.send("setDirtyFlag")
-            valueA = 0.0
+
+            values = []
+            for value in entryList:
+                try:
+                    values.append(float(value.get(True)))
+                except:
+                    logging.exception("ERROR: NAN", value.get(True))
+
             try:
-                valueA = float(a.get(True))
+                if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+                    oldValue = self.__getValues(updateElement, updateAttribute)
+                else:
+                    oldValue = updateElement[updateAttribute]
+                differ = False
+                if oldValue is not None:
+                    for i in range(n):
+                        if oldValue[i] != values[i]:
+                            differ = True
+                            break
+                if differ:
+                    base.messenger.send("addToKillRing",
+                        [updateElement, "set", updateAttribute, oldValue, values])
             except:
-                logging.exception("ERROR: NAN", valueA)
-            valueB = 0.0
-            try:
-                valueB = float(b.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueB)
-            valueC = 0.0
-            try:
-                valueC = float(c.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueC)
-            valueD = 0.0
-            try:
-                valueD = float(d.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueD)
-            if updateAttribute in self.initOpDict:
+                print(updateAttribute, " not supported by undo/redo yet")
+
+            if updateAttribute in self.initOpGetDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
-                    getattr(updateElement, self.initOpDict[updateAttribute])(
-                        valueA,
-                        valueB,
-                        valueC,
-                        valueD)
+                    getattr(updateElement, self.initOpDict[updateAttribute])(*values)
             elif updateAttribute in self.subControlInitOpDict:
                 if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
                     control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
                     if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
-                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(
-                            valueA,
-                            valueB,
-                            valueC,
-                            valueD)
+                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(*values)
             else:
-                updateElement[updateAttribute] = (
-                    valueA,
-                    valueB,
-                    valueC,
-                    valueD)
+                updateElement[updateAttribute] = tuple(values)
         x = startPos.getX()
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
         z = startPos.getZ()
-        valueA = valueB = valueC = valueD = 0
+        values = [0] * n
         if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
             v = self.__getValues(updateElement, updateAttribute)
             if v is not None:
-                valueA, valueB, valueC, valueD = v
+                values = v
         elif "image_" in updateAttribute:
             parts = updateAttribute.split("_")
-            if updateElement[parts[0]] is not None:
-                valueA = updateElement[updateAttribute][0]
-                valueB = updateElement[updateAttribute][1]
-                valueC = updateElement[updateAttribute][2]
-                valueD = updateElement[updateAttribute][3]
+            try:
+                if updateElement[parts[0]] is not None:
+                    for i in range(n):
+                        values[i] = updateElement[updateAttribute][i]
+            except:
+                logging.debug("Failed do get image property:", parts)
+                return
         elif updateElement[updateAttribute] is not None:
-            valueA = updateElement[updateAttribute][0]
-            valueB = updateElement[updateAttribute][1]
-            valueC = updateElement[updateAttribute][2]
-            valueD = updateElement[updateAttribute][3]
+            for i in range(n):
+                values[i] = updateElement[updateAttribute][i]
 
-        valueA = self.__getFormated(valueA)
-        valueB = self.__getFormated(valueB)
-        valueC = self.__getFormated(valueC)
-        valueD = self.__getFormated(valueD)
-        width = (parent.bounds[1]-10) / 4
+        entryList = []
+        width = (parent.bounds[1]-10) / n
         entryWidth = width / 13
-        a = self.__createTextEntry(str(valueA), x, z, entryWidth, update, parent)
-        x += width
-        b = self.__createTextEntry(str(valueB), x, z, entryWidth, update, parent)
-        x += width
-        c = self.__createTextEntry(str(valueC), x, z, entryWidth, update, parent)
-        x += width
-        d = self.__createTextEntry(str(valueD), x, z, entryWidth, update, parent)
+        for i in range(n):
+            value = self.__getFormated(values[i])
+
+            entryList.append(self.__createTextEntry(str(value), x, z, entryWidth, update, parent))
+            x += width
+
+    def __createBase4Input(self, description, startPos, parent, updateElement, updateAttribute):
+        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 4)
 
     def __createBase3Input(self, description, startPos, parent, updateElement, updateAttribute):
-        def update(text):
-            base.messenger.send("setDirtyFlag")
-            valueA = 0.0
-            try:
-                valueA = float(a.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueA)
-            valueB = 0.0
-            try:
-                valueB = float(b.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueB)
-            valueC = 0.0
-            try:
-                valueC = float(c.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueC)
-            if updateAttribute in self.initOpDict:
-                if hasattr(updateElement, self.initOpDict[updateAttribute]):
-                    getattr(updateElement, self.initOpDict[updateAttribute])(
-                        valueA,
-                        valueB,
-                        valueC)
-            elif updateAttribute in self.subControlInitOpDict:
-                if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
-                    control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
-                    if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
-                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(
-                            valueA,
-                            valueB,
-                            valueC)
-            else:
-                updateElement[updateAttribute] = (
-                    valueA,
-                    valueB,
-                    valueC)
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader(description, z, parent)
-        z = startPos.getZ()
-        valueA = valueB = valueC = 0
-
-        if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
-            v = self.__getValues(updateElement, updateAttribute)
-            if v is not None:
-                valueA, valueB, valueC = v
-        elif updateAttribute.startswith("image_"):
-            parts = updateAttribute.split("_")
-            if updateElement[parts[0]] is not None:
-                valueA = updateElement[updateAttribute][0]
-                valueB = updateElement[updateAttribute][1]
-                valueC = updateElement[updateAttribute][2]
-        elif updateElement[updateAttribute] is not None:
-            valueA = updateElement[updateAttribute][0]
-            valueB = updateElement[updateAttribute][1]
-            valueC = updateElement[updateAttribute][2]
-
-        valueA = self.__getFormated(valueA)
-        valueB = self.__getFormated(valueB)
-        valueC = self.__getFormated(valueC)
-        width = (parent.bounds[1]-10) / 3
-        entryWidth = width / 13
-        a = self.__createTextEntry(str(valueA), x, z, entryWidth, update, parent)
-        x += width
-        b = self.__createTextEntry(str(valueB), x, z, entryWidth, update, parent)
-        x += width
-        c = self.__createTextEntry(str(valueC), x, z, entryWidth, update, parent)
+        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 3)
 
     def __createBase2Input(self, description, startPos, parent, updateElement, updateAttribute):
-        def update(text):
-            base.messenger.send("setDirtyFlag")
-            valueA = 0.0
-            try:
-                valueA = float(a.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueA)
-            valueB = 0.0
-            try:
-                valueB = float(b.get(True))
-            except:
-                logging.exception("ERROR: NAN", valueB)
-            if updateAttribute in self.initOpDict:
-                if hasattr(updateElement, self.initOpDict[updateAttribute]):
-                    getattr(updateElement, self.initOpDict[updateAttribute])(
-                        valueA,
-                        valueB)
-            elif updateAttribute in self.subControlInitOpDict:
-                if hasattr(updateElement, self.subControlInitOpDict[updateAttribute][0]):
-                    control = getattr(updateElement, self.subControlInitOpDict[updateAttribute][0])
-                    if hasattr(control, self.subControlInitOpDict[updateAttribute][1]):
-                        getattr(control, self.subControlInitOpDict[updateAttribute][1])(
-                            valueA,
-                            valueB)
-            else:
-                updateElement[updateAttribute] = (
-                    valueA,
-                    valueB)
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader(description, z, parent)
-        z = startPos.getZ()
-        valueA = valueB = 0
-        if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
-            v = self.__getValues(updateElement, updateAttribute)
-            if v is not None:
-                valueA, valueB = v
-        elif "image_" in updateAttribute:
-            parts = updateAttribute.split("_")
-            if updateElement[parts[0]] is not None:
-                valueA = updateElement[updateAttribute][0]
-                valueB = updateElement[updateAttribute][1]
-        elif updateElement[updateAttribute] is not None:
-            valueA = updateElement[updateAttribute][0]
-            valueB = updateElement[updateAttribute][1]
-
-        valueA = self.__getFormated(valueA)
-        valueB = self.__getFormated(valueB)
-        width = (parent.bounds[1]-10) / 2
-        entryWidth = width / 13
-        a = self.__createTextEntry(str(valueA), x, z, entryWidth, update, parent)
-        x += width
-        b = self.__createTextEntry(str(valueB), x, z, entryWidth, update, parent)
+        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 2)
 
     def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute, resetFrameSize=False):
         def update(text):
@@ -1101,6 +979,17 @@ class DirectGuiDesignerProperties():
                 value = float(text)
             except:
                 logging.exception("ERROR: NAN", value)
+
+            try:
+                if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+                    oldValue = self.__getValues(updateElement, updateAttribute)
+                else:
+                    oldValue = updateElement[updateAttribute]
+                base.messenger.send("addToKillRing",
+                    [updateElement, "set", updateAttribute, oldValue, value])
+            except:
+                print(updateAttribute, " not supported by undo/redo yet")
+
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(value)
@@ -1142,6 +1031,17 @@ class DirectGuiDesignerProperties():
                 value = int(text)
             except:
                 logging.exception("ERROR: NAN", value)
+
+            try:
+                if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+                    oldValue = self.__getValues(updateElement, updateAttribute)
+                else:
+                    oldValue = updateElement[updateAttribute]
+                base.messenger.send("addToKillRing",
+                    [updateElement, "set", updateAttribute, oldValue, value])
+            except:
+                print(updateAttribute, " not supported by undo/redo yet")
+
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(value)
@@ -1179,6 +1079,16 @@ class DirectGuiDesignerProperties():
         def update(text):
             base.messenger.send("setDirtyFlag")
 
+            try:
+                if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+                    oldValue = self.__getValues(updateElement, updateAttribute)
+                else:
+                    oldValue = updateElement[updateAttribute]
+                base.messenger.send("addToKillRing",
+                    [updateElement, "set", updateAttribute, oldValue, text])
+            except:
+                print(updateAttribute, " not supported by undo/redo yet")
+
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(text)
@@ -1215,6 +1125,12 @@ class DirectGuiDesignerProperties():
 
             command = eval(text)
 
+            try:
+                base.messenger.send("addToKillRing",
+                    [updateElement, "set", updateAttribute, curCommand, text])
+            except:
+                print(updateAttribute, " not supported by undo/redo yet")
+
             if updateAttribute in self.initOpDict:
                 if hasattr(updateElement, self.initOpDict[updateAttribute]):
                     getattr(updateElement, self.initOpDict[updateAttribute])(command)
@@ -1229,20 +1145,28 @@ class DirectGuiDesignerProperties():
         z = startPos.getZ()
         self.__createPropertyHeader(description, z, parent)
         z = startPos.getZ()
-        text = ""
+        curCommand = ""
         if updateAttribute in elementInfo.extraOptions:
-            text = elementInfo.extraOptions[updateAttribute]
-        #if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
-        #    text = self.__getValues(updateElement, updateAttribute)
-        #elif updateElement[updateAttribute] is not None:
-        #    text = updateElement[updateAttribute]
+            curCommand = elementInfo.extraOptions[updateAttribute]
         width = (parent.bounds[1]-10)
         entryWidth = width / 13
-        self.__createTextEntry(text, x, z, entryWidth, update, parent)
+        self.__createTextEntry(curCommand, x, z, entryWidth, update, parent)
 
     def __createBoolProperty(self, description, startPos, parent, updateElement, updateAttribute):
         def update(value):
             base.messenger.send("setDirtyFlag")
+
+            try:
+                if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
+                    oldValue = self.__getValues(updateElement, updateAttribute)
+                else:
+                    oldValue = updateElement[updateAttribute]
+                base.messenger.send("addToKillRing",
+                    [updateElement, "set", updateAttribute, oldValue, value])
+            except:
+                print(updateAttribute, " not supported by undo/redo yet")
+
+
             if updateAttribute in self.callFunc.keys():
                 if hasattr(updateElement, self.callFunc[updateAttribute][0]):
                     getattr(updateElement, self.callFunc[updateAttribute][0])(self.callFunc[updateAttribute][1])
@@ -1280,6 +1204,12 @@ class DirectGuiDesignerProperties():
     def __createPressEffectProperty(self, description, startPos, parent, elementInfo):
         def update(value):
             base.messenger.send("setDirtyFlag")
+            try:
+                oldValue = elementInfo.extraOptions["pressEffect"] if "pressEffect" in elementInfo.extraOptions else 1
+                base.messenger.send("addToKillRing",
+                    [elementInfo, "set", "pressEffect", oldValue, value])
+            except:
+                print("pressEffect not supported by undo/redo yet")
             elementInfo.extraOptions["pressEffect"] = value
         x = startPos.getX()
         z = startPos.getZ()
@@ -1338,6 +1268,7 @@ class DirectGuiDesignerProperties():
 
     def __createFontProperty(self, description, startPos, parent, updateElement, updateAttribute="text_font"):
         def update(text):
+            if text == "": return
             base.messenger.send("setDirtyFlag")
             try:
                 self.elementInfo.extraOptions[updateAttribute] = text
