@@ -94,9 +94,9 @@ class DirectGuiDesignerJSONTools:
 
     def __getAllSubcomponents(self, componentName, component, componentPath):
         # we only respect the first state for now
-        if componentName[-1:].isdigit():
-            if not componentName[-1:].endswith("0"):
-                return
+        #if componentName[-1:].isdigit():
+        #    if not componentName[-1:].endswith("0"):
+        #        return
 
         if componentPath == "":
             componentPath = componentName
@@ -129,10 +129,10 @@ class DirectGuiDesignerJSONTools:
                 reprFunc = lambda x: x
             else:
                 reprFunc = repr
-            if name[-1:].isdigit():
-                if name[-1:].endswith("0"):
-                    # first state of this component
-                    name = name[:-1]
+            #if name[-1:].isdigit():
+            #    if name[-1:].endswith("0"):
+            #        # first state of this component
+            #        name = name[:-1]
             if name != "":
                 name += "_"
             for key in self.functionMapping.keys():
