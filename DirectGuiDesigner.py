@@ -777,7 +777,7 @@ class DirectGuiDesigner(ShowBase):
         self.refreshProperties(self.selectedElement)
         base.messenger.send("setDirtyFlag")
         base.messenger.send("addToKillRing",
-            [t.elementInfo, "set", "pos", startPos, workOn.getPos()])
+            [self.selectedElement, "set", "pos", startPos, workOn.getPos()])
 
     def removeElement(self, element=None, includeWithKillCycle=True):
         workOn = None
