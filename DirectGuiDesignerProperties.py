@@ -10,6 +10,7 @@ import logging, sys
 
 from panda3d.core import (
     VBase4,
+    LVecBase4f,
     TextNode,
     Point3,
     TextProperties,
@@ -384,18 +385,21 @@ class DirectGuiDesignerProperties():
                 # make sure the frameSize is set correct
                 element.frameInitialiseFunc()
                 if element["frameSize"] is None:
-                    b = element.getBounds()
+                    element.setFrameSize(fClearFrame = 1)
+
                     frameType = element.getFrameType()
                     if ((frameType != PGFrameStyle.TNone) and
                         (frameType != PGFrameStyle.TFlat)):
                         bw = element['borderWidth']
                     else:
                         bw = (0, 0)
-                    element["frameSize"] = (
-                        b[0] - bw[0],
-                        b[1] + bw[0],
-                        b[2] - bw[1],
-                        b[3] + bw[1])
+                    newFS = LVecBase4f(element.guiItem.getFrame())
+                    newFS[0] += bw[0]
+                    newFS[1] -= bw[0]
+                    newFS[2] += bw[1]
+                    newFS[3] -= bw[1]
+                    element["frameSize"] = newFS
+
                 self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
                 self.moveNext()
                 self.__createResetFramesize(self.startPos, propFrame, element)
