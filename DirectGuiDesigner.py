@@ -65,6 +65,7 @@ loadPrcFileData(
     #show-frame-rate-meter #t
     #want-pstats #t
     maximized #t
+    model-path $MAIN_DIR/models/
     """)
 
 # check if we have a config file

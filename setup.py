@@ -4,7 +4,7 @@ include = [
     "**/fonts/*",
     "**/icons/*.png",
     "**/LICENSE",
-    "**/models/misc/*",
+    "**/models/**",
 ]
 
 setup(
