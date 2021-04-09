@@ -10,6 +10,7 @@ from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectCheckButton import DirectCheckButton
+from DirectGuiExtension.DirectSpinBox import DirectSpinBox
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
@@ -19,7 +20,7 @@ from panda3d.core import (
 
 class GUI:
     def __init__(self, rootParent=None):
-        
+
         self.frmMain = DirectFrame(
             borderWidth=(2, 2),
             frameColor=(1, 1, 1, 1),
@@ -363,6 +364,99 @@ class GUI:
             pressEffect=1,
         )
         self.btnBrowseWorkDir.setTransparency(0)
+
+        self.spinAutosaveDealy = DirectSpinBox(
+            frameSize=(-2.1, 1.0, -0.742, 0.742),
+            hpr=LVecBase3f(0, 0, 0),
+            maxValue=3600,
+            minValue=10,
+            pos=LPoint3f(105, 0, -140),
+            value=60,
+            scale=LVecBase3f(12,1,12),
+            decButton_hpr=LVecBase3f(0, 0, 0),
+            decButton_pos=LPoint3f(0.583333, 0, -0.533333),
+            decButton_text='6',
+            decButton_text0_align=TextNode.A_center,
+            decButton_text0_scale=(1, 1),
+            decButton_text0_pos=(0, 0),
+            decButton_text0_fg=LVecBase4f(0, 0, 0, 1),
+            decButton_text0_bg=LVecBase4f(0, 0, 0, 0),
+            decButton_text0_wordwrap=None,
+            decButton_text1_align=TextNode.A_center,
+            decButton_text1_scale=(1, 1),
+            decButton_text1_pos=(0, 0),
+            decButton_text1_fg=LVecBase4f(0, 0, 0, 1),
+            decButton_text1_bg=LVecBase4f(0, 0, 0, 0),
+            decButton_text1_wordwrap=None,
+            decButton_text2_align=TextNode.A_center,
+            decButton_text2_scale=(1, 1),
+            decButton_text2_pos=(0, 0),
+            decButton_text2_fg=LVecBase4f(0, 0, 0, 1),
+            decButton_text2_bg=LVecBase4f(0, 0, 0, 0),
+            decButton_text2_wordwrap=None,
+            decButton_text3_align=TextNode.A_center,
+            decButton_text3_scale=(1, 1),
+            decButton_text3_pos=(0, 0),
+            decButton_text3_fg=LVecBase4f(0, 0, 0, 1),
+            decButton_text3_bg=LVecBase4f(0, 0, 0, 0),
+            decButton_text3_wordwrap=None,
+            incButton_hpr=LVecBase3f(0, 0, 0),
+            incButton_pos=LPoint3f(0.583333, 0, -0.016667),
+            incButton_text='5',
+            incButton_text0_align=TextNode.A_center,
+            incButton_text0_scale=(1, 1),
+            incButton_text0_pos=(0, 0),
+            incButton_text0_fg=LVecBase4f(0, 0, 0, 1),
+            incButton_text0_bg=LVecBase4f(0, 0, 0, 0),
+            incButton_text0_wordwrap=None,
+            incButton_text1_align=TextNode.A_center,
+            incButton_text1_scale=(1, 1),
+            incButton_text1_pos=(0, 0),
+            incButton_text1_fg=LVecBase4f(0, 0, 0, 1),
+            incButton_text1_bg=LVecBase4f(0, 0, 0, 0),
+            incButton_text1_wordwrap=None,
+            incButton_text2_align=TextNode.A_center,
+            incButton_text2_scale=(1, 1),
+            incButton_text2_pos=(0, 0),
+            incButton_text2_fg=LVecBase4f(0, 0, 0, 1),
+            incButton_text2_bg=LVecBase4f(0, 0, 0, 0),
+            incButton_text2_wordwrap=None,
+            incButton_text3_align=TextNode.A_center,
+            incButton_text3_scale=(1, 1),
+            incButton_text3_pos=(0, 0),
+            incButton_text3_fg=LVecBase4f(0, 0, 0, 1),
+            incButton_text3_bg=LVecBase4f(0, 0, 0, 0),
+            incButton_text3_wordwrap=None,
+            valueEntry_hpr=LVecBase3f(0, 0, 0),
+            valueEntry_initialText='60',
+            valueEntry_pos=LPoint3f(0, 0, -0.345625),
+            valueEntry_text_align=TextNode.A_right,
+            valueEntry_text_scale=(1, 1),
+            valueEntry_text_pos=(0, 0),
+            valueEntry_text_fg=LVecBase4f(0, 0, 0, 1),
+            valueEntry_text_bg=LVecBase4f(0, 0, 0, 0),
+            valueEntry_text_wordwrap=None,
+            parent=self.frmMain,
+        )
+        self.spinAutosaveDealy.setTransparency(0)
+
+        self.lblAutosaveDelay = DirectLabel(
+            borderWidth=(2, 2),
+            frameColor=(0.8, 0.8, 0.8, 0.0),
+            frameSize=LVecBase4f(0.3, 84.45, -3.9, 8.7),
+            hpr=LVecBase3f(0, 0, 0),
+            pos=LPoint3f(-260, 0, -140),
+            scale=LVecBase3f(1, 1, 1),
+            text='Autosave delay in seconds',
+            text0_align=TextNode.A_left,
+            text0_scale=(12.0, 12.0),
+            text0_pos=(0, 0),
+            text0_fg=LVecBase4f(0, 0, 0, 1),
+            text0_bg=LVecBase4f(0, 0, 0, 0),
+            text0_wordwrap=None,
+            parent=self.frmMain,
+        )
+        self.lblAutosaveDelay.setTransparency(0)
 
 
     def show(self):

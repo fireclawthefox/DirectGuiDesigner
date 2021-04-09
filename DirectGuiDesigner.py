@@ -17,6 +17,7 @@ from panda3d.core import (
     loadPrcFile,
     loadPrcFileData,
     WindowProperties,
+    ConfigVariableInt,
     ConfigVariableBool,
     ConfigVariableString,
     ConfigVariableSearchPath,
@@ -129,6 +130,7 @@ class DirectGuiDesigner(ShowBase):
         logging.debug("Start Designer")
 
         self.dirty = False
+        self.hasSaved = False
         self.killRing = KillRing()
 
         self.lastDirPath = ConfigVariableString("work-dir-path", "~").getValue()
@@ -179,6 +181,8 @@ class DirectGuiDesigner(ShowBase):
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
         taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
+
+        taskMgr.doMethodLater(ConfigVariableInt("autosave-delay", 60).getValue(), self.autosaveTask, 'autosave task')
 
     def setupGui(self):
         logging.debug("Setup GUI")
@@ -239,6 +243,9 @@ class DirectGuiDesigner(ShowBase):
         self.accept("pasteOptions", self.pasteOptions)
         self.accept("copyElement", self.copyElement)
         self.accept("pasteElement", self.pasteElement)
+        self.accept("undo", self.undo)
+        self.accept("redo", self.redo)
+        self.accept("cycleRedo", self.cycleKillRing)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
         self.accept("toggleGrid", self.editorFrame.toggleGrid)
@@ -303,6 +310,7 @@ class DirectGuiDesigner(ShowBase):
         base.win.requestProperties(wp)
 
         self.dirty = False
+        self.hasSaved = True
 
     def addToKillRing(self, editObject, action, objectType, oldValue, newValue):
         if action == "set" and oldValue.__eq__(newValue): return
@@ -425,8 +433,26 @@ class DirectGuiDesigner(ShowBase):
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
         print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
-
         DirectGuiDesignerExporterProject("", self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
+
+    def autosaveTask(self, task):
+        task.delayTime = ConfigVariableInt("autosave-delay", 60).getValue()
+        try:
+            filename = ""
+            if self.hasSaved:
+                filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json~")
+            DirectGuiDesignerExporterProject(filename, self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, autosave=True)
+        except Exception as e:
+            logging.error("Autosave failed")
+            logging.exception(e)
+            print("autosave failed")
+            #       Make autosave interval configurable in seconds min 10 max 2h maybe?
+
+            #Other things: Create icons for undo/redo in the toolbar, also add them to the menus
+
+            #Upload built binaries to github and maybe itch.io or wherever those tools are usually shared
+
+        return task.again
 
     def inteligentEscape(self):
         dlgList = [self.dlgHelp, self.dlgSettings, self.dlgQuit, self.dlgWarning, self.dlgInfo, self.dlgNewProject]
@@ -1120,6 +1146,7 @@ class DirectGuiDesigner(ShowBase):
         self.dlgSettings.cbShowToolbar["indicatorValue"] = ConfigVariableBool("show-toolbar", True).getValue()
         self.dlgSettings.txtCustomWidgetsPath.enterText(ConfigVariableString("custom-widgets-path", "").getValue())
         self.dlgSettings.txtWorkDir.enterText(ConfigVariableString("work-dir-path", "").getValue())
+        self.dlgSettings.spinAutosaveDealy.setValue(ConfigVariableInt("autosave-delay", 60).getValue())
 
         paths = ""
         pathsConfig = ConfigVariableSearchPath("custom-model-path", "").getValue()
@@ -1187,6 +1214,10 @@ class DirectGuiDesigner(ShowBase):
                     loadPrcFileData("", line)
 
                 prcFile.write("work-dir-path {}\n".format(self.dlgSettings.txtWorkDir.get()))
+
+                line = "autosave-delay {}\n".format(self.dlgSettings.spinAutosaveDealy.get())
+                prcFile.write(line)
+                loadPrcFileData("", line)
 
             # This somehow results in files that can't be changed by the code above anymore
             # So... no hidden config files for windows.

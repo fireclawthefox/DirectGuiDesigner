@@ -19,13 +19,19 @@ from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
 from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
 
 class DirectGuiDesignerExporterProject:
-    def __init__(self, fileName, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, tooltip=None):
+    def __init__(self, fileName, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, autosave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
         self.getEditorFrame = getEditorFrame
         self.usePixel2D = usePixel2D
+        self.isAutosave = False
 
         if exceptionSave:
             self.excSave()
+            return
+
+        if autosave:
+            self.isAutosave = True
+            self.autoSave(fileName)
             return
 
         self.dlgPathSelect = DirectGuiDesignerPathSelect(
@@ -38,6 +44,14 @@ class DirectGuiDesignerExporterProject:
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         self.__executeSave(True, tmpPath)
         logging.info("Wrote crash session file to {}".format(tmpPath))
+
+    def autoSave(self, fileName=""):
+        self.dlgOverwrite = None
+        self.dlgOverwriteShadow = None
+        if fileName == "":
+            fileName = os.path.join(tempfile.gettempdir(), "DGDAutosave.json")
+        self.__executeSave(True, fileName)
+        logging.info("Wrote autosave file to {}".format(fileName))
 
     def save(self, doSave):
         if doSave:
@@ -83,5 +97,6 @@ class DirectGuiDesignerExporterProject:
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)
 
-        base.messenger.send("clearDirtyFlag")
+        if not self.isAutosave:
+            base.messenger.send("clearDirtyFlag")
 

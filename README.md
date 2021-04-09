@@ -64,6 +64,10 @@ This will save a Json file that can later be loaded by the designer again.
 To export as a python script that can directly be used in projects, either hit Ctrl-E or click the button in the toolbar.
 If enabled in the settings, the python exporter will create scripts that can directly be run.
 
+#### Autosave
+The designer will automatically save the project after a specific time has elapsed. If the project has not been saved before, the autosave file will be created in your systems temp directory. Otherwise it will be placed next to your saved project with a .1 appended at the end.
+To change the autosave delay, open the options dialog and change the value in the spinner box dedicated for the autosave delay or change the config variable <code>autosave-delay</code>. The minimum value is set to 10 and the max value is set to 3600 (1 hour) while the default delay is set to 60 (1 minute).
+
 ### Use exported scripts
 The python script will always contain a class called Gui which you can pass a NodePath to be used as root parent element for the GUI. Simply instancing the class will make the GUI visible by default. If this is not desired, hide the root NodePath as given on initialization. As you shouldn't edit the exported class due to edits being overwritten with a new export, you should create another python module which will handle the connection of the apps logic with the gui. This dedicated module could for example implement a show and hide method to easily change the visibility of the gui or set and gather values of the GUI without having to change the actual GUI design module code.
 
@@ -94,6 +98,7 @@ These custom configuration variables have been introduced for the editor.
 |show-toolbar|bool|If set to True, the toolbar over the editor area will be shown, otherwise only the menubar will be displayed. Defaults to True|
 |custom-widgets-path|String|The path to a folder which will contain custom designed DirectGui widgets.|
 |custom-model-path|String|A path to a folder containing textures, models and other assets required by your gui. You cann add this property more than once and each line should only contain one path.|
+|autosave-delay|Integer|Delay in seconds at which the project is automatically saved to a special auto-save file.|
 
 The Designer will create a hidden configuration file called .DirectGuiDesigner.prc in the users Home directory. It will contain all custom configurations from the list above with their default values and can be changed/extended with other Panda3D configurations.
 
