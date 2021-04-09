@@ -54,8 +54,7 @@ from DirectGuiDesignerKillRing import KillRing
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
-from DirectGuiDesignerTooltip import Tooltip
-
+from DirectGuiExtension.DirectTooltip import DirectTooltip
 
 loadPrcFileData(
     "",
@@ -193,7 +192,16 @@ class DirectGuiDesigner(ShowBase):
         self.leftEdge = -(self.screenWidth * (2.0 / 3.0))
         self.rightEdge = self.screenWidth * (1.0 / 3.0)
 
-        self.tt = Tooltip()
+        self.tt = DirectTooltip(
+            text = "Tooltip",
+            #text_fg = (1,1,1,1),
+            pad=(0.2, 0.2),
+            scale = 16,
+            text_align = TextNode.ALeft,
+            frameColor = (1, 1, 0.7, 1),
+            parent=base.pixel2d,
+            sortOrder=1000
+        )
 
         # 3/4 wide editor content frame
         self.editorFrame = DirectGuiDesignerEditorCanvas()
