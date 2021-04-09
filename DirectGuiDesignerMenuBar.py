@@ -33,7 +33,7 @@ class DirectGuiDesignerMenuBar(DirectObject):
             frameSize=(0,screenWidthPx,-12, 12),
             autoUpdateFrameSize=False,
             pos=(0, 0, -12),
-            itemMargin=(10,10,10,10),
+            itemMargin=(2,2,2,2),
             parent=base.pixel2d)
 
         fileEntries = [
@@ -83,6 +83,9 @@ class DirectGuiDesignerMenuBar(DirectObject):
         toolsEntries = [
             DirectMenuItemEntry("Delete Element", base.messenger.send, ["removeElement"]),
             DirectMenuItemEntry("Options", base.messenger.send, ["showSettings"]),
+            DirectMenuItemEntry("Undo", base.messenger.send, ["undo"]),
+            DirectMenuItemEntry("Redo", base.messenger.send, ["redo"]),
+            DirectMenuItemEntry("Cycle redos", base.messenger.send, ["cycleRedo"]),
             DirectMenuItemEntry("Copy", base.messenger.send, ["copyElement"]),
             DirectMenuItemEntry("Paste", base.messenger.send, ["pasteElement"]),
             DirectMenuItemEntry("Copy options", base.messenger.send, ["copyOptions"]),
@@ -180,6 +183,62 @@ class DirectGuiDesignerMenuBar(DirectObject):
         btn.bind(DGG.EXIT, self.tt.hide)
         self.toolBar.addItem(btn)
 
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
+
+        btn = DirectButton(
+            frameSize=(-24,24,-24,24),
+            frameColor=buttonColor,
+            relief=DGG.FLAT,
+            text_scale=0.33,
+            command=base.messenger.send,
+            extraArgs=["undo"],
+            image="icons/Undo.png",
+            image_scale=24)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
+        btn.bind(DGG.ENTER, self.tt.show, ["Undo last action (Ctrl-Z)"])
+        btn.bind(DGG.EXIT, self.tt.hide)
+        self.toolBar.addItem(btn)
+
+        btn = DirectButton(
+            frameSize=(-24,24,-24,24),
+            frameColor=buttonColor,
+            relief=DGG.FLAT,
+            text_scale=0.33,
+            command=base.messenger.send,
+            extraArgs=["redo"],
+            image="icons/Redo.png",
+            image_scale=24)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
+        btn.bind(DGG.ENTER, self.tt.show, ["Redo last action (Ctrl-Y)"])
+        btn.bind(DGG.EXIT, self.tt.hide)
+        self.toolBar.addItem(btn)
+
+        btn = DirectButton(
+            frameSize=(-24,24,-24,24),
+            frameColor=buttonColor,
+            relief=DGG.FLAT,
+            text_scale=0.33,
+            command=base.messenger.send,
+            extraArgs=["cycleRedo"],
+            image="icons/CycleRedo.png",
+            image_scale=24)
+        btn.setTransparency(TransparencyAttrib.M_multisample)
+        btn.bind(DGG.ENTER, self.tt.show, ["Cycle through redo branches (Ctrl-Shift-Y)"])
+        btn.bind(DGG.EXIT, self.tt.hide)
+        self.toolBar.addItem(btn)
+
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
+
         btn = DirectButton(
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
@@ -193,6 +252,13 @@ class DirectGuiDesignerMenuBar(DirectObject):
         btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Del)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         self.toolBar.addItem(btn)
+
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
 
         self.cb_grid = DirectCheckBox(
             frameSize=(-24,24,-24,24),
@@ -226,6 +292,13 @@ class DirectGuiDesignerMenuBar(DirectObject):
         self.cb_scale.bind(DGG.EXIT, self.tt.hide)
         self.toolBar.addItem(self.cb_scale)
 
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
+
         btn = DirectButton(
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
@@ -239,6 +312,13 @@ class DirectGuiDesignerMenuBar(DirectObject):
         btn.bind(DGG.ENTER, self.tt.show, ["Quit Direct GUI Designer (Ctrl-Q)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         self.toolBar.addItem(btn)
+
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
 
         btn = DirectButton(
             frameSize=(-24,24,-24,24),
