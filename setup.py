@@ -1,6 +1,7 @@
 from setuptools import setup
 
 include = [
+    "**/fonts/*",
     "**/icons/*.png",
     "**/LICENSE",
     "**/models/misc/*",
