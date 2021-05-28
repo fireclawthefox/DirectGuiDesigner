@@ -14,22 +14,36 @@ from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectCheckBox import DirectCheckBox
 
+from DirectGuiExtension import DirectGuiHelper as DGH
+from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
+
 class DirectGuiDesignerStructure():
-    def __init__(self, parent, posZ, height, getEditorRootCanvas, elementDict, selectedElement):
+    def __init__(self, parent, getEditorRootCanvas, elementDict, selectedElement):
+        height = DGH.getRealHeight(parent)
         self.collapsedElements = []
 
         self.parent = parent
+
+
+        self.box = DirectBoxSizer(
+            frameColor=(0.25, 0.25, 0.25, 1),
+            autoUpdateFrameSize=False,
+            orientation=DGG.VERTICAL)
+        self.sizer = DirectAutoSizer(
+            parent=parent,
+            child=self.box,
+            childUpdateSizeFunc=self.box.refresh)
+
         self.lblHeader = DirectLabel(
             text="Structure",
             text_scale=16,
-            text_pos=(parent["frameSize"][0], -0.015),
             text_align=TextNode.ALeft,
             text_fg=(1,1,1,1),
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-20),
-            parent=parent,)
-        posZ -= 30
+            )
+        self.box.addItem(self.lblHeader)
+
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
             (0.9, 0.9, 1, 1), # Click
@@ -37,9 +51,10 @@ class DirectGuiDesignerStructure():
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.structureFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], height+30, 0),
-            # make the canvas as big as the frame
-            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
+            frameSize=VBase4(
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3]),
+            #canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
             # set the frames color to transparent
             frameColor=VBase4(1, 1, 1, 1),
             scrollBarWidth=20,
@@ -56,9 +71,8 @@ class DirectGuiDesignerStructure():
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),
-            state=DGG.NORMAL,
-            parent=parent)
+            state=DGG.NORMAL)
+        self.box.addItem(self.structureFrame)
         self.structureFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
         self.structureFrame.bind(DGG.MWUP, self.scroll, [-0.01])
         self.maxWidth = parent["frameSize"][1]-20
@@ -68,13 +82,20 @@ class DirectGuiDesignerStructure():
     def scroll(self, scrollStep, event):
         self.structureFrame.verticalScroll.scrollStep(scrollStep)
 
-    def resizeFrame(self, posZ, height):
-        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
-        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
-        self.lblHeader.setPos(0,0,posZ-20)
-        posZ -= 30
-        self.structureFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
-        self.structureFrame.setPos(0,0,posZ)
+    def resizeFrame(self):
+        self.sizer.refresh()
+        self.structureFrame["frameSize"] = (
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+
+        #posZ = 0
+        #height = DGH.getRealHeight(parent)
+        #self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
+        #self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
+        #self.lblHeader.setPos(0,0,posZ-20)
+        #posZ -= 30
+        #self.structureFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
+        #self.structureFrame.setPos(0,0,posZ)
 
     def refreshStructureTree(self, elementDict, selectedElement):
         self.elementDict = elementDict

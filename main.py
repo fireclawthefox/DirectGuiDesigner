@@ -40,7 +40,8 @@ from direct.directtools.DirectUtil import ROUND_TO
 from DirectGuiDesignerEditorCanvas import DirectGuiDesignerEditorCanvas
 from DirectGuiDesignerElementHandler import DirectGuiDesignerElementHandler
 from DirectGuiDesignerElementHandler import ElementInfo
-from DirectGuiDesignerMenuBar import DirectGuiDesignerMenuBar
+from DirectGuiDesigner.MenuBar import MenuBar
+from DirectGuiDesigner.ToolBar import ToolBar
 from DirectGuiDesignerToolbox import DirectGuiDesignerToolbox
 from DirectGuiDesignerProperties import DirectGuiDesignerProperties
 from DirectGuiDesignerStructure import DirectGuiDesignerStructure
@@ -54,17 +55,24 @@ from DirectGuiDesignerKillRing import KillRing
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
+from DirectGuiExtension import DirectGuiHelper as DGH
+
 from DirectGuiExtension.DirectTooltip import DirectTooltip
+
+from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
+from DirectGuiExtension.DirectSplitFrame import DirectSplitFrame
 
 loadPrcFileData(
     "",
     """
     textures-power-2 none
     window-title DirectGUI Designer
-    #show-frame-rate-meter #t
+    show-frame-rate-meter #t
     #want-pstats #t
     maximized #t
     model-path $MAIN_DIR/models/
+    win-size 1280 720
     """)
 
 # check if we have a config file
@@ -182,6 +190,7 @@ class DirectGuiDesigner(ShowBase):
         # size and we'll be able to use the screen corner/edge variables
         taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
 
+
         taskMgr.doMethodLater(ConfigVariableInt("autosave-delay", 60).getValue(), self.autosaveTask, 'autosave task')
 
     def setupGui(self):
@@ -191,6 +200,7 @@ class DirectGuiDesigner(ShowBase):
         self.screenHeightPx = base.getSize()[1]
         self.leftEdge = -(self.screenWidth * (2.0 / 3.0))
         self.rightEdge = self.screenWidth * (1.0 / 3.0)
+        splitterWidth = 8
 
         self.tt = DirectTooltip(
             text = "Tooltip",
@@ -200,40 +210,132 @@ class DirectGuiDesigner(ShowBase):
             text_align = TextNode.ALeft,
             frameColor = (1, 1, 0.7, 1),
             parent=base.pixel2d,
-            sortOrder=1000
-        )
+            sortOrder=1000)
 
-        # 3/4 wide editor content frame
-        self.editorFrame = DirectGuiDesignerEditorCanvas()
+        #
+        # LAYOUT SETUP
+        #
+
+        self.mainBox = DirectBoxSizer(
+            frameColor=(1,0,0,1),
+            orientation=DGG.VERTICAL,
+            autoUpdateFrameSize=False)
+        self.mainSizer = DirectAutoSizer(
+            parent=base.pixel2d,
+            child=self.mainBox,
+            childUpdateSizeFunc=self.mainBox.refresh)
+
+        menuBarHeight = 24
+        toolBarHeight = 48
+
+        self.menuBarSizer = DirectAutoSizer(
+            parent=self.mainBox,
+            minSize=(0,0,-menuBarHeight/2, menuBarHeight/2),
+            extendVertical=False)
+        self.toolBarSizer = DirectAutoSizer(
+            parent=self.mainBox,
+            minSize=(0,0,-toolBarHeight/2, toolBarHeight/2),
+            extendVertical=False)
+        self.mainBox.addItem(self.menuBarSizer)
+        self.mainBox.addItem(self.toolBarSizer)
+
+        self.mainSplitter = DirectSplitFrame(
+            frameSize=(-self.screenWidthPx/2,self.screenWidthPx/2,0,self.screenHeightPx-menuBarHeight-toolBarHeight),
+            firstFrameMinSize=100,
+            secondFrameMinSize=100,
+            splitterWidth=splitterWidth,
+            splitterPos=self.screenWidthPx/3,
+            pixel2d=True)
+        self.mainSplitter.firstFrame["frameColor"] = (1,1,0,1)
+        self.mainSplitter.secondFrame["frameColor"] = (0,1,1,1)
+        self.mainSplitSizer = DirectAutoSizer(
+            parent=self.mainBox,
+            child=self.mainSplitter,
+            extendVertical=False,
+            childUpdateSizeFunc=self.mainSplitter.refresh)
+        self.mainBox.addItem(self.mainSplitSizer)
+        #self.mainSplitter["splitterPos"] = self.screenWidthPx/3
+
+        self.sidebarSplitterA = DirectSplitFrame(
+            frameSize=(0,DGH.getRealWidth(self.mainSplitter.firstFrame),0,DGH.getRealHeight(self.mainSplitter.firstFrame)),
+            firstFrameMinSize=40,
+            secondFrameMinSize=20,
+            splitterWidth=splitterWidth,
+            splitterPos=DGH.getRealHeight(self.mainSplitter)/3*2,
+            pixel2d=True,
+            orientation=DGG.VERTICAL)
+        self.sidebarSplitterA.firstFrame["frameColor"] = (1,0,0,1)
+        self.sidebarSplitterA.secondFrame["frameColor"] = (1,0,1,1)
+        self.sideSplitSizerA = DirectAutoSizer(
+            parent=self.mainSplitter.firstFrame,
+            child=self.sidebarSplitterA,
+            childUpdateSizeFunc=self.sidebarSplitterA.refresh)
+        self.mainSplitter["firstFrameUpdateSizeFunc"] = self.sideSplitSizerA.refresh
+        #self.sidebarSplitterA["splitterPos"] = DGH.getRealHeight(self.mainSplitter)/3*2
+
+        self.sidebarSplitterB = DirectSplitFrame(
+            frameSize=(0,DGH.getRealWidth(self.sidebarSplitterA.firstFrame),0,DGH.getRealHeight(self.sidebarSplitterA.firstFrame)),
+            firstFrameMinSize=20,
+            secondFrameMinSize=20,
+            splitterWidth=splitterWidth,
+            orientation=DGG.VERTICAL)
+        self.sidebarSplitterB.firstFrame["frameColor"] = (0,0,1,1)
+        self.sidebarSplitterB.secondFrame["frameColor"] = (0,1,0,1)
+        self.sideSplitSizerB = DirectAutoSizer(
+            parent=self.sidebarSplitterA.secondFrame,
+            child=self.sidebarSplitterB,
+            childUpdateSizeFunc=self.sidebarSplitterB.refresh)
+        self.sidebarSplitterA["secondFrameUpdateSizeFunc"] = self.sideSplitSizerB.refresh
+
+        #
+        # CONTENT SETUP
+        #
+
+        self.editorFrame = DirectGuiDesignerEditorCanvas(self.mainSplitter.secondFrame)
+        self.mainSplitter["secondFrameUpdateSizeFunc"] = self.editorFrame.resizeFrame
+
         self.visualEditorInfo = ElementInfo(self.editorFrame.visualEditor, "Editor")
 
-        self.menuBar = DirectGuiDesignerMenuBar(self.tt, self.editorFrame.grid)
-        self.toolbarHeight = 24
+        self.menuBar = MenuBar(self.editorFrame.grid)
+        self.menuBarSizer.setChild(self.menuBar.menuBar)
+        self.menuBarSizer["childUpdateSizeFunc"] = self.menuBar.menuBar.refresh
 
-        # 1/4 wide toolbox, properties and structure frame
-        self.toolsFrame = DirectFrame(
-            frameColor=(0.25, 0.25, 0.25, 1),
-            frameSize=(0, self.screenWidthPx/4, -self.screenHeightPx, -self.toolbarHeight),
-            pos=(self.screenWidth/8,0,0),
-            parent=base.pixel2d)
+        self.toolBar = ToolBar(self.tt, self.editorFrame.grid)
+        self.toolBarSizer.setChild(self.toolBar.toolBar)
+        self.toolBarSizer["childUpdateSizeFunc"] = self.toolBar.toolBar.refresh
 
-        self.toolFrameHeight = -self.screenHeightPx / 3 + (self.toolbarHeight/3)
+        self.mainBox.refresh()
 
-        self.nextToolFrameY = -self.toolbarHeight
+        # TOOLBOX
+        self.toolboxFrame = DirectGuiDesignerToolbox(
+            self.sidebarSplitterA.firstFrame)
+        self.sidebarSplitterA["firstFrameUpdateSizeFunc"]=self.toolboxFrame.resizeFrame
 
-        self.toolboxFrame = DirectGuiDesignerToolbox(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight)
-        self.nextToolFrameY += self.toolFrameHeight
-
-        self.propertiesFrame = DirectGuiDesignerProperties(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.getEditorPlacer, self.tt)
+        # PROPERTIES EDITOR
+        self.propertiesFrame = DirectGuiDesignerProperties(
+            self.sidebarSplitterB.firstFrame,
+            self.getEditorRootCanvas,
+            self.getEditorPlacer,
+            self.tt)
         self.propertiesEditor(self.visualEditorInfo)
-        self.nextToolFrameY += self.toolFrameHeight
+        self.sidebarSplitterB["firstFrameUpdateSizeFunc"]=self.propertiesFrame.resizeFrame
 
-        self.structureFrame = DirectGuiDesignerStructure(self.toolsFrame, self.nextToolFrameY, self.toolFrameHeight, self.getEditorRootCanvas, self.elementDict, self.selectedElement)
+        # STRUCTUR VIEWER
+        self.structureFrame = DirectGuiDesignerStructure(
+            self.sidebarSplitterB.secondFrame,
+            self.getEditorRootCanvas,
+            self.elementDict,
+            self.selectedElement)
+        self.sidebarSplitterB["secondFrameUpdateSizeFunc"]=self.structureFrame.resizeFrame
 
+        #
+        # ELEMENT HANDLERS
+        #
         self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
-        self.editorFrame.setElementHandler(self.elementHandler)
-
         self.customWidgetsHandler = DirectGuiDesignerCustomWidgets(self.toolboxFrame, self.elementHandler)
+
+        # connect the handler with the editor frame
+        self.editorFrame.setElementHandler(self.elementHandler)
 
         self.registerKeyboardEvents()
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
@@ -305,6 +407,24 @@ class DirectGuiDesigner(ShowBase):
             os.remove(tmpPath)
             logging.info("Removed crash session file")
         logging.debug("Startup complete")
+
+        self.refreshAllSizers()
+
+    def refreshAllSizers(self):
+        self.mainSizer.refresh()
+        self.mainBox.refresh()
+
+        self.menuBarSizer.refresh()
+        self.toolBarSizer.refresh()
+
+        self.mainSplitSizer.refresh()
+        self.mainSplitter.refresh()
+
+        self.sideSplitSizerA.refresh()
+        self.sideSplitSizerB.refresh()
+
+
+        self.editorFrame.sizer.refresh()
 
     def setDirty(self):
         wp = WindowProperties()
@@ -431,7 +551,7 @@ class DirectGuiDesigner(ShowBase):
             self.lastFileNameWOExtension = os.path.splitext(os.path.basename(path))[0]
 
     def getEditorRootCanvas(self):
-        return self.editorFrame.visualEditor.getCanvas()
+        return self.editorFrame.getEditorRootCanvas()
 
     def getEditorPlacer(self, placerName):
         return self.editorFrame.getEditorPlacer(placerName)
@@ -455,12 +575,6 @@ class DirectGuiDesigner(ShowBase):
             logging.error("Autosave failed")
             logging.exception(e)
             print("autosave failed")
-            #       Make autosave interval configurable in seconds min 10 max 2h maybe?
-
-            #Other things: Create icons for undo/redo in the toolbar, also add them to the menus
-
-            #Upload built binaries to github and maybe itch.io or wherever those tools are usually shared
-
         return task.again
 
     def inteligentEscape(self):
@@ -488,7 +602,7 @@ class DirectGuiDesigner(ShowBase):
         self.accept("shift-control-c", self.copyOptions)
         self.accept("shift-control-v", self.pasteOptions)
         self.accept("delete", self.removeElement)
-        self.accept("control-g", self.menuBar.cb_grid.commandFunc, extraArgs=[None])
+        self.accept("control-g", self.toolBar.cb_grid.commandFunc, extraArgs=[None])
         self.accept("control-h", self.toggleElementVisibility)
         self.accept("f1", self.showHelp)
         self.accept("control-z", self.undo)
@@ -590,27 +704,14 @@ class DirectGuiDesigner(ShowBase):
             self.screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
             self.screenWidthPx = base.getSize()[0]
             self.screenHeightPx = base.getSize()[1]
-            self.toolsFrame["frameSize"] = (0, self.screenWidthPx/4, -self.screenHeightPx, -self.toolbarHeight)
 
-            # Resize all editor frames
-            self.editorFrame.resizeFrame()
-            self.menuBar.resizeFrame()
-            self.toolFrameHeight = -self.screenHeightPx / 3 + (self.toolbarHeight / 3)
-            self.nextToolFrameY = -self.toolbarHeight
-            self.toolboxFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
-            self.nextToolFrameY += self.toolFrameHeight
-            self.propertiesFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
-            self.nextToolFrameY += self.toolFrameHeight
-            self.structureFrame.resizeFrame(self.nextToolFrameY, self.toolFrameHeight)
+            # resize the main splitter to fit the remaining window space
+            self.mainSplitter["frameSize"] = (
+                -self.screenWidthPx/2, self.screenWidthPx/2,
+                0, self.screenHeightPx-DGH.getRealHeight(self.menuBarSizer)-DGH.getRealHeight(self.toolBarSizer))
 
-            # Reposition dialogs and resize thier shadows
-            for dialog in [self.dlgHelp, self.dlgSettings, self.dlgQuit, self.dlgWarning, self.dlgInfo, self.dlgNewProject]:
-                if dialog is not None:
-                    dialog.setPos(base.getSize()[0]//2, 0, -base.getSize()[1]//2)
-
-            for shadow in [self.dlgHelpShadow, self.dlgSettingsShadow, self.dlgQuitShadow, self.dlgWarningShadow, self.dlgInfoShadow, self.dlgNewProjectShadow]:
-                if shadow is not None:
-                    shadow["frameSize"] = (0, base.getSize()[0], -base.getSize()[1], 0)
+            # delay the refresh so we won't get stuck with a half sized editor
+            self.taskMgr.doMethodLater(0.5, self.refreshAllSizers, "delayed size fit", appendTask=False, extraArgs=[])
 
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.clearPropertySelection()
@@ -766,16 +867,17 @@ class DirectGuiDesigner(ShowBase):
 
     def dragStop(self, event):
         t = taskMgr.getTasksNamed("dragDropTask")[0]
-        parent = t.elementInfo.element.getParent()
-        pos = t.elementInfo.element.getPos(self.editorFrame.visualEditor.getCanvas())
-        if pos.x < self.editorFrame.visualEditor["canvasSize"][0]:
-            t.elementInfo.element.setX(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][0])
-        if pos.x > self.editorFrame.visualEditor["canvasSize"][1]:
-            t.elementInfo.element.setX(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][1])
-        if pos.z < self.editorFrame.visualEditor["canvasSize"][2]:
-            t.elementInfo.element.setZ(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][2])
-        if pos.z > self.editorFrame.visualEditor["canvasSize"][3]:
-            t.elementInfo.element.setZ(self.editorFrame.visualEditor.getCanvas(), self.editorFrame.visualEditor["canvasSize"][3])
+        #parent = t.elementInfo.element.getParent()
+        pos = t.elementInfo.element.getPos()
+
+        if pos.x < self.editorFrame.getEditorCanvasSize()[0]:
+            t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[0])
+        if pos.x > self.editorFrame.getEditorCanvasSize()[1]:
+            t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[1])
+        if pos.z < self.editorFrame.getEditorCanvasSize()[2]:
+            t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[2])
+        if pos.z > self.editorFrame.getEditorCanvasSize()[3]:
+            t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[3])
         self.refreshProperties(t.elementInfo)
 
         if t.hasMoved:

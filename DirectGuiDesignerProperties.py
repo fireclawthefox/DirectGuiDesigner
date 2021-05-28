@@ -36,8 +36,9 @@ from direct.gui.DirectCheckButton import DirectCheckButton
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
-from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension import DirectGuiHelper as DGH
+from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 
 class PropertyInfo:
     def __init__(self, displayName, propertyName, propertyType, customCommandName, customSelectionDict):
@@ -228,23 +229,32 @@ class DirectGuiDesignerProperties():
     scrollSpeedUp = -0.001
     scrollSpeedDown = 0.001
 
-    def __init__(self, parent, posZ, height, getEditorRootCanvas, getEditorPlacer, tooltip):
+    def __init__(self, parent, getEditorRootCanvas, getEditorPlacer, tooltip):
+        height = DGH.getRealHeight(parent)
         # A list containing the prooperty information
         self.customProperties = []
         self.tooltip = tooltip
         self.parent = parent
         self.maxElementWidth = 0
+
+        self.box = DirectBoxSizer(
+            frameColor=(0.25, 0.25, 0.25, 1),
+            autoUpdateFrameSize=False,
+            orientation=DGG.VERTICAL)
+        self.sizer = DirectAutoSizer(
+            parent=parent,
+            child=self.box,
+            childUpdateSizeFunc=self.box.refresh)
+
         self.lblHeader = DirectLabel(
             text="Properties",
             text_scale=16,
-            text_pos=(parent["frameSize"][0], 0),
             text_align=TextNode.ALeft,
             text_fg=(1,1,1,1),
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-20),
-            parent=parent,)
-        posZ -= 30
+            )
+        self.box.addItem(self.lblHeader)
+
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
             (0.9, 0.9, 1, 1), # Click
@@ -252,9 +262,9 @@ class DirectGuiDesignerProperties():
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.propertiesFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], height+30, 0),
-            # make the canvas as big as the frame
-            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
+            frameSize=VBase4(
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3]),
             # set the frames color to transparent
             frameColor=VBase4(1, 1, 1, 1),
             scrollBarWidth=20,
@@ -271,9 +281,8 @@ class DirectGuiDesignerProperties():
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),
-            state=DGG.NORMAL,
-            parent=parent,)
+            state=DGG.NORMAL)
+        self.box.addItem(self.propertiesFrame)
         self.propertiesFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         self.propertiesFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
@@ -283,13 +292,11 @@ class DirectGuiDesignerProperties():
     def scroll(self, scrollStep, event):
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
 
-    def resizeFrame(self, posZ, height):
-        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
-        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
-        self.lblHeader.setPos(0,0,posZ-20)
-        posZ -= 30
-        self.propertiesFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
-        self.propertiesFrame.setPos(0,0,posZ)
+    def resizeFrame(self):
+        self.sizer.refresh()
+        self.propertiesFrame["frameSize"] = (
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
 
         # refresh properties
         self.clear()
@@ -328,11 +335,11 @@ class DirectGuiDesignerProperties():
         DirectLabel(
             text=headerText,
             text_scale=18,
-            text_pos=(0, 0),
+            text_pos=(-10, 0),
             text_align=TextNode.ACenter,
-            frameSize=VBase4(-self.propertiesFrame["frameSize"][1]/2, self.propertiesFrame["frameSize"][1]/2, -10, 20),
+            frameSize=VBase4(-self.propertiesFrame["frameSize"][1], self.propertiesFrame["frameSize"][1], -10, 20),
             frameColor=VBase4(0.7,0.7,0.7,1),
-            pos=(self.propertiesFrame["frameSize"][1]/2,0,-20),
+            pos=(0,0,-20),
             parent=propFrame)
         self.startPos = Point3(self.propertiesFrame["frameSize"][0], 0, -30)
         self.frameSize = 30
@@ -351,6 +358,8 @@ class DirectGuiDesignerProperties():
             if self.propertyList["parent"]:
                 self.__createParentProperty(self.startPos, propFrame, elementInfo)
                 self.moveNext()
+            self.__createInbetweenHeader("Text Properties", self.startPos, propFrame)
+            self.frameSize += 30
             if self.propertyList["text"]:
                 self.__createTextProperty("Text", self.startPos, propFrame, element, "text")
                 self.moveNext()
@@ -358,28 +367,30 @@ class DirectGuiDesignerProperties():
                 self.__createTextAlignProperty(self.startPos, propFrame, element)
                 self.moveNext()
             if self.propertyList["text_scale"]:
-                self.__createBase2Input("Text Scale", self.startPos, propFrame, element, "text_scale")
+                self.__createBaseNInput("Text Scale", self.startPos, propFrame, element, "text_scale", 2)
                 self.moveNext()
             if self.propertyList["text_font"]:
                 self.__createFontProperty("Font", self.startPos, propFrame, element)
                 self.moveNext()
             if self.propertyList["text_fg"]:
-                self.__createBase4Input("Text Color (r/g/b/a)", self.startPos, propFrame, element, "text_fg")
+                self.__createBaseNInput("Text Color (r/g/b/a)", self.startPos, propFrame, element, "text_fg", 4)
                 self.moveNext()
             if self.propertyList["text_bg"]:
-                self.__createBase4Input("Text Background Color (r/g/b/a)", self.startPos, propFrame, element, "text_bg")
+                self.__createBaseNInput("Text Background Color (r/g/b/a)", self.startPos, propFrame, element, "text_bg", 4)
                 self.moveNext()
             if self.propertyList["text_pos"]:
-                self.__createBase2Input("Text Position (X/Y)", self.startPos, propFrame, element, "text_pos")
+                self.__createBaseNInput("Text Position (X/Y)", self.startPos, propFrame, element, "text_pos", 2)
                 self.moveNext()
             if self.propertyList["text_wordwrap"]:
                 self.__createFloatInput("Word wrap", self.startPos, propFrame, element, "text_wordwrap")
                 self.moveNext()
+            self.__createInbetweenHeader("Frame Properties", self.startPos, propFrame)
+            self.frameSize += 30
             if self.propertyList["relief"]:
                 self.__createReliefProperty("Relief", self.startPos, propFrame, element)
                 self.moveNext()
             if self.propertyList["borderWidth"]:
-                self.__createBase2Input("Border Width", self.startPos, propFrame, element, "borderWidth")
+                self.__createBaseNInput("Border Width", self.startPos, propFrame, element, "borderWidth", 2)
                 self.moveNext()
             if self.propertyList["frameSize"]:
                 # make sure the frameSize is set correct
@@ -394,47 +405,53 @@ class DirectGuiDesignerProperties():
                     else:
                         bw = (0, 0)
                     newFS = LVecBase4f(element.guiItem.getFrame())
-                    newFS[0] += bw[0]
-                    newFS[1] -= bw[0]
-                    newFS[2] += bw[1]
-                    newFS[3] -= bw[1]
+                    #newFS[0] += bw[0]
+                    #newFS[1] -= bw[0]
+                    #newFS[2] += bw[1]
+                    #newFS[3] -= bw[1]
                     element["frameSize"] = newFS
 
-                self.__createBase4Input("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize")
+                self.__createBaseNInput("Frame Size (L/R/B/T)", self.startPos, propFrame, element, "frameSize", 4)
                 self.moveNext()
                 self.__createResetFramesize(self.startPos, propFrame, element)
                 self.startPos.setZ(self.startPos.getZ() - 30)
                 self.frameSize += 30
             if self.propertyList["frameColor"]:
-                self.__createBase4Input("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor")
+                self.__createBaseNInput("Background Color (r/g/b/a)", self.startPos, propFrame, element, "frameColor", 4)
                 self.moveNext()
             if self.propertyList["enableTransparency"]:
                 self.__createTransparencyProperty(self.startPos, propFrame, element)
                 self.moveNext()
             if self.propertyList["pad"]:
-                self.__createBase2Input("Padding", self.startPos, propFrame, element, "pad")
+                self.__createBaseNInput("Padding", self.startPos, propFrame, element, "pad", 2)
                 self.moveNext()
+            self.__createInbetweenHeader("Location Properties", self.startPos, propFrame)
+            self.frameSize += 30
             if self.propertyList["pos"]:
-                self.__createBase3Input("Position (X/Y/Z)", self.startPos, propFrame, element, "pos")
+                self.__createBaseNInput("Position (X/Y/Z)", self.startPos, propFrame, element, "pos", 3)
                 self.moveNext()
             if self.propertyList["hpr"]:
-                self.__createBase3Input("Rotation (H/P/R)", self.startPos, propFrame, element, "hpr")
+                self.__createBaseNInput("Rotation (H/P/R)", self.startPos, propFrame, element, "hpr", 3)
                 self.moveNext()
             if self.propertyList["scale"]:
-                self.__createBase3Input("Scale", self.startPos, propFrame, element, "scale")
+                self.__createBaseNInput("Scale", self.startPos, propFrame, element, "scale", 3)
                 self.moveNext()
+            self.__createInbetweenHeader("Look Properties", self.startPos, propFrame)
+            self.frameSize += 30
             if self.propertyList["color"]:
-                self.__createBase4Input("Color (r/g/b/a)", self.startPos, propFrame, element, "color")
+                self.__createBaseNInput("Color (r/g/b/a)", self.startPos, propFrame, element, "color", 4)
                 self.moveNext()
             if self.propertyList["image"]:
                 self.__createImageProperty("Image", self.startPos, propFrame, element)
                 self.moveNext()
             if self.propertyList["image_scale"]:
-                self.__createBase3Input("Image Scale", self.startPos, propFrame, element, "image_scale")
+                self.__createBaseNInput("Image Scale", self.startPos, propFrame, element, "image_scale", 3)
                 self.moveNext()
             if self.propertyList["image_pos"]:
-                self.__createBase3Input("Image Position (X/Y/Z)", self.startPos, propFrame, element, "image_pos")
+                self.__createBaseNInput("Image Position (X/Y/Z)", self.startPos, propFrame, element, "image_pos", 3)
                 self.moveNext()
+            self.__createInbetweenHeader("Other Properties", self.startPos, propFrame)
+            self.frameSize += 30
             if self.propertyList["sortOrder"]:
                 self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
                 self.moveNext()
@@ -492,7 +509,7 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Scrolled Frame Properties", self.startPos, propFrame)
                     break
             if self.propertyList["canvasSize"]:
-                self.__createBase4Input("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize")
+                self.__createBaseNInput("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize", 4)
                 self.moveNext()
             if self.propertyList["scrollBarWidth"]:
                 self.__createFloatInput("Scroll Bar Width", self.startPos, propFrame, element, "scrollBarWidth", True)
@@ -506,7 +523,7 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
                     break
             if self.propertyList["clipSize"]:
-                self.__createBase4Input("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize")
+                self.__createBaseNInput("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize", 4)
                 self.moveNext()
 
             #
@@ -534,19 +551,19 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Inc Button Properties", self.startPos, propFrame)
                     break
             if self.propertyList["incButton_pos"]:
-                self.__createBase3Input("incButton Position (X/Y/Z)", self.startPos, propFrame, element, "incButton_pos")
+                self.__createBaseNInput("incButton Position (X/Y/Z)", self.startPos, propFrame, element, "incButton_pos", 3)
                 self.moveNext()
             if self.propertyList["incButton_hpr"]:
-                self.__createBase3Input("incButton Rotation (H/P/R)", self.startPos, propFrame, element, "incButton_hpr")
+                self.__createBaseNInput("incButton Rotation (H/P/R)", self.startPos, propFrame, element, "incButton_hpr", 3)
                 self.moveNext()
             if self.propertyList["incButton_scale"]:
-                self.__createBase3Input("incButton Scale", self.startPos, propFrame, element, "incButton_scale")
+                self.__createBaseNInput("incButton Scale", self.startPos, propFrame, element, "incButton_scale", 3)
                 self.moveNext()
             if self.propertyList["incButton_frameColor"]:
-                self.__createBase4Input("incButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "incButton_frameColor")
+                self.__createBaseNInput("incButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "incButton_frameColor", 4)
                 self.moveNext()
             if self.propertyList["incButton_frameSize"]:
-                self.__createBase4Input("incButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "incButton_frameSize")
+                self.__createBaseNInput("incButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "incButton_frameSize", 4)
                 self.moveNext()
                 incBtn = element.incButton
                 self.__createResetFramesize(self.startPos, propFrame, incBtn)
@@ -556,7 +573,7 @@ class DirectGuiDesignerProperties():
                 self.__createImageProperty("incButton Image", self.startPos, propFrame, element, "incButton_image")
                 self.moveNext()
             if self.propertyList["incButton_image_scale"]:
-                self.__createBase3Input("incButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "incButton_image_scale")
+                self.__createBaseNInput("incButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "incButton_image_scale", 3)
                 self.moveNext()
 
             for key in self.propertyList.keys():
@@ -564,19 +581,19 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Dec Button Properties", self.startPos, propFrame)
                     break
             if self.propertyList["decButton_pos"]:
-                self.__createBase3Input("decButton Position (X/Y/Z)", self.startPos, propFrame, element, "decButton_pos")
+                self.__createBaseNInput("decButton Position (X/Y/Z)", self.startPos, propFrame, element, "decButton_pos", 3)
                 self.moveNext()
             if self.propertyList["decButton_hpr"]:
-                self.__createBase3Input("decButton Rotation (H/P/R)", self.startPos, propFrame, element, "decButton_hpr")
+                self.__createBaseNInput("decButton Rotation (H/P/R)", self.startPos, propFrame, element, "decButton_hpr", 3)
                 self.moveNext()
             if self.propertyList["decButton_scale"]:
-                self.__createBase3Input("decButton Scale", self.startPos, propFrame, element, "decButton_scale")
+                self.__createBaseNInput("decButton Scale", self.startPos, propFrame, element, "decButton_scale", 3)
                 self.moveNext()
             if self.propertyList["decButton_frameColor"]:
-                self.__createBase4Input("decButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "decButton_frameColor")
+                self.__createBaseNInput("decButton Background Color (r/g/b/a)", self.startPos, propFrame, element, "decButton_frameColor", 4)
                 self.moveNext()
             if self.propertyList["decButton_frameSize"]:
-                self.__createBase4Input("decButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "decButton_frameSize")
+                self.__createBaseNInput("decButton Frame Size (L/R/B/T)", self.startPos, propFrame, element, "decButton_frameSize", 4)
                 self.moveNext()
                 decBtn = element.decButton
                 self.__createResetFramesize(self.startPos, propFrame, decBtn)
@@ -586,7 +603,7 @@ class DirectGuiDesignerProperties():
                 self.__createImageProperty("decButton Image", self.startPos, propFrame, element, "decButton_image")
                 self.moveNext()
             if self.propertyList["decButton_image_scale"]:
-                self.__createBase3Input("decButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "decButton_image_scale")
+                self.__createBaseNInput("decButton Image Scale (X/Y/Z)", self.startPos, propFrame, element, "decButton_image_scale", 3)
                 self.moveNext()
 
             for key in self.propertyList.keys():
@@ -594,19 +611,19 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Thumb Properties", self.startPos, propFrame)
                     break
             if self.propertyList["thumb_pos"]:
-                self.__createBase3Input("thumb Position (X/Y/Z)", self.startPos, propFrame, element, "thumb_pos")
+                self.__createBaseNInput("thumb Position (X/Y/Z)", self.startPos, propFrame, element, "thumb_pos", 3)
                 self.moveNext()
             if self.propertyList["thumb_hpr"]:
-                self.__createBase3Input("thumb Rotation (H/P/R)", self.startPos, propFrame, element, "thumb_hpr")
+                self.__createBaseNInput("thumb Rotation (H/P/R)", self.startPos, propFrame, element, "thumb_hpr", 3)
                 self.moveNext()
             if self.propertyList["thumb_scale"]:
-                self.__createBase3Input("thumb Scale", self.startPos, propFrame, element, "thumb_scale")
+                self.__createBaseNInput("thumb Scale", self.startPos, propFrame, element, "thumb_scale", 3)
                 self.moveNext()
             if self.propertyList["thumb_frameColor"]:
-                self.__createBase4Input("thumb Background Color (r/g/b/a)", self.startPos, propFrame, element, "thumb_frameColor")
+                self.__createBaseNInput("thumb Background Color (r/g/b/a)", self.startPos, propFrame, element, "thumb_frameColor", 4)
                 self.moveNext()
             if self.propertyList["thumb_frameSize"]:
-                self.__createBase4Input("thumb Frame Size (L/R/B/T)", self.startPos, propFrame, element, "thumb_frameSize")
+                self.__createBaseNInput("thumb Frame Size (L/R/B/T)", self.startPos, propFrame, element, "thumb_frameSize", 4)
                 self.moveNext()
                 decBtn = element.thumb
                 self.__createResetFramesize(self.startPos, propFrame, decBtn)
@@ -616,7 +633,7 @@ class DirectGuiDesignerProperties():
                 self.__createImageProperty("thumb Image", self.startPos, propFrame, element, "thumb_image")
                 self.moveNext()
             if self.propertyList["thumb_image_scale"]:
-                self.__createBase3Input("thumb Image Scale (X/Y/Z)", self.startPos, propFrame, element, "thumb_image_scale")
+                self.__createBaseNInput("thumb Image Scale (X/Y/Z)", self.startPos, propFrame, element, "thumb_image_scale", 3)
                 self.moveNext()
 
             #
@@ -640,19 +657,19 @@ class DirectGuiDesignerProperties():
                 self.__createFloatInput("Box Image Scale (X/Y/Z)", self.startPos, propFrame, element, "boxImageScale")
                 self.moveNext()
             if self.propertyList["boxImageColor"]:
-                self.__createBase4Input("Box Image Color (r/g/b/a)", self.startPos, propFrame, element, "boxImageColor")
+                self.__createBaseNInput("Box Image Color (r/g/b/a)", self.startPos, propFrame, element, "boxImageColor", 4)
                 self.moveNext()
             if self.propertyList["boxRelief"]:
                 self.__createReliefProperty("Box Relief", self.startPos, propFrame, element, "boxRelief")
                 self.moveNext()
             if self.propertyList["indicator_text_scale"]:
-                self.__createBase2Input("Indicator Text Scale", self.startPos, propFrame, element, "indicator_text_scale")
+                self.__createBaseNInput("Indicator Text Scale", self.startPos, propFrame, element, "indicator_text_scale", 2)
                 self.moveNext()
             if self.propertyList["indicator_text_pos"]:
-                self.__createBase2Input("Indicator Text Position (X/Y)", self.startPos, propFrame, element, "indicator_text_pos")
+                self.__createBaseNInput("Indicator Text Position (X/Y)", self.startPos, propFrame, element, "indicator_text_pos", 2)
                 self.moveNext()
             if self.propertyList["indicator_borderWidth"]:
-                self.__createBase2Input("Indicator Border Width", self.startPos, propFrame, element, "indicator_borderWidth")
+                self.__createBaseNInput("Indicator Border Width", self.startPos, propFrame, element, "indicator_borderWidth", 2)
                 self.moveNext()
 
             #
@@ -676,19 +693,19 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
                     break
             if self.propertyList["popupMarkerBorder"]:
-                self.__createBase2Input("Popup Marker Border", self.startPos, propFrame, element, "popupMarkerBorder")
+                self.__createBaseNInput("Popup Marker Border", self.startPos, propFrame, element, "popupMarkerBorder", 2)
                 self.moveNext()
             if self.propertyList["popupMarker_pos"]:
-                self.__createBase3Input("Popup Marker Position (X/Y/Z)", self.startPos, propFrame, element, "popupMarker_pos")
+                self.__createBaseNInput("Popup Marker Position (X/Y/Z)", self.startPos, propFrame, element, "popupMarker_pos", 3)
                 self.moveNext()
             if self.propertyList["popupMenuLocation"]:
                 self.__createPlacementProperty("Popup Menu Location", self.startPos, propFrame, element, "popupMenuLocation")
                 self.moveNext()
             if self.propertyList["highlightColor"]:
-                self.__createBase4Input("Highlight Color", self.startPos, propFrame, element, "highlightColor")
+                self.__createBaseNInput("Highlight Color", self.startPos, propFrame, element, "highlightColor", 4)
                 self.moveNext()
             if self.propertyList["highlightScale"]:
-                self.__createBase2Input("Highlight Scale", self.startPos, propFrame, element, "highlightScale")
+                self.__createBaseNInput("Highlight Scale", self.startPos, propFrame, element, "highlightScale", 2)
                 self.moveNext()
 
             #
@@ -699,7 +716,7 @@ class DirectGuiDesignerProperties():
                     self.__createInbetweenHeader("ScrollBar/Slider Properties", self.startPos, propFrame)
                     break
             if self.propertyList["SB-range"]:
-                self.__createBase2Input("Bar Range", self.startPos, propFrame, element, "range")
+                self.__createBaseNInput("Bar Range", self.startPos, propFrame, element, "range", 2)
                 self.moveNext()
             if self.propertyList["scrollSize"]:
                 self.__createFloatInput("Scroll Size", self.startPos, propFrame, element, "scrollSize")
@@ -728,10 +745,10 @@ class DirectGuiDesignerProperties():
                 self.__createFloatInput("Bar Range", self.startPos, propFrame, element, "range")
                 self.moveNext()
             if self.propertyList["barBorderWidth"]:
-                self.__createBase2Input("Bar Border Width", self.startPos, propFrame, element, "barBorderWidth")
+                self.__createBaseNInput("Bar Border Width", self.startPos, propFrame, element, "barBorderWidth", 2)
                 self.moveNext()
             if self.propertyList["barColor"]:
-                self.__createBase4Input("Bar Color", self.startPos, propFrame, element, "barColor")
+                self.__createBaseNInput("Bar Color", self.startPos, propFrame, element, "barColor", 4)
                 self.moveNext()
             if self.propertyList["barTexture"]:
                 self.__createImageProperty("Bar Texture", self.startPos, propFrame, element, "barTexture")
@@ -760,13 +777,13 @@ class DirectGuiDesignerProperties():
                     self.__createFloatInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
                     self.moveNext()
                 elif prop.propertyType.lower() == "vbase2":
-                    self.__createBase2Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                    self.__createBaseNInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName, 2)
                     self.moveNext()
                 elif prop.propertyType.lower() == "vbase3":
-                    self.__createBase3Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                    self.__createBaseNInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName, 3)
                     self.moveNext()
                 elif prop.propertyType.lower() == "vbase4":
-                    self.__createBase4Input(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
+                    self.__createBaseNInput(prop.displayName, self.startPos, propFrame, element, prop.propertyName, 4)
                     self.moveNext()
                 elif prop.propertyType.lower() == "text":
                     self.__createTextProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName)
@@ -795,6 +812,10 @@ class DirectGuiDesignerProperties():
                 elif prop.propertyType.lower() == "commandproperty":
                     self.__createCustomCommandProperty(prop.displayName, self.startPos, propFrame, element, prop.propertyName, elementInfo)
                     self.moveNext()
+                #TODO: ADD CUSTOM COMMAND EXTRA ARGUMENTS
+                #elif prop.propertyType.lower() == "commandArguments":
+                #    self.__createCommandArgsProperty(self.startPos, propFrame, elementInfo)
+                #    self.moveNext()
                 elif prop.propertyType.lower() == "command":
                     self.__createCustomCommand(prop.displayName, self.startPos, propFrame, element, prop.customCommandName)
                     self.moveNext()
@@ -826,11 +847,11 @@ class DirectGuiDesignerProperties():
         DirectLabel(
             text=description,
             text_scale=16,
-            text_pos=(0, 0),
+            text_pos=(-10, 0),
             text_align=TextNode.ACenter,
-            frameSize=VBase4(-self.propertiesFrame["frameSize"][1]/2, self.propertiesFrame["frameSize"][1]/2, -10, 20),
+            frameSize=VBase4(-self.propertiesFrame["frameSize"][1], self.propertiesFrame["frameSize"][1], -10, 20),
             frameColor=VBase4(0.85,0.85,0.85,1),
-            pos=(self.propertiesFrame["frameSize"][1]/2,0,z-20),
+            pos=(0,0,z-20),
             parent=parent)
         self.startPos.setZ(self.startPos.getZ() - 30)
         self.frameSize += 30
@@ -895,8 +916,6 @@ class DirectGuiDesignerProperties():
     #
     # General input elements
     #
-
-
     def __createBaseNInput(self, description, startPos, parent, updateElement, updateAttribute, n):
         def update(text):
             base.messenger.send("setDirtyFlag")
@@ -958,22 +977,13 @@ class DirectGuiDesignerProperties():
                 values[i] = updateElement[updateAttribute][i]
 
         entryList = []
-        width = (parent.bounds[1]-10) / n
+        width = (DGH.getRealWidth(parent)-10) / n
         entryWidth = width / 13
         for i in range(n):
             value = self.__getFormated(values[i])
 
             entryList.append(self.__createTextEntry(str(value), x, z, entryWidth, update, parent))
             x += width
-
-    def __createBase4Input(self, description, startPos, parent, updateElement, updateAttribute):
-        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 4)
-
-    def __createBase3Input(self, description, startPos, parent, updateElement, updateAttribute):
-        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 3)
-
-    def __createBase2Input(self, description, startPos, parent, updateElement, updateAttribute):
-        return self.__createBaseNInput(description, startPos, parent, updateElement, updateAttribute, 2)
 
     def __createFloatInput(self, description, startPos, parent, updateElement, updateAttribute, resetFrameSize=False):
         def update(text):
@@ -1362,7 +1372,7 @@ class DirectGuiDesignerProperties():
         btn = DirectButton(
             text=description,
             pad=(0.25,0.25),
-            pos=(self.parent.getWidth() / 2, 0, z-3),
+            pos=(0, 0, z-3),
             scale=12,
             parent=parent,
             command=getattr(updateElement, customCommandName)
@@ -1724,8 +1734,6 @@ class DirectGuiDesignerProperties():
                             b = eb
                         if t is None:
                             t = DGH.getRealTop(element) + element.getZ()
-
-                        print("CUR SIZE:", l, r, b, t)
 
                         l = min(l, el)
                         r = max(r, er)

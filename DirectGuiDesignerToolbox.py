@@ -11,21 +11,33 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 
+from DirectGuiExtension import DirectGuiHelper as DGH
+from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
+
 class DirectGuiDesignerToolbox:
-    def __init__(self, parent, posZ, height):
+    def __init__(self, parent):
+        height = DGH.getRealHeight(parent)
         self.parent = parent
-        self.toolsFrame = parent
+
+        self.box = DirectBoxSizer(
+            frameColor=(0.25, 0.25, 0.25, 1),
+            autoUpdateFrameSize=False,
+            orientation=DGG.VERTICAL)
+        self.sizer = DirectAutoSizer(
+            parent=parent,
+            child=self.box,
+            childUpdateSizeFunc=self.box.refresh)
+
         self.lblHeader = DirectLabel(
             text="Toolbox",
             text_scale=16,
-            text_pos=(parent["frameSize"][0], 0),
             text_align=TextNode.ALeft,
             text_fg=(1,1,1,1),
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0, 0, 0, 0),
-            pos=(0,0,posZ-20),
-            parent=parent,)
-        posZ -= 30
+            )
+        self.box.addItem(self.lblHeader)
+
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
             (0.9, 0.9, 1, 1), # Click
@@ -33,11 +45,9 @@ class DirectGuiDesignerToolbox:
             (0.5, 0.5, 0.5, 1)) # Disabled
         self.toolboxFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
-            frameSize=VBase4(parent["frameSize"][0], parent["frameSize"][1], height+30, 0),
-            # make the canvas as big as the frame
-            canvasSize=VBase4(parent["frameSize"][0], parent["frameSize"][1]-20, height+30, 0),
-            # set the frames color to transparent
-            frameColor=VBase4(1, 1, 1, 1),
+            frameSize=VBase4(
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3]),
             scrollBarWidth=20,
             verticalScroll_scrollSize=20,
             verticalScroll_thumb_relief=DGG.FLAT,
@@ -52,9 +62,8 @@ class DirectGuiDesignerToolbox:
             horizontalScroll_thumb_frameColor=color,
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
-            pos=(0,0,posZ),
-            state=DGG.NORMAL,
-            parent=parent)
+            state=DGG.NORMAL)
+        self.box.addItem(self.toolboxFrame)
         self.toolboxFrame.bind(DGG.MWDOWN, self.scroll, [0.01])
         self.toolboxFrame.bind(DGG.MWUP, self.scroll, [-0.01])
         self.toolboxEntries = [
@@ -111,13 +120,12 @@ class DirectGuiDesignerToolbox:
             -(len(self.toolboxEntries)*30), 0)
         self.toolboxFrame.setCanvasSize()
 
-    def resizeFrame(self, posZ, height):
-        self.lblHeader["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], -10, 20)
-        self.lblHeader["text_pos"] = (self.parent["frameSize"][0], 0)
-        self.lblHeader.setPos(0,0,posZ-20)
-        posZ -= 30
-        self.toolboxFrame["frameSize"] = (self.parent["frameSize"][0], self.parent["frameSize"][1], height+30, 0)
-        self.toolboxFrame.setPos(0,0,posZ)
+    def resizeFrame(self):
+        self.sizer.refresh()
+        self.toolboxFrame["frameSize"] = (
+                self.parent["frameSize"][0], self.parent["frameSize"][1],
+                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+
         self.createEntries()
 
     def __createControl(self, name):
@@ -126,14 +134,14 @@ class DirectGuiDesignerToolbox:
     def __makeToolboxListItem(self, displayName, name, index):
         item = DirectButton(
             text=displayName,
-            frameSize=VBase4(self.toolsFrame["frameSize"][0], self.toolsFrame["frameSize"][1]-20, -10, 20),
+            frameSize=VBase4(self.parent["frameSize"][0], self.parent["frameSize"][1]-20, -10, 20),
             frameColor=(VBase4(1,1,1,1), #normal
                 VBase4(0.9,0.9,0.9,1), #click
                 VBase4(0.8,0.8,0.8,1), #hover
                 VBase4(0.5,0.5,0.5,1)), #disabled
             text_align=TextNode.ALeft,
             text_scale=12,
-            text_pos=(self.toolsFrame["frameSize"][0], 0),
+            text_pos=(self.parent["frameSize"][0], 0),
             pos=(0, 0, -30 * index + 10),
             relief=DGG.FLAT,
             command=self.__createControl,
@@ -145,12 +153,12 @@ class DirectGuiDesignerToolbox:
     def __makeToolboxCenteredListItem(self, displayName, index):
         item = DirectFrame(
             text=displayName,
-            frameSize=VBase4(-self.toolsFrame["frameSize"][1]/2-10, self.toolsFrame["frameSize"][1]/2-10, -10, 20),
+            frameSize=VBase4(-self.parent["frameSize"][1], self.parent["frameSize"][1], -10, 20),
             frameColor=VBase4(0.85,0.85,0.85,1),
             text_align=TextNode.ACenter,
             text_scale=16,
-            text_pos=(0, 0),
-            pos=(self.toolsFrame["frameSize"][1]/2-10, 0, -30 * index + 10),
+            text_pos=(-10, 0),
+            pos=(0, 0, -30 * index + 10),#self.parent["frameSize"][1]/2-10
             state=DGG.NORMAL,
             #suppressMouse=0
             )

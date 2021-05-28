@@ -11,7 +11,7 @@ from direct.gui.DirectCheckBox import DirectCheckBox
 from DirectGuiExtension.DirectMenuItem import DirectMenuItem, DirectMenuItemEntry, DirectMenuItemSubMenu
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 
-class DirectGuiDesignerMenuBar(DirectObject):
+class ToolBar(DirectObject):
     def __init__(self, tooltip, grid):
         self.tt = tooltip
         self.grid = grid
@@ -26,102 +26,13 @@ class DirectGuiDesignerMenuBar(DirectObject):
             (0.1, 0.1, 0.1, 1)) # Disabled
 
         #
-        # Menubar
-        #
-        self.menuBar = DirectBoxSizer(
-            frameColor=(0.25, 0.25, 0.25, 1),
-            frameSize=(0,screenWidthPx,-12, 12),
-            autoUpdateFrameSize=False,
-            pos=(0, 0, -12),
-            itemMargin=(2,2,2,2),
-            parent=base.pixel2d)
-
-        fileEntries = [
-            DirectMenuItemEntry("New", base.messenger.send, ["newProject"]),
-            DirectMenuItemEntry("Save", base.messenger.send, ["saveProject"]),
-            DirectMenuItemEntry("Load", base.messenger.send, ["loadProject"]),
-            DirectMenuItemEntry("Export", base.messenger.send, ["exportProject"]),
-            DirectMenuItemEntry("Quit", base.messenger.send, ["quitApp"]),
-            ]
-        self.file = DirectMenuItem(
-            text="File",
-            text_fg=(1,1,1,1),
-            text_scale=0.8,
-            items=fileEntries,
-            frameSize=(0,65/21,-7/21,17/21),
-            frameColor=color,
-            scale=21,
-            relief=DGG.FLAT,
-            item_text_fg=(1,1,1,1),
-            item_text_scale=0.8,
-            item_relief=DGG.FLAT,
-            item_pad=(0.2, 0.2),
-            itemFrameColor=color,
-            popupMenu_itemMargin=(0,0,-.1,-.1),
-            popupMenu_frameColor=color,
-            highlightColor=color[2])
-
-        # NOTE: view entries defined after toolbar creation
-        self.view = DirectMenuItem(
-            text="View",
-            text_fg=(1,1,1,1),
-            text_scale=0.8,
-            items=[DirectMenuItemEntry("placeholder", print, ["placeholder"])],
-            frameSize=(0,65/21,-7/21,17/21),
-            frameColor=color,
-            scale=21,
-            relief=DGG.FLAT,
-            item_text_fg=(1,1,1,1),
-            item_text_scale=0.8,
-            item_relief=DGG.FLAT,
-            item_pad=(0.2, 0.2),
-            itemFrameColor=color,
-            popupMenu_itemMargin=(0,0,-.1,-.1),
-            popupMenu_frameColor=color,
-            highlightColor=color[2])
-
-        toolsEntries = [
-            DirectMenuItemEntry("Delete Element", base.messenger.send, ["removeElement"]),
-            DirectMenuItemEntry("Options", base.messenger.send, ["showSettings"]),
-            DirectMenuItemEntry("Undo", base.messenger.send, ["undo"]),
-            DirectMenuItemEntry("Redo", base.messenger.send, ["redo"]),
-            DirectMenuItemEntry("Cycle redos", base.messenger.send, ["cycleRedo"]),
-            DirectMenuItemEntry("Copy", base.messenger.send, ["copyElement"]),
-            DirectMenuItemEntry("Paste", base.messenger.send, ["pasteElement"]),
-            DirectMenuItemEntry("Copy options", base.messenger.send, ["copyOptions"]),
-            DirectMenuItemEntry("Paste options", base.messenger.send, ["pasteOptions"]),
-            DirectMenuItemEntry("Help", base.messenger.send, ["showHelp"]),
-        ]
-        self.tools = DirectMenuItem(
-            text="Tools",
-            text_fg=(1,1,1,1),
-            text_scale=0.8,
-            items=toolsEntries,
-            frameSize=(0,65/21,-7/21,17/21),
-            frameColor=color,
-            scale=21,
-            relief=DGG.FLAT,
-            item_text_fg=(1,1,1,1),
-            item_text_scale=0.8,
-            item_relief=DGG.FLAT,
-            item_pad=(0.2, 0.2),
-            itemFrameColor=color,
-            popupMenu_itemMargin=(0,0,-.1,-.1),
-            popupMenu_frameColor=color,
-            highlightColor=color[2])
-
-        self.menuBar.addItem(self.file)
-        self.menuBar.addItem(self.view)
-        self.menuBar.addItem(self.tools)
-
-        #
         # Toolbar
         #
         self.toolBar = DirectBoxSizer(
             frameColor=(0.25, 0.25, 0.25, 1),
             frameSize=(0,barWidth,-24, 24),
             autoUpdateFrameSize=False,
-            pos=(left, 0, -24-24),
+            pos=(0, 0, 0),
             parent=base.pixel2d)
 
         buttonColor = (
@@ -351,26 +262,21 @@ class DirectGuiDesignerMenuBar(DirectObject):
         if not ConfigVariableBool("show-toolbar", True).getValue():
             self.toolBar.hide()
 
-        viewEntries = [
-            DirectMenuItemEntry("Toggle Grid", self.cb_grid.commandFunc, [None]),
-            DirectMenuItemEntry("Toggle Scale", self.cb_scale.commandFunc, [None])
-        ]
-
-        self.view["items"] = viewEntries
-        # HACK: this shouldn't be needed
-        #'''
-        self.view["item_text_fg"]=(1,1,1,1)
-        self.view["item_text_scale"]=0.8
-        self.view["item_relief"]=DGG.FLAT
-        self.view["item_pad"]=(0.2, 0.2)
-        self.view["itemFrameColor"]=color
-        self.view["popupMenu_itemMargin"]=(0,0,-.1,-.1)
-        self.view["popupMenu_frameColor"]=color
-        #'''
         self.accept("setVisualEditorParent", self.setVisualEditorParent)
+        self.accept("toggleGrid", self.setGrid)
+        #self.accept("toggleGrid", self.setVisualEditorParent)
 
     def toggleGrid(self, selection):
         base.messenger.send("toggleGrid", [selection])
+
+    def setGrid(self, selection):
+        self.cb_grid['isChecked'] = selection
+        if selection:
+            self.cb_grid['image'] = self.cb_grid['checkedImage']
+        else:
+            self.cb_grid['image'] = self.cb_grid['uncheckedImage']
+
+        self.cb_grid.setImage()
 
     def toggleVisualEditorParent(self, selection):
         base.messenger.send("toggleVisualEditorParent")
@@ -384,16 +290,3 @@ class DirectGuiDesignerMenuBar(DirectObject):
             self.cb_scale['image'] = self.cb_scale['uncheckedImage']
 
         self.cb_scale.setImage()
-
-    def resizeFrame(self):
-        screenWidthPx = base.getSize()[0]
-        left = screenWidthPx*0.25
-        barWidth = screenWidthPx*0.75
-        self.toolBar["frameSize"] = (0,barWidth,-24, 24)
-        self.toolBar.setPos(left, 0, -24-24)
-
-        self.menuBar["frameSize"] = (0,screenWidthPx,-12, 12)
-        self.menuBar.setPos(0, 0, -12)
-
-        if not ConfigVariableBool("show-toolbar", True).getValue():
-            self.toolBar.hide()
