@@ -13,7 +13,7 @@ import tempfile
 
 from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
-from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
+from DirectGuiDesigner.dialogs.PathSelect import PathSelect
 
 from panda3d.core import TextNode
 from panda3d.core import LVecBase2f, LVecBase3f, LVecBase4f, LPoint2f, LPoint3f, LPoint4f
@@ -24,7 +24,7 @@ import importlib.util
 
 
 
-class DirectGuiDesignerLoaderProject(DirectObject):
+class ProjectLoader(DirectObject):
     funcMap = {"initialText":"set"}
     # This prioList will be walked through if all other options not in
     # this list have already been set
@@ -48,7 +48,7 @@ class DirectGuiDesignerLoaderProject(DirectObject):
         if exceptionLoading:
             self.excLoad()
         else:
-            self.dlgPathSelect = DirectGuiDesignerPathSelect(
+            self.dlgPathSelect = PathSelect(
                 self.Load, "Load Project File", "Load file path", "Load", filePath, tooltip)
 
     def excLoad(self):

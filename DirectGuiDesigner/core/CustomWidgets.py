@@ -4,7 +4,7 @@ import json
 import importlib
 import pathlib
 from panda3d.core import ConfigVariableString
-from DirectGuiDesignerProperties import PropertyInfo
+from DirectGuiDesigner.panels.PropertiesPanel import PropertyInfo
 
 class CustomWidget():
     def __init__(self, dispName, clsName, clsFile, enabledProps, customProperties, module, addItemFunction, removeItemFunction, importPath):
@@ -24,7 +24,7 @@ class CustomWidget():
     def getCreateFunctionName(self):
         return "create{}".format(self.className)
 
-class DirectGuiDesignerCustomWidgets():
+class CustomWidgets():
     def __init__(self, toolbox, elementHandler):
         self.toolboxExtensionList = [["~Custom Widgets~"]]
         self.toolbox = toolbox
@@ -59,8 +59,6 @@ class DirectGuiDesignerCustomWidgets():
             else:
                 spec = importlib.util.find_spec(configFileContent["classfilePath"])
             if spec is None:
-                print("spec is None")
-                print(spec)
                 continue
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)

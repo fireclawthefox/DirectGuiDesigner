@@ -37,21 +37,25 @@ from direct.gui.DirectDialog import OkCancelDialog
 from direct.directtools.DirectGrid import DirectGrid
 from direct.directtools.DirectUtil import ROUND_TO
 
-from DirectGuiDesignerEditorCanvas import DirectGuiDesignerEditorCanvas
-from DirectGuiDesignerElementHandler import DirectGuiDesignerElementHandler
-from DirectGuiDesignerElementHandler import ElementInfo
-from DirectGuiDesigner.MenuBar import MenuBar
-from DirectGuiDesigner.ToolBar import ToolBar
-from DirectGuiDesignerToolbox import DirectGuiDesignerToolbox
-from DirectGuiDesignerProperties import DirectGuiDesignerProperties
-from DirectGuiDesignerStructure import DirectGuiDesignerStructure
-from DirectGuiDesignerExporterPy import DirectGuiDesignerExporterPy
-from DirectGuiDesignerExporterProject import DirectGuiDesignerExporterProject
-from DirectGuiDesignerLoaderProject import DirectGuiDesignerLoaderProject
-from DirectGuiDesignerLoaderPy import DirectGuiDesignerLoaderPy
-from DirectGuiDesignerSettings import GUI as DirectGuiDesignerSettings
-from DirectGuiDesignerCustomWidgets import DirectGuiDesignerCustomWidgets
-from DirectGuiDesignerKillRing import KillRing
+from DirectGuiDesigner.panels.CanvasPanel import CanvasPanel
+from DirectGuiDesigner.panels.MenuBar import MenuBar
+from DirectGuiDesigner.panels.ToolBar import ToolBar
+from DirectGuiDesigner.panels.ToolboxPanel import ToolboxPanel
+from DirectGuiDesigner.panels.PropertiesPanel import PropertiesPanel
+from DirectGuiDesigner.panels.StructurePanel import StructurePanel
+
+from DirectGuiDesigner.export.ExporterPy import ExporterPy
+from DirectGuiDesigner.export.ExporterProject import ExporterProject
+
+from DirectGuiDesigner.loader.Project import ProjectLoader
+from DirectGuiDesigner.loader.PyScript import PyScriptLoader
+
+from DirectGuiDesigner.dialogs.SettingsDialog import GUI as SettingsDialog
+
+from DirectGuiDesigner.core.ElementHandler import ElementHandler
+from DirectGuiDesigner.core.ElementHandler import ElementInfo
+from DirectGuiDesigner.core.CustomWidgets import CustomWidgets
+from DirectGuiDesigner.core.KillRing import KillRing
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
@@ -291,7 +295,7 @@ class DirectGuiDesigner(ShowBase):
         # CONTENT SETUP
         #
 
-        self.editorFrame = DirectGuiDesignerEditorCanvas(self.mainSplitter.secondFrame)
+        self.editorFrame = CanvasPanel(self.mainSplitter.secondFrame)
         self.mainSplitter["secondFrameUpdateSizeFunc"] = self.editorFrame.resizeFrame
 
         self.visualEditorInfo = ElementInfo(self.editorFrame.visualEditor, "Editor")
@@ -307,12 +311,12 @@ class DirectGuiDesigner(ShowBase):
         self.mainBox.refresh()
 
         # TOOLBOX
-        self.toolboxFrame = DirectGuiDesignerToolbox(
+        self.toolboxFrame = ToolboxPanel(
             self.sidebarSplitterA.firstFrame)
         self.sidebarSplitterA["firstFrameUpdateSizeFunc"]=self.toolboxFrame.resizeFrame
 
         # PROPERTIES EDITOR
-        self.propertiesFrame = DirectGuiDesignerProperties(
+        self.propertiesFrame = PropertiesPanel(
             self.sidebarSplitterB.firstFrame,
             self.getEditorRootCanvas,
             self.getEditorPlacer,
@@ -321,7 +325,7 @@ class DirectGuiDesigner(ShowBase):
         self.sidebarSplitterB["firstFrameUpdateSizeFunc"]=self.propertiesFrame.resizeFrame
 
         # STRUCTUR VIEWER
-        self.structureFrame = DirectGuiDesignerStructure(
+        self.structureFrame = StructurePanel(
             self.sidebarSplitterB.secondFrame,
             self.getEditorRootCanvas,
             self.elementDict,
@@ -331,13 +335,23 @@ class DirectGuiDesigner(ShowBase):
         #
         # ELEMENT HANDLERS
         #
-        self.elementHandler = DirectGuiDesignerElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
-        self.customWidgetsHandler = DirectGuiDesignerCustomWidgets(self.toolboxFrame, self.elementHandler)
+        self.elementHandler = ElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
+        self.customWidgetsHandler = CustomWidgets(self.toolboxFrame, self.elementHandler)
 
         # connect the handler with the editor frame
         self.editorFrame.setElementHandler(self.elementHandler)
 
         self.registerKeyboardEvents()
+
+        # these keys will not be ignored until the application is closed
+        self.accept("escape", self.inteligentEscape)
+        self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
+        self.accept("mouse2", self.editorFrame.dragEditorFrame, extraArgs=[True])
+        self.accept("mouse2-up", self.editorFrame.dragEditorFrame, extraArgs=[False])
+        self.accept("wheel_up", self.editorFrame.zoom, extraArgs=[.1])
+        self.accept("wheel_down", self.editorFrame.zoom, extraArgs=[-.1])
+
+        # here we have custom events that do not represent a keyboard action
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
         self.accept("reregisterKeyboardEvents", self.registerKeyboardEvents)
 
@@ -363,11 +377,18 @@ class DirectGuiDesigner(ShowBase):
         self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
         self.accept("setVisualEditorParent", self.editorFrame.setVisualEditorParent)
         self.accept("setVisualEditorCanvasSize", self.editorFrame.setVisualEditorCanvasSize)
+        self.accept("setEditorZoom", self.editorFrame.setZoom)
+        self.accept("resetZoom", self.editorFrame.resetZoom)
+        self.accept("setZoomValeMinMax", self.toolBar.setZoomMinMax)
+        self.accept("setZoomValue", self.toolBar.setZoomValue)
         self.accept("showHelp", self.showHelp)
         self.accept("quitApp", self.quitApp)
         self.accept("showSettings", self.showSettings)
         self.accept("Settings_OK", self.hideSettings, [True])
         self.accept("Settings_CANCEL", self.hideSettings, [False])
+        self.accept("zoom-in", self.editorFrame.zoom, extraArgs=[.1])
+        self.accept("zoom-out", self.editorFrame.zoom, extraArgs=[-.1])
+        self.accept("zoom-reset", self.editorFrame.resetZoom)
 
         self.accept("setDirtyFlag", self.setDirty)
         self.accept("clearDirtyFlag", self.setClean)
@@ -399,7 +420,7 @@ class DirectGuiDesigner(ShowBase):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
-            projectLoader = DirectGuiDesignerLoaderProject(tmpPath, self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
+            projectLoader = ProjectLoader(tmpPath, self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
             base.messenger.send("setDirtyFlag")
@@ -408,7 +429,12 @@ class DirectGuiDesigner(ShowBase):
             logging.info("Removed crash session file")
         logging.debug("Startup complete")
 
+        # refresh all sizers
         self.refreshAllSizers()
+
+        # refresh the editor area.
+        self.editorFrame.setVisualEditorParent(False)
+
 
     def refreshAllSizers(self):
         self.mainSizer.refresh()
@@ -562,7 +588,7 @@ class DirectGuiDesigner(ShowBase):
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
         print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
-        DirectGuiDesignerExporterProject("", self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
+        ExporterProject("", self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
     def autosaveTask(self, task):
         task.delayTime = ConfigVariableInt("autosave-delay", 60).getValue()
@@ -570,7 +596,7 @@ class DirectGuiDesigner(ShowBase):
             filename = ""
             if self.hasSaved:
                 filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json~")
-            DirectGuiDesignerExporterProject(filename, self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, autosave=True)
+            ExporterProject(filename, self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, autosave=True)
         except Exception as e:
             logging.error("Autosave failed")
             logging.exception(e)
@@ -585,109 +611,61 @@ class DirectGuiDesigner(ShowBase):
             self.selectElement(self.visualEditorInfo, None)
 
     def registerKeyboardEvents(self):
-        self.accept("escape", self.inteligentEscape)
-        self.accept("mouse3", self.selectElement, extraArgs=[self.visualEditorInfo, None])
-        self.accept("mouse2", self.editorFrame.dragEditorFrame, extraArgs=[True])
-        self.accept("mouse2-up", self.editorFrame.dragEditorFrame, extraArgs=[False])
-        self.accept("wheel_up", self.editorFrame.zoom, extraArgs=[.1])
-        self.accept("wheel_down", self.editorFrame.zoom, extraArgs=[-.1])
-
-        self.accept("control-n", self.new)
-        self.accept("control-s", self.save)
-        self.accept("control-e", self.export)
-        self.accept("control-o", self.load)
-        self.accept("control-q", self.quitApp)
-        self.accept("control-c", self.copyElement)
-        self.accept("control-v", self.pasteElement)
-        self.accept("shift-control-c", self.copyOptions)
-        self.accept("shift-control-v", self.pasteOptions)
-        self.accept("delete", self.removeElement)
-        self.accept("control-g", self.toolBar.cb_grid.commandFunc, extraArgs=[None])
-        self.accept("control-h", self.toggleElementVisibility)
-        self.accept("f1", self.showHelp)
-        self.accept("control-z", self.undo)
-        self.accept("control-y", self.redo)
-        self.accept("shift-control-y", self.cycleKillRing)
-
-        self.accept("arrow_left", self.moveElement, extraArgs=["left"])
-        self.accept("arrow_right", self.moveElement, extraArgs=["right"])
-        self.accept("arrow_up", self.moveElement, extraArgs=["up"])
-        self.accept("arrow_down", self.moveElement, extraArgs=["down"])
-
-        self.accept("arrow_left-repeat", self.moveElement, extraArgs=["left"])
-        self.accept("arrow_right-repeat", self.moveElement, extraArgs=["right"])
-        self.accept("arrow_up-repeat", self.moveElement, extraArgs=["up"])
-        self.accept("arrow_down-repeat", self.moveElement, extraArgs=["down"])
-
         speedUp = 5
-        self.accept("shift-arrow_left", self.moveElement, extraArgs=["left", speedUp])
-        self.accept("shift-arrow_right", self.moveElement, extraArgs=["right", speedUp])
-        self.accept("shift-arrow_up", self.moveElement, extraArgs=["up", speedUp])
-        self.accept("shift-arrow_down", self.moveElement, extraArgs=["down", speedUp])
-
-        self.accept("shift-arrow_left-repeat", self.moveElement, extraArgs=["left", speedUp])
-        self.accept("shift-arrow_right-repeat", self.moveElement, extraArgs=["right", speedUp])
-        self.accept("shift-arrow_up-repeat", self.moveElement, extraArgs=["up", speedUp])
-        self.accept("shift-arrow_down-repeat", self.moveElement, extraArgs=["down", speedUp])
-
         speedDown = 0.5
-        self.accept("control-arrow_left", self.moveElement, extraArgs=["left", speedDown])
-        self.accept("control-arrow_right", self.moveElement, extraArgs=["right", speedDown])
-        self.accept("control-arrow_up", self.moveElement, extraArgs=["up", speedDown])
-        self.accept("control-arrow_down", self.moveElement, extraArgs=["down", speedDown])
+        self.keyEvents = {
+            "+": [self.editorFrame.zoom, [.1]],
+            "-": [self.editorFrame.zoom, [-.1]],
+            "control-0": [self.editorFrame.resetZoom],
 
-        self.accept("control-arrow_left-repeat", self.moveElement, extraArgs=["left", speedDown])
-        self.accept("control-arrow_right-repeat", self.moveElement, extraArgs=["right", speedDown])
-        self.accept("control-arrow_up-repeat", self.moveElement, extraArgs=["up", speedDown])
-        self.accept("control-arrow_down-repeat", self.moveElement, extraArgs=["down", speedDown])
+            "control-n": [self.new],
+            "control-s": [self.save],
+            "control-e": [self.export],
+            "control-o": [self.load],
+            "control-q": [self.quitApp],
+            "control-c": [self.copyElement],
+            "control-v": [self.pasteElement],
+            "shift-control-c": [self.copyOptions],
+            "shift-control-v": [self.pasteOptions],
+            "delete": [self.removeElement],
+            "control-g": [self.toolBar.cb_grid.commandFunc, [None]],
+            "control-h": [self.toggleElementVisibility],
+            "f1": [self.showHelp],
+            "control-z": [self.undo],
+            "control-y": [self.redo],
+            "shift-control-y": [self.cycleKillRing],
+
+
+            "arrow_left": [self.moveElement, ["left"]],
+            "arrow_right": [self.moveElement, ["right"]],
+            "arrow_up": [self.moveElement, ["up"]],
+            "arrow_down": [self.moveElement, ["down"]],
+
+            "arrow_left-repeat": [self.moveElement, ["left"]],
+            "arrow_right-repeat": [self.moveElement, ["right"]],
+            "arrow_up-repeat": [self.moveElement, ["up"]],
+            "arrow_down-repeat": [self.moveElement, ["down"]],
+
+            "shift-arrow_left": [self.moveElement, ["left", speedUp]],
+            "shift-arrow_right": [self.moveElement, ["right", speedUp]],
+            "shift-arrow_up": [self.moveElement, ["up", speedUp]],
+            "shift-arrow_down": [self.moveElement, ["down", speedUp]],
+
+            "shift-arrow_left-repeat": [self.moveElement, ["left", speedUp]],
+            "shift-arrow_right-repeat": [self.moveElement, ["right", speedUp]],
+            "shift-arrow_up-repeat": [self.moveElement, ["up", speedUp]],
+            "shift-arrow_down-repeat": [self.moveElement, ["down", speedUp]]
+        }
+
+        for event, actionSet in self.keyEvents.items():
+            if len(actionSet) == 2:
+                self.accept(event, actionSet[0], extraArgs=actionSet[1])
+            else:
+                self.accept(event, actionSet[0])
 
     def ignoreKeyboardEvents(self):
-        self.ignore("control-n")
-        self.ignore("control-s")
-        self.ignore("control-e")
-        self.ignore("control-o")
-        self.ignore("control-q")
-        self.ignore("control-c")
-        self.ignore("control-v")
-        self.ignore("shift-control-c")
-        self.ignore("shift-control-v")
-        self.ignore("delete")
-        self.ignore("control-g")
-        self.ignore("control-h")
-        self.ignore("f1")
-        self.ignore("control-z")
-        self.ignore("control-y")
-        self.ignore("shift-control-y")
-
-        self.ignore("arrow_left")
-        self.ignore("arrow_right")
-        self.ignore("arrow_up")
-        self.ignore("arrow_down")
-
-        self.ignore("arrow_left-repeat")
-        self.ignore("arrow_right-repeat")
-        self.ignore("arrow_up-repeat")
-        self.ignore("arrow_down-repeat")
-
-        self.ignore("shift-arrow_left")
-        self.ignore("shift-arrow_right")
-        self.ignore("shift-arrow_up")
-        self.ignore("shift-arrow_down")
-
-        self.ignore("shift-arrow_left-repeat")
-        self.ignore("shift-arrow_right-repeat")
-        self.ignore("shift-arrow_up-repeat")
-        self.ignore("shift-arrow_down-repeat")
-
-        self.ignore("control-arrow_left")
-        self.ignore("control-arrow_right")
-        self.ignore("control-arrow_up")
-        self.ignore("control-arrow_down")
-
-        self.ignore("control-arrow_left-repeat")
-        self.ignore("control-arrow_right-repeat")
-        self.ignore("control-arrow_up-repeat")
-        self.ignore("control-arrow_down-repeat")
+        for event, actionSet in self.keyEvents.items():
+            self.ignore(event)
 
     def windowEventHandler(self, window=None):
         # call showBase windowEvent which would otherwise get overridden and breaking the app
@@ -1180,15 +1158,15 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
+        ExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        DirectGuiDesignerExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
+        ExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
-        projectLoader = DirectGuiDesignerLoaderProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
+        projectLoader = ProjectLoader(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)
@@ -1242,7 +1220,7 @@ class DirectGuiDesigner(ShowBase):
             frameSize=(0, base.getSize()[0], -base.getSize()[1], 0),
             parent=base.pixel2d)
 
-        self.dlgSettings = DirectGuiDesignerSettings(base.pixel2d)
+        self.dlgSettings = SettingsDialog(base.pixel2d)
 
         self.dlgSettings.lblSearchPath["state"] = DGG.NORMAL
         self.dlgSettings.lblSearchPath.bind(DGG.ENTER, self.tt.show, ["A colon separated list of paths to search for models, images and other assets"])

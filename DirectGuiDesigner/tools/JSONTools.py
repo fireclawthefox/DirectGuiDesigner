@@ -11,7 +11,7 @@ import logging
 from direct.gui import DirectGuiGlobals as DGG
 from panda3d.core import NodePath
 
-class DirectGuiDesignerJSONTools:
+class JSONTools:
     functionMapping = {
         "base":{"initialText":"get"},
         "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}}

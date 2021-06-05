@@ -18,7 +18,7 @@ from panda3d.core import (
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
-class DirectGuiDesignerPathSelect(DirectObject):
+class PathSelect(DirectObject):
     def __init__(self, command, headerText, actionText, affirmText, filePath, tooltip):
         self.command = command
         self.darkenFrame = DirectFrame(

@@ -7,17 +7,17 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
 import os
-from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
+from DirectGuiDesigner.dialogs.PathSelect import PathSelect
 
 
 import importlib.util
 
 
 
-class DirectGuiDesignerLoaderPy:
+class PyScriptLoader:
     def __init__(self, visualEditor, tooltip):
         self.visualEditor = visualEditor
-        self.dlgPathSelect = DirectGuiDesignerPathSelect(
+        self.dlgPathSelect = PathSelect(
             self.Load, "Load Python File", "Load file path", "Load", "~/export.py", tooltip)
 
     def Load(self, doLoad):

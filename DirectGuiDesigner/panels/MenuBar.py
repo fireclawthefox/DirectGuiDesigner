@@ -8,7 +8,7 @@ DGG.BELOW = "below"
 from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectCheckBox import DirectCheckBox
-from DirectGuiExtension.DirectMenuItem import DirectMenuItem, DirectMenuItemEntry, DirectMenuItemSubMenu
+from DirectGuiExtension.DirectMenuItem import DirectMenuItem, DirectMenuItemEntry, DirectMenuItemSubMenu, DirectMenuSeparator
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 
 class MenuBar(DirectObject):
@@ -24,6 +24,8 @@ class MenuBar(DirectObject):
             (0.25, 0.25, 1, 1), # Hover
             (0.1, 0.1, 0.1, 1)) # Disabled
 
+        sepColor = (0.7, 0.7, 0.7, 1)
+
         #
         # Menubar
         #
@@ -37,9 +39,11 @@ class MenuBar(DirectObject):
 
         fileEntries = [
             DirectMenuItemEntry("New", base.messenger.send, ["newProject"]),
+            DirectMenuSeparator(),
+            DirectMenuItemEntry("Open", base.messenger.send, ["loadProject"]),
             DirectMenuItemEntry("Save", base.messenger.send, ["saveProject"]),
-            DirectMenuItemEntry("Load", base.messenger.send, ["loadProject"]),
             DirectMenuItemEntry("Export", base.messenger.send, ["exportProject"]),
+            DirectMenuSeparator(),
             DirectMenuItemEntry("Quit", base.messenger.send, ["quitApp"]),
             ]
         self.file = DirectMenuItem(
@@ -56,13 +60,19 @@ class MenuBar(DirectObject):
             item_relief=DGG.FLAT,
             item_pad=(0.2, 0.2),
             itemFrameColor=color,
+            separatorFrameColor=sepColor,
             popupMenu_itemMargin=(0,0,-.1,-.1),
             popupMenu_frameColor=color,
             highlightColor=color[2])
 
         viewEntries = [
             DirectMenuItemEntry("Toggle Grid", base.messenger.send, ["toggleGrid", [not self.grid.isHidden()]]),
-            DirectMenuItemEntry("Toggle Scale", base.messenger.send, ["toggleVisualEditorParent"])
+            DirectMenuItemEntry("Toggle Scale", base.messenger.send, ["toggleVisualEditorParent"]),
+            DirectMenuSeparator(),
+            DirectMenuItemEntry("Zoom-in", base.messenger.send, ["zoom-in"]),
+            DirectMenuItemEntry("Zoom-out", base.messenger.send, ["zoom-out"]),
+            DirectMenuItemEntry("reset Zoom", base.messenger.send, ["zoom-reset"]),
+
         ]
         self.view = DirectMenuItem(
             text="View",
@@ -78,20 +88,23 @@ class MenuBar(DirectObject):
             item_relief=DGG.FLAT,
             item_pad=(0.2, 0.2),
             itemFrameColor=color,
+            separatorFrameColor=sepColor,
             popupMenu_itemMargin=(0,0,-.1,-.1),
             popupMenu_frameColor=color,
             highlightColor=color[2])
 
         toolsEntries = [
-            DirectMenuItemEntry("Delete Element", base.messenger.send, ["removeElement"]),
-            DirectMenuItemEntry("Options", base.messenger.send, ["showSettings"]),
             DirectMenuItemEntry("Undo", base.messenger.send, ["undo"]),
             DirectMenuItemEntry("Redo", base.messenger.send, ["redo"]),
             DirectMenuItemEntry("Cycle redos", base.messenger.send, ["cycleRedo"]),
+            DirectMenuSeparator(),
+            DirectMenuItemEntry("Delete Element", base.messenger.send, ["removeElement"]),
             DirectMenuItemEntry("Copy", base.messenger.send, ["copyElement"]),
             DirectMenuItemEntry("Paste", base.messenger.send, ["pasteElement"]),
             DirectMenuItemEntry("Copy options", base.messenger.send, ["copyOptions"]),
             DirectMenuItemEntry("Paste options", base.messenger.send, ["pasteOptions"]),
+            DirectMenuSeparator(),
+            DirectMenuItemEntry("Options", base.messenger.send, ["showSettings"]),
             DirectMenuItemEntry("Help", base.messenger.send, ["showHelp"]),
         ]
         self.tools = DirectMenuItem(
@@ -108,6 +121,7 @@ class MenuBar(DirectObject):
             item_relief=DGG.FLAT,
             item_pad=(0.2, 0.2),
             itemFrameColor=color,
+            separatorFrameColor=sepColor,
             popupMenu_itemMargin=(0,0,-.1,-.1),
             popupMenu_frameColor=color,
             highlightColor=color[2])

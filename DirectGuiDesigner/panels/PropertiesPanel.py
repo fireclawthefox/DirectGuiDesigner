@@ -48,7 +48,7 @@ class PropertyInfo:
         self.customCommandName = customCommandName
         self.customSelectionDict = customSelectionDict
 
-class DirectGuiDesignerProperties():
+class PropertiesPanel():
 
     propertyList = {
         "name":False, # text
@@ -1137,7 +1137,14 @@ class DirectGuiDesignerProperties():
                 elif self.elementInfo.name in text:
                     text = text.replace(self.elementInfo.name, "elementDict['{}'].element".format(elementId))
 
-            command = eval(text)
+            command = ""
+            if text:
+                try:
+                    command = eval(text)
+                except:
+                    logging.debug("command evaluation not supported: ", text)
+                    logging.debug("set command without evalution")
+                    command = text
 
             try:
                 base.messenger.send("addToKillRing",

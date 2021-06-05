@@ -14,15 +14,13 @@ from direct.directtools.DirectGrid import DirectGrid
 from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 
-DEFAULT_MIN_SCALE = 0.1
-DEFAULT_MAX_SCALE = 1.5
+DEFAULT_MIN_SCALE = 0.2
+DEFAULT_MAX_SCALE = 2.0
 
-class DirectGuiDesignerEditorCanvas():
+class CanvasPanel():
     def __init__(self, parent):
         self.parent = parent
-
-        posParentScaleX = DGH.getRealWidth(parent)
-        posParentScaleY = DGH.getRealHeight(parent)
+        self.elementHandler = None
 
         color = (
             (0.8, 0.8, 0.8, 1), # Normal
@@ -31,7 +29,7 @@ class DirectGuiDesignerEditorCanvas():
             (0.5, 0.5, 0.5, 1)) # Disabled
         # respect menu bar
 
-        self.canvasScale = max(base.getSize()[0], base.getSize()[1])
+        self.canvasScale = 1080 # min(base.getSize()[0], base.getSize()[1])
 
         # we default to a 1920x1080 FHD screen
         self.canvasLeft = -1920/2
@@ -63,9 +61,6 @@ class DirectGuiDesignerEditorCanvas():
             horizontalScroll_decButton_frameColor=color,
             )
 
-        #self.visualEditor.canvas.setColor(0.25, 0.25, 0.25, 1)
-        #self.visualEditor.canvas.setTransparency(1)
-
         self.scaleParent = DirectFrame(
             scale=(1,1,1)
             )
@@ -82,8 +77,8 @@ class DirectGuiDesignerEditorCanvas():
             )
 
         # zoom scale
-        self.minScale = posParentScaleX * DEFAULT_MIN_SCALE
-        self.maxScale = posParentScaleX * DEFAULT_MAX_SCALE
+        self.minScale = DEFAULT_MIN_SCALE
+        self.maxScale = DEFAULT_MAX_SCALE
         self.zoomInMultiplyer = 1.1
         self.zoomOutMultiplyer = 0.9
 
@@ -123,9 +118,10 @@ class DirectGuiDesignerEditorCanvas():
         self.canvasBottomLeft = self.elementHolder.attachNewNode("canvasBottomLeft")
         self.canvasBottomRight = self.elementHolder.attachNewNode("canvasBottomRight")
 
-        self.setCanvasPlacers()
+        # default to Aspect2D
+        self.setVisualEditorParent(False)
 
-        base.taskMgr.add(self.watchCanvasSize, "watchCanvasSize", sort=50, priority=0)
+        base.taskMgr.add(self.watchCanvasProps, "watch-canvas-properties", sort=50, priority=0)
 
     def getEditorCanvasSize(self):
         cs = self.elementHolder["frameSize"]
@@ -138,21 +134,55 @@ class DirectGuiDesignerEditorCanvas():
     def getEditorRootCanvas(self):
         return self.elementHolder
 
-    def watchCanvasSize(self, task):
+    def watchCanvasProps(self, task):
+        """Watch for all properties that can be changed on the canvas and won't
+        directly propagate down to the actual background, which is the element
+        holder."""
+
+        self.sizer.refresh()
+
         sizeChanged = False
-        if self.canvasLeft != self.getEditorCanvasSize()[0]:
+        cs = self.getEditorCanvasSize()
+        if self.canvasLeft != cs[0]:
             sizeChanged = True
-        elif self.canvasRight != self.getEditorCanvasSize()[1]:
+        elif self.canvasRight != cs[1]:
             sizeChanged = True
-        elif self.canvasBottom != self.getEditorCanvasSize()[2]:
+        elif self.canvasBottom != cs[2]:
             sizeChanged = True
-        elif self.canvasTop != self.getEditorCanvasSize()[3]:
+        elif self.canvasTop != cs[3]:
             sizeChanged = True
 
         if sizeChanged:
+            width = cs[1] - cs[0]
+            height = cs[3] - cs[2]
+
+            self.canvasScale = min(width, height)
+
+            if self.currentVisEditorParent == base.pixel2d:
+                if width > height:
+                    self.canvasScale *= self.visualEditor.getScale()[2]
+                else:
+                    self.canvasScale *= self.visualEditor.getScale()[0]
+            else:
+                if width > height:
+                    self.canvasScale *= self.elementHolder.getScale()[2]
+                else:
+                    self.canvasScale *= self.elementHolder.getScale()[0]
+
+            #TODO: the scale probably needs to be calculated dependent on the users screen size
+            self.elementHolder["scale"]= LVecBase3f(self.canvasScale/2,1,self.canvasScale/2),
+
             self.elementHolderSizer.refresh()
             self.scaleParentSizer.refresh()
             self.setCanvasPlacers()
+
+        if self.visualEditor["frameColor"] != self.elementHolder["frameColor"]:
+            fc = self.visualEditor["frameColor"]
+            self.elementHolder["frameColor"] = fc
+            self.elementHolderSizer["frameColor"] = fc
+            self.scaleParentSizer["frameColor"] = fc
+            self.scaleParent["frameColor"] = fc
+        self.visualEditor
 
         return task.cont
 
@@ -204,26 +234,8 @@ class DirectGuiDesignerEditorCanvas():
         self.setCanvasPlacers()
 
     def setVisualEditorParent(self, toPixel2D):
-        if self.currentVisEditorParent == base.aspect2d and toPixel2D:
-            self.toggleVisualEditorParent()
-        elif self.currentVisEditorParent != base.aspect2d and not toPixel2D:
-            self.toggleVisualEditorParent()
-
-    def toggleVisualEditorParent(self):
-        screenWidthPx = base.getSize()[0]
-        screenHeightPx = base.getSize()[1]
-
-        posParentScaleX = DGH.getRealWidth(self.parent)
-        posParentScaleY = DGH.getRealHeight(self.parent)
-
-        self.resetZoom()
-
-        screenWidth = abs(base.a2dRight) + abs(base.a2dLeft)
-        if self.currentVisEditorParent == base.aspect2d:
+        if toPixel2D:
             # change to pixel2d
-            self.minScale = posParentScaleX * DEFAULT_MIN_SCALE
-            self.maxScale = posParentScaleX * DEFAULT_MAX_SCALE
-
             # we default to a 1920x1080 FHD screen
             self.canvasLeft = 0
             self.canvasRight = 1920
@@ -238,14 +250,11 @@ class DirectGuiDesignerEditorCanvas():
             self.grid.setGridSpacing(0.05 * (self.canvasScale / 2))
             self.grid.setGridSize(1920*4)
             self.visEditorInAspect2D = False
-            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
-            self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
+            if self.elementHandler is not None:
+                self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
+                self.elementHandler.setEditorCenter((self.visualEditor.getWidth()/2, 0, -self.visualEditor.getHeight()/2))
         else:
             # change to aspect2d
-            #aspectX = posParentScaleX/posParentScaleY
-            self.minScale = posParentScaleX * DEFAULT_MIN_SCALE
-            self.maxScale = posParentScaleX * DEFAULT_MAX_SCALE
-
             # we default to a 1920x1080 FHD screen
             self.canvasLeft = -1920/2
             self.canvasRight = 1920/2
@@ -262,21 +271,20 @@ class DirectGuiDesignerEditorCanvas():
             self.grid.setGridSpacing(0.05)
             self.grid.setGridSize(50)
             self.visEditorInAspect2D = True
-            self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
-            self.elementHandler.setEditorCenter((0, 0, 0))
+            if self.elementHandler is not None:
+                self.elementHandler.setEditorParentType(self.visEditorInAspect2D)
+                self.elementHandler.setEditorCenter((0, 0, 0))
+
+        # reset the zoom value
+        self.resetZoom()
 
         self.setCanvasPlacers()
 
-        '''
-        print("6x parent scale:", self.parent.parent.parent.parent.parent.parent.getScale())
-        print("5x parent scale:", self.parent.parent.parent.parent.parent.getScale())
-        print("4x parent scale:", self.parent.parent.parent.parent.getScale())
-        print("3x parent scale:", self.parent.parent.parent.getScale())
-        print("2x parent scale:", self.parent.parent.getScale())
-        print("1x parent scale:", self.parent.getScale())
-        print("EH SCALE:", self.elementHolder.getScale())
-        print("VE SCALE:", self.visualEditor.getScale())
-        '''
+    def toggleVisualEditorParent(self):
+        if self.currentVisEditorParent == base.aspect2d:
+            self.setVisualEditorParent(True)
+        elif self.currentVisEditorParent != base.aspect2d:
+            self.setVisualEditorParent(False)
 
     def resizeFrame(self):
         self.sizer.refresh()
@@ -292,29 +300,70 @@ class DirectGuiDesignerEditorCanvas():
     def resetZoom(self):
         self.visualEditor["verticalScroll_range"] = (0, 1)
         self.visualEditor["horizontalScroll_range"] = (0, 1)
-        if self.currentVisEditorParent == base.aspect2d:
-            # change to pixel2d
+        if self.currentVisEditorParent != base.aspect2d:
+            # we are in pixel2d
             self.getEditorRootCanvas().setScale(1,1,1)
             self.visualEditor.verticalScroll["value"] = 0
             self.visualEditor.horizontalScroll["value"] = 0
+
+            posParentScaleX = DGH.getRealWidth(self.parent)
+            self.minScale = DEFAULT_MIN_SCALE
+            self.maxScale = DEFAULT_MAX_SCALE
+            base.messenger.send("setZoomValeMinMax", [self.minScale, self.maxScale])
+            base.messenger.send("setZoomValue", [1])
         else:
-            # change to aspect2d
-            #aspectX = posParentScaleX/posParentScaleY
+            # we are in aspect2d
             self.getEditorRootCanvas().setScale(self.canvasScale/2,1,self.canvasScale/2)
             self.visualEditor.verticalScroll["value"] = 0.5
             self.visualEditor.horizontalScroll["value"] = 0.5
+
+            posParentScaleX = DGH.getRealWidth(self.parent)
+            self.minScale = posParentScaleX * DEFAULT_MIN_SCALE
+            self.maxScale = posParentScaleX * DEFAULT_MAX_SCALE
+            base.messenger.send("setZoomValeMinMax", [self.minScale, self.maxScale])
+            base.messenger.send("setZoomValue", [self.canvasScale/2])
+
+    def setZoom(self, zoomValue):
+        z = zoomValue
+        s = self.getEditorRootCanvas().getScale()
+
+        self.getEditorRootCanvas().setScale(z, s[1], z)
+
+        # update scroll bars
+        vr = self.visualEditor["verticalScroll_range"]
+        vv = self.visualEditor.verticalScroll["value"]
+        hr = self.visualEditor["horizontalScroll_range"]
+        hv = self.visualEditor.horizontalScroll["value"]
+
+        vw = vr[1] - vr[0]
+        hw = hr[1] - hr[0]
+
+        curPosVer = vv / vw * 100
+        curPosHor = hv / hw * 100
+
+        self.visualEditor["verticalScroll_range"] = (vr[0]*(z/s[0]), vr[1]*(z/s[2]))
+        self.visualEditor["horizontalScroll_range"] = (hr[0]*(z/s[0]), hr[1]*(z/s[2]))
+
+        vr = self.visualEditor["verticalScroll_range"]
+        hr = self.visualEditor["horizontalScroll_range"]
+
+        self.visualEditor.verticalScroll["value"] = (vr[1] - vr[0]) / 100 * curPosVer
+        self.visualEditor.horizontalScroll["value"] = (hr[1] - hr[0]) / 100 * curPosHor
+
+        self.elementHolderSizer.refresh()
 
 
     def zoom(self, direction):
         z = 1
         s = self.getEditorRootCanvas().getScale()
-        if direction < 0 and self.getEditorRootCanvas().getScale() > self.minScale:
-            self.getEditorRootCanvas().setScale(s[0]*self.zoomOutMultiplyer, s[1], s[2]*self.zoomOutMultiplyer)
+        if direction < 0 and self.getEditorRootCanvas().getScale()[0] > self.minScale:
             z = self.zoomOutMultiplyer
-        elif direction > 0 and self.getEditorRootCanvas().getScale() < self.maxScale:
-            self.getEditorRootCanvas().setScale(s[0]*self.zoomInMultiplyer, s[1], s[2]*self.zoomInMultiplyer)
+        elif direction > 0 and self.getEditorRootCanvas().getScale()[0] < self.maxScale:
             z = self.zoomInMultiplyer
 
+        self.getEditorRootCanvas().setScale(s[0]*z, s[1], s[2]*z)
+
+        base.messenger.send("setZoomValue", [self.getEditorRootCanvas().getScale()[0]])
         #print(self.getEditorRootCanvas().getScale())
 
         # update scroll bars

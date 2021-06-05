@@ -6,6 +6,7 @@ from direct.gui import DirectGuiGlobals as DGG
 DGG.BELOW = "below"
 
 from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectSlider import DirectSlider
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectCheckBox import DirectCheckBox
 from DirectGuiExtension.DirectMenuItem import DirectMenuItem, DirectMenuItemEntry, DirectMenuItemSubMenu
@@ -210,6 +211,28 @@ class ToolBar(DirectObject):
             frameColor=(0,0,0,1))
         self.toolBar.addItem(placeholder)
 
+        zoomHolder = DirectFrame(
+            frameSize=(-48,48,-24,24),
+            #pad=(4, 0),
+            frameColor=(0,0,0,0))
+        self.toolBar.addItem(zoomHolder)
+        self.zoomSlider = DirectSlider(
+            zoomHolder,
+            scale=(48, 1, 96),
+            pos=(0,0,0),
+            range=(0.1, 1.5),
+            command=self.zoomSliderChanged)
+        self.zoomSlider.bind(DGG.ENTER, self.tt.show, ["Zoom"])
+        self.zoomSlider.bind(DGG.EXIT, self.tt.hide)
+        #self.toolBar.addItem(self.zoomSlider)
+
+        placeholder = DirectFrame(
+            text="|",
+            frameSize=(-1,1,-24,24),
+            pad=(4, 0),
+            frameColor=(0,0,0,1))
+        self.toolBar.addItem(placeholder)
+
         btn = DirectButton(
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
@@ -290,3 +313,13 @@ class ToolBar(DirectObject):
             self.cb_scale['image'] = self.cb_scale['uncheckedImage']
 
         self.cb_scale.setImage()
+
+
+    def setZoomMinMax(self, minVal, maxVal):
+        self.zoomSlider["range"] = (minVal, maxVal)
+
+    def setZoomValue(self, newValue):
+        self.zoomSlider["value"] = newValue
+
+    def zoomSliderChanged(self):
+        base.messenger.send("setEditorZoom", [self.zoomSlider.getValue()])

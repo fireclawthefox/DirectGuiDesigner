@@ -15,10 +15,10 @@ from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
 
-from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
-from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
+from DirectGuiDesigner.dialogs.PathSelect import PathSelect
+from DirectGuiDesigner.tools.JSONTools import JSONTools
 
-class DirectGuiDesignerExporterProject:
+class ExporterProject:
     def __init__(self, fileName, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, autosave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
         self.getEditorFrame = getEditorFrame
@@ -34,7 +34,7 @@ class DirectGuiDesignerExporterProject:
             self.autoSave(fileName)
             return
 
-        self.dlgPathSelect = DirectGuiDesignerPathSelect(
+        self.dlgPathSelect = PathSelect(
             self.save, "Save Project File", "Save file path", "Save", fileName, tooltip)
 
     def excSave(self):
@@ -92,7 +92,7 @@ class DirectGuiDesignerExporterProject:
         if self.dlgOverwriteShadow is not None: self.dlgOverwriteShadow.destroy()
         if not overwrite: return
 
-        jsonTools = DirectGuiDesignerJSONTools()
+        jsonTools = JSONTools()
         jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, self.getEditorFrame, self.usePixel2D)
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)

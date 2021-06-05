@@ -15,7 +15,7 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 
-class DirectGuiDesignerToolbox:
+class ToolboxPanel:
     def __init__(self, parent):
         height = DGH.getRealHeight(parent)
         self.parent = parent

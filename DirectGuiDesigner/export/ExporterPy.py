@@ -13,10 +13,10 @@ from direct.gui import DirectGuiGlobals as DGG
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectDialog import YesNoDialog
 
-from DirectGuiDesignerPathSelect import DirectGuiDesignerPathSelect
-from DirectGuiDesignerJSONTools import DirectGuiDesignerJSONTools
+from DirectGuiDesigner.dialogs.PathSelect import PathSelect
+from DirectGuiDesigner.tools.JSONTools import JSONTools
 
-class DirectGuiDesignerExporterPy:
+class ExporterPy:
     functionMapping = {
         "base":{"initialText":"get"},
         "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg"}}
@@ -30,7 +30,7 @@ class DirectGuiDesignerExporterPy:
         self.guiElementsDict = guiElementsDict
         self.customWidgetHandler = customWidgetHandler
 
-        jsonTools = DirectGuiDesignerJSONTools()
+        jsonTools = JSONTools()
         self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, usePixel2D)
         self.jsonElements = self.jsonFileContent["ComponentList"]
 
@@ -151,7 +151,7 @@ app = ShowBase()\n"""
                 self.content += "GUI()\n"
             self.content += "app.run()\n"
 
-        self.dlgPathSelect = DirectGuiDesignerPathSelect(
+        self.dlgPathSelect = PathSelect(
             self.save, "Save Python File", "Save file path", "Save", saveFile, tooltip)
 
     def save(self, doSave):

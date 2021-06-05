@@ -67,7 +67,7 @@ class ElementInfo:
 
         self.customImportPath = customImportPath
 
-class DirectGuiDesignerElementHandler:
+class ElementHandler:
     def __init__(self, propertiesFrame, getEditorRootCanvas):
         self.propertiesFrame = propertiesFrame
         self.getEditorRootCanvas = getEditorRootCanvas
