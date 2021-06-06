@@ -350,7 +350,9 @@ class PropertiesPanel():
             #
             # General Properties
             #
-            self.__createInbetweenHeader("General Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "General Properties", self.startPos, propFrame,
+                ["name", "parent"])
             self.frameSize += 30
             if self.propertyList["name"]:
                 self.__createNameProperty(self.startPos, propFrame, elementInfo)
@@ -358,7 +360,10 @@ class PropertiesPanel():
             if self.propertyList["parent"]:
                 self.__createParentProperty(self.startPos, propFrame, elementInfo)
                 self.moveNext()
-            self.__createInbetweenHeader("Text Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "Text Properties", self.startPos, propFrame,
+                ["text", "text_align", "text_scale", "text_font", "text_fg",
+                "text_bg", "text_pos", "text_wordwrap"])
             self.frameSize += 30
             if self.propertyList["text"]:
                 self.__createTextProperty("Text", self.startPos, propFrame, element, "text")
@@ -384,7 +389,10 @@ class PropertiesPanel():
             if self.propertyList["text_wordwrap"]:
                 self.__createFloatInput("Word wrap", self.startPos, propFrame, element, "text_wordwrap")
                 self.moveNext()
-            self.__createInbetweenHeader("Frame Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "Frame Properties", self.startPos, propFrame,
+                ["relief", "borderWidth", "frameSize", "frameColor",
+                "enableTransparency", "pad"])
             self.frameSize += 30
             if self.propertyList["relief"]:
                 self.__createReliefProperty("Relief", self.startPos, propFrame, element)
@@ -425,7 +433,9 @@ class PropertiesPanel():
             if self.propertyList["pad"]:
                 self.__createBaseNInput("Padding", self.startPos, propFrame, element, "pad", 2)
                 self.moveNext()
-            self.__createInbetweenHeader("Location Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "Location Properties", self.startPos, propFrame,
+                ["pos", "hpr", "scale"])
             self.frameSize += 30
             if self.propertyList["pos"]:
                 self.__createBaseNInput("Position (X/Y/Z)", self.startPos, propFrame, element, "pos", 3)
@@ -436,7 +446,9 @@ class PropertiesPanel():
             if self.propertyList["scale"]:
                 self.__createBaseNInput("Scale", self.startPos, propFrame, element, "scale", 3)
                 self.moveNext()
-            self.__createInbetweenHeader("Look Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "Look Properties", self.startPos, propFrame,
+                ["color", "image", "image_scale", "image_pos"])
             self.frameSize += 30
             if self.propertyList["color"]:
                 self.__createBaseNInput("Color (r/g/b/a)", self.startPos, propFrame, element, "color", 4)
@@ -450,7 +462,9 @@ class PropertiesPanel():
             if self.propertyList["image_pos"]:
                 self.__createBaseNInput("Image Position (X/Y/Z)", self.startPos, propFrame, element, "image_pos", 3)
                 self.moveNext()
-            self.__createInbetweenHeader("Other Properties", self.startPos, propFrame)
+            self.__createInbetweenHeader(
+                "Other Properties", self.startPos, propFrame,
+                ["sortOrder", "command", "state"])
             self.frameSize += 30
             if self.propertyList["sortOrder"]:
                 self.__createIntegerInput("Sort Order", self.startPos, propFrame, element, "sortOrder")
@@ -469,10 +483,8 @@ class PropertiesPanel():
             #
             # Button specific
             #
-            for prop in ["pressEffect"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Button Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Button Properties", self.startPos, propFrame, ["pressEffect"])
             if self.propertyList["pressEffect"]:
                 #TODO: The pressEffect is currently not changeable after initialization!
                 self.__createPressEffectProperty("Show press effect", self.startPos, propFrame, elementInfo)
@@ -481,10 +493,9 @@ class PropertiesPanel():
             #
             # Entry specific
             #
-            for prop in ["initialText", "width", "numLines", "overflow", "obscured"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Entry Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Entry Properties", self.startPos, propFrame,
+                ["initialText", "width", "numLines", "overflow", "obscured"])
             if self.propertyList["initialText"]:
                 self.__createTextProperty("Initial Text", self.startPos, propFrame, element, "initialText")
                 self.moveNext()
@@ -504,10 +515,9 @@ class PropertiesPanel():
             #
             # Scrolled Frame specific
             #
-            for prop in ["canvasSize", "scrollBarWidth"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Scrolled Frame Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Scrolled Frame Properties", self.startPos, propFrame,
+                ["canvasSize", "scrollBarWidth"])
             if self.propertyList["canvasSize"]:
                 self.__createBaseNInput("Canvas Space (L/R/B/T)", self.startPos, propFrame, element, "canvasSize", 4)
                 self.moveNext()
@@ -518,10 +528,9 @@ class PropertiesPanel():
             #
             # Scrolled Entry specific
             #
-            for prop in ["clipSize"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Scrolled Entry Properties", self.startPos, propFrame,
+                ["clipSize"])
             if self.propertyList["clipSize"]:
                 self.__createBaseNInput("Clip Size (L/R/B/T)", self.startPos, propFrame, element, "clipSize", 4)
                 self.moveNext()
@@ -529,10 +538,9 @@ class PropertiesPanel():
             #
             # Checkbox specific
             #
-            for prop in ["uncheckedImage","checkedImage","isChecked"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Scrolled Entry Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Scrolled Entry Properties", self.startPos, propFrame,
+                ["uncheckedImage","checkedImage","isChecked"])
             if self.propertyList["uncheckedImage"]:
                 self.__createImageProperty("Unchecked Image", self.startPos, propFrame, element, "uncheckedImage")
                 self.moveNext()
@@ -639,10 +647,11 @@ class PropertiesPanel():
             #
             # CheckButton specific
             #
-            for prop in ["boxBorder","boxPlacement","boxImage","boxImageScale","boxImageColor","boxRelief", "indicator_text_scale", "indicator_text_pos", "indicator_borderWidth"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Check Button Properties", self.startPos, propFrame,
+                ["boxBorder","boxPlacement","boxImage","boxImageScale",
+                "boxImageColor","boxRelief", "indicator_text_scale",
+                "indicator_text_pos", "indicator_borderWidth"])
             if self.propertyList["boxBorder"]:
                 self.__createFloatInput("Box Border Width", self.startPos, propFrame, element, "boxBorder")
                 self.moveNext()
@@ -675,10 +684,9 @@ class PropertiesPanel():
             #
             # RadioButton specific
             #
-            for prop in ["others", "indicatorValue"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Radio Button Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Radio Button Properties", self.startPos, propFrame,
+                ["others", "indicatorValue"])
             if self.propertyList["others"]:
                 self.__createOthersSelectorProperty(self.startPos, propFrame, element)
             if self.propertyList["indicatorValue"]:
@@ -688,10 +696,10 @@ class PropertiesPanel():
             #
             # OptionMenu specific
             #
-            for prop in ["popupMarkerBorder","popupMarker_pos","popupMenuLocation","highlightColor","highlightScale"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("Check Button Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "Check Button Properties", self.startPos, propFrame,
+                ["popupMarkerBorder","popupMarker_pos","popupMenuLocation",
+                "highlightColor","highlightScale"])
             if self.propertyList["popupMarkerBorder"]:
                 self.__createBaseNInput("Popup Marker Border", self.startPos, propFrame, element, "popupMarkerBorder", 2)
                 self.moveNext()
@@ -711,10 +719,10 @@ class PropertiesPanel():
             #
             # ScrollBar/Silder specific
             #
-            for prop in ["SB-range","scrollSize","pageSize","orientation","manageButtons", "resizeThumb"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("ScrollBar/Slider Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "ScrollBar/Slider Properties", self.startPos, propFrame,
+                ["SB-range","scrollSize","pageSize","orientation",
+                "manageButtons", "resizeThumb"])
             if self.propertyList["SB-range"]:
                 self.__createBaseNInput("Bar Range", self.startPos, propFrame, element, "range", 2)
                 self.moveNext()
@@ -737,10 +745,9 @@ class PropertiesPanel():
             #
             # WaitBar specific
             #
-            for prop in ["range","barBorderWidth","barColor","barTexture", "barRelief"]:
-                if self.propertyList[prop]:
-                    self.__createInbetweenHeader("WaitBar Properties", self.startPos, propFrame)
-                    break
+            self.__createInbetweenHeader(
+                "WaitBar Properties", self.startPos, propFrame,
+                ["range","barBorderWidth","barColor","barTexture", "barRelief"])
             if self.propertyList["range"]:
                 self.__createFloatInput("Bar Range", self.startPos, propFrame, element, "range")
                 self.moveNext()
@@ -835,13 +842,28 @@ class PropertiesPanel():
             propFrame.bounds[2]-20, 0)
         self.propertiesFrame.setCanvasSize()
 
+        a = self.propertiesFrame["canvasSize"][2]
+        b = abs(self.propertiesFrame["frameSize"][2]) + self.propertiesFrame["frameSize"][3]
+        scrollDefault = 200
+        s = -(scrollDefault / (a / b))
+
+        self.propertiesFrame["verticalScroll_scrollSize"] = s
+        self.propertiesFrame["verticalScroll_pageSize"] = s
+
         self.curPropFrame = propFrame
 
     def clear(self):
         if self.curPropFrame is not None:
             self.curPropFrame.destroy()
 
-    def __createInbetweenHeader(self, description, startPos, parent):
+    def __createInbetweenHeader(self, description, startPos, parent, mustDefinedValues=[]):
+        if mustDefinedValues is not []:
+            hasDefined = False
+            for prop in mustDefinedValues:
+                if self.propertyList[prop]:
+                    hasDefined = True
+                    break
+            if not hasDefined: return
         x = startPos.getX()
         z = startPos.getZ()
         DirectLabel(
