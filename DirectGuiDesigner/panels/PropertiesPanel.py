@@ -40,6 +40,19 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 
+class PropertyEditTypes:
+    integer = "integer"
+    float = "float"
+    bool = "bool"
+    text = "text"
+    base2 = "base2"
+    base3 = "base3"
+    base4 = "base4"
+    command = "command"
+    path = "path"
+    optionMenu = "optionmenu"
+    resetFrameSize = "resetFrameSize"
+
 class PropertyInfo:
     def __init__(self, displayName, propertyName, propertyType, customCommandName, customSelectionDict):
         self.displayName = displayName
@@ -242,6 +255,7 @@ class PropertiesPanel():
             autoUpdateFrameSize=False,
             orientation=DGG.VERTICAL)
         self.sizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=parent,
             child=self.box,
             childUpdateSizeFunc=self.box.refresh)
@@ -948,6 +962,7 @@ class PropertiesPanel():
                     values.append(float(value.get(True)))
                 except:
                     logging.exception("ERROR: NAN", value.get(True))
+                    values.append(float(0))
 
             try:
                 if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
@@ -1015,6 +1030,7 @@ class PropertiesPanel():
                 value = float(text)
             except:
                 logging.exception("ERROR: NAN", value)
+                value = float(0)
 
             try:
                 if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
@@ -1055,7 +1071,7 @@ class PropertiesPanel():
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA)
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(str(valueA), x, z, entryWidth, update, parent)
 
@@ -1067,6 +1083,7 @@ class PropertiesPanel():
                 value = int(text)
             except:
                 logging.exception("ERROR: NAN", value)
+                value = int(0)
 
             try:
                 if updateAttribute in self.initOpGetDict or updateAttribute in self.subControlInitOpGetDict or updateAttribute in self.getAsPropDict:
@@ -1107,7 +1124,7 @@ class PropertiesPanel():
             valueA = updateElement[updateAttribute]
 
         valueA = self.__getFormated(valueA, True)
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(str(valueA), x, z, entryWidth, update, parent)
 
@@ -1144,7 +1161,7 @@ class PropertiesPanel():
             text = self.__getValues(updateElement, updateAttribute)
         elif updateElement[updateAttribute] is not None:
             text = updateElement[updateAttribute]
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(text, x, z, entryWidth, update, parent)
 
@@ -1191,7 +1208,7 @@ class PropertiesPanel():
         curCommand = ""
         if updateAttribute in elementInfo.extraOptions:
             curCommand = elementInfo.extraOptions[updateAttribute]
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         self.__createTextEntry(curCommand, x, z, entryWidth, update, parent)
 
@@ -1294,15 +1311,16 @@ class PropertiesPanel():
         self.__createPropertyHeader(description, z, parent)
         z = startPos.getZ()
         image = updateElement[updateAttribute]
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 15
         entry = self.__createTextEntry(image, x, z, entryWidth, update, parent)
 
         btn = DirectButton(
             text="Browse",
+            text_align=TextNode.ALeft,
             command=showBrowser,
             pad=(0.25,0.25),
-            pos=(width - entryWidth, 0, z),
+            pos=(startPos.getX() + 20 + DGH.getRealWidth(entry), 0, z),
             scale=12,
             parent=parent
             )
@@ -1338,15 +1356,16 @@ class PropertiesPanel():
         font = ""
         if updateAttribute in self.elementInfo.extraOptions:
             font = self.elementInfo.extraOptions[updateAttribute]
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 15
         entry = self.__createTextEntry(font, x, z, entryWidth, update, parent)
 
         btn = DirectButton(
             text="Browse",
+            text_align=TextNode.ALeft,
             command=showBrowser,
             pad=(0.25,0.25),
-            pos=(width - entryWidth, 0, z),
+            pos=(startPos.getX() + 20 + DGH.getRealWidth(entry), 0, z),
             scale=12,
             parent=parent
             )
@@ -1426,7 +1445,7 @@ class PropertiesPanel():
         z = startPos.getZ()
 
         text = updateElementInfo.name
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(text, x, z, entryWidth, update, parent)
 
@@ -1442,7 +1461,7 @@ class PropertiesPanel():
         self.__createPropertyHeader("Command", z, parent)
         z = startPos.getZ()
         cmd = "" if updateElementInfo.command is None else updateElementInfo.command
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(cmd, x, z, entryWidth, update, parent)
 
@@ -1458,7 +1477,7 @@ class PropertiesPanel():
         self.__createPropertyHeader("Command Arguments", z, parent)
         z = startPos.getZ()
         args = "" if updateElementInfo.extraArgs is None else updateElementInfo.extraArgs
-        width = (parent.bounds[1]-10)
+        width = (DGH.getRealWidth(parent)-10)
         entryWidth = width / 13
         entry = self.__createTextEntry(args, x, z, entryWidth, update, parent)
 
@@ -1690,9 +1709,8 @@ class PropertiesPanel():
             transparencyAttribs, selectedElement, update)
 
     def __createResetFramesize(self, startPos, parent, updateElement):
-        pos = startPos
-        pos.setX(pos.getX() + 10)
         box = DirectBoxSizer(parent=parent, pos=startPos)
+        box.setX(box.getX() + 10)
 
         #
         # Update Frame

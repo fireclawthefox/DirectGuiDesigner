@@ -103,11 +103,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesMethod(self, element, elementDict, widget):
-        self.propertiesFrame.defaultPropertySelection()
-        for propName in widget.enabledProperties:
-            self.propertiesFrame.propertyList[propName] = True
-        for prop in widget.customProperties:
-            self.propertiesFrame.customProperties.append(prop)
         self.propertiesFrame.setupProperties("{} Properties".format(widget.displayName), element, elementDict)
 
     def createCustomWidgetMethods(self, widget):
@@ -136,10 +131,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["pressEffect"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):
@@ -161,14 +152,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectEntry(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["initialText"] = True
-        self.propertiesFrame.propertyList["width"] = True
-        self.propertiesFrame.propertyList["numLines"] = True
-        self.propertiesFrame.propertyList["overflow"] = True
-        self.propertiesFrame.propertyList["obscured"] = True
         self.propertiesFrame.setupProperties("Entry Properties", element, elementDict)
 
     def createDirectEntryScroll(self, parent=None, createEntry=True):
@@ -218,8 +201,6 @@ class ElementHandler:
             return elementInfo
 
     def propertiesDirectEntryScroll(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["clipSize"] = True
         self.propertiesFrame.setupProperties("Scrolled Entry Properties", element, elementDict)
 
     def createDirectCheckBox(self, parent=None):
@@ -246,15 +227,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectCheckBox(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["text"] = True
-        self.propertiesFrame.propertyList["text_align"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["uncheckedImage"] = True
-        self.propertiesFrame.propertyList["checkedImage"] = True
-        self.propertiesFrame.propertyList["isChecked"] = True
         self.propertiesFrame.setupProperties("Checkbox Properties", element, elementDict)
 
     def createDirectCheckButton(self, parent=None):
@@ -281,20 +253,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectCheckButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["boxBorder"] = True
-        self.propertiesFrame.propertyList["boxPlacement"] = True
-        self.propertiesFrame.propertyList["boxImage"] = True
-        self.propertiesFrame.propertyList["boxImageScale"] = True
-        self.propertiesFrame.propertyList["boxImageColor"] = True
-        self.propertiesFrame.propertyList["boxRelief"] = True
-        self.propertiesFrame.propertyList["indicator_text_scale"] = True
-        self.propertiesFrame.propertyList["indicator_text_pos"] = True
-        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
@@ -317,16 +275,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectOptionMenu(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["popupMarkerBorder"] = True
-        self.propertiesFrame.propertyList["popupMarker_pos"] = True
-        self.propertiesFrame.propertyList["popupMenuLocation"] = True
-        self.propertiesFrame.propertyList["highlightColor"] = True
-        self.propertiesFrame.propertyList["highlightScale"] = True
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
     def createDirectRadioButton(self, parent=None):
@@ -356,22 +304,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectRadioButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["boxBorder"] = True
-        self.propertiesFrame.propertyList["boxPlacement"] = True
-        self.propertiesFrame.propertyList["boxImage"] = True
-        self.propertiesFrame.propertyList["boxImageScale"] = True
-        self.propertiesFrame.propertyList["boxImageColor"] = True
-        self.propertiesFrame.propertyList["boxRelief"] = True
-        self.propertiesFrame.propertyList["others"] = True
-        self.propertiesFrame.propertyList["indicatorValue"] = True
-        self.propertiesFrame.propertyList["indicator_text_scale"] = True
-        self.propertiesFrame.propertyList["indicator_text_pos"] = True
-        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
     def createDirectSlider(self, parent=None):
@@ -395,25 +327,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectSlider(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-
-        self.propertiesFrame.propertyList["SB-range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["scrollSize"] = True
-        self.propertiesFrame.propertyList["pageSize"] = True
-        self.propertiesFrame.propertyList["orientation"] = True
-
-        self.propertiesFrame.propertyList["thumb_pos"] = True
-        self.propertiesFrame.propertyList["thumb_hpr"] = True
-        self.propertiesFrame.propertyList["thumb_scale"] = True
-        self.propertiesFrame.propertyList["thumb_frameColor"] = True
-        self.propertiesFrame.propertyList["thumb_frameSize"] = True
-        self.propertiesFrame.propertyList["thumb_image"] = True
-        self.propertiesFrame.propertyList["thumb_image_scale"] = True
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
@@ -433,44 +346,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectScrollBar(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["text"] = True
-        self.propertiesFrame.propertyList["text_align"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["SB-range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["scrollSize"] = True
-        self.propertiesFrame.propertyList["pageSize"] = True
-        self.propertiesFrame.propertyList["orientation"] = True
-        self.propertiesFrame.propertyList["manageButtons"] = True
-        self.propertiesFrame.propertyList["resizeThumb"] = True
-
-        self.propertiesFrame.propertyList["incButton_pos"] = True
-        self.propertiesFrame.propertyList["incButton_hpr"] = True
-        self.propertiesFrame.propertyList["incButton_scale"] = True
-        self.propertiesFrame.propertyList["incButton_frameColor"] = True
-        self.propertiesFrame.propertyList["incButton_frameSize"] = True
-        self.propertiesFrame.propertyList["incButton_image"] = True
-        self.propertiesFrame.propertyList["incButton_image_scale"] = True
-
-        self.propertiesFrame.propertyList["decButton_pos"] = True
-        self.propertiesFrame.propertyList["decButton_hpr"] = True
-        self.propertiesFrame.propertyList["decButton_scale"] = True
-        self.propertiesFrame.propertyList["decButton_frameColor"] = True
-        self.propertiesFrame.propertyList["decButton_frameSize"] = True
-        self.propertiesFrame.propertyList["decButton_image"] = True
-        self.propertiesFrame.propertyList["decButton_image_scale"] = True
-
-        self.propertiesFrame.propertyList["thumb_pos"] = True
-        self.propertiesFrame.propertyList["thumb_hpr"] = True
-        self.propertiesFrame.propertyList["thumb_scale"] = True
-        self.propertiesFrame.propertyList["thumb_frameColor"] = True
-        self.propertiesFrame.propertyList["thumb_frameSize"] = True
-        self.propertiesFrame.propertyList["thumb_image"] = True
-        self.propertiesFrame.propertyList["thumb_image_scale"] = True
-
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
     def createDirectScrolledList(self, parent=None):
@@ -542,13 +417,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectScrolledList(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        for key in self.propertiesFrame.propertyList.keys():
-            if key.startswith("incButton") or key.startswith("decButton"):
-                self.propertiesFrame.propertyList[key] = True
         self.propertiesFrame.setupProperties("Scrolled List Properties", element, elementDict)
 
     def createDirectScrolledListItem(self, parent=None):
@@ -578,10 +446,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectScrolledListItem(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Scrolled List Item Properties", element, elementDict)
 
     def createDirectLabel(self, parent=None):
@@ -607,10 +471,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectLabel(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Label Properties", element, elementDict)
 
     def createDirectWaitBar(self, parent=None):
@@ -636,16 +496,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectWaitBar(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["barBorderWidth"] = True
-        self.propertiesFrame.propertyList["barColor"] = True
-        self.propertiesFrame.propertyList["barTexture"] = True
-        self.propertiesFrame.propertyList["barRelief"] = True
         self.propertiesFrame.setupProperties("Wait Bar Properties", element, elementDict)
 
     def createOkDialog(self, parent=None):
@@ -668,11 +518,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesOkDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
     def createOkCancelDialog(self, parent=None):
@@ -696,11 +541,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesOkCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
     def createYesNoDialog(self, parent=None):
@@ -723,11 +563,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesYesNoDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Dialog Properties", element, elementDict)
 
     def createYesNoCancelDialog(self, parent=None):
@@ -748,11 +583,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesYesNoCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
     def createRetryCancelDialog(self, parent=None):
@@ -775,11 +605,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesRetryCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 
     def createDirectFrame(self, parent=None):
@@ -805,11 +630,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectFrame(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        if element.element['text'] == None:
-            self.propertiesFrame.propertyList["text"] = True
-        else:
-            self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.setupProperties("Frame Properties", element, elementDict)
 
     def createDirectScrolledFrame(self, parent=None):
@@ -838,7 +658,4 @@ class ElementHandler:
         return elementInfo
 
     def propertiesDirectScrolledFrame(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["canvasSize"] = True
-        self.propertiesFrame.propertyList["scrollBarWidth"] = True
         self.propertiesFrame.setupProperties("Scrolled Frame Properties", element, elementDict)

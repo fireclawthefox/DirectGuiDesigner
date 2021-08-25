@@ -27,15 +27,16 @@ class CanvasPanel():
             (0.9, 0.9, 1, 1), # Click
             (0.8, 0.8, 1, 1), # Hover
             (0.5, 0.5, 0.5, 1)) # Disabled
-        # respect menu bar
 
-        self.canvasScale = 1080 # min(base.getSize()[0], base.getSize()[1])
 
         # we default to a 1920x1080 FHD screen
         self.canvasLeft = -1920/2
         self.canvasRight = 1920/2
         self.canvasTop = 1080/2
         self.canvasBottom = -1080/2
+
+        # use the shorter size (vertical) to calculate a scale of 1
+        self.canvasScale = 1080
 
         self.visualEditor = DirectScrolledFrame(
             frameColor=(0.25, 0.25, 0.25, 1),
@@ -71,7 +72,7 @@ class CanvasPanel():
 
         # Layouting
         self.sizer = DirectAutoSizer(
-            updateOnWindowResize=False,
+            #updateOnWindowResize=False,
             parent=parent,
             child=self.visualEditor,
             )
@@ -91,6 +92,7 @@ class CanvasPanel():
         self.elementHolder.bind(DGG.B1RELEASE, base.messenger.send, ["mouse3"])
         # Ensure the holder frame will be streched to fill the parent
         self.scaleParentSizer = DirectAutoSizer(
+            #updateOnWindowResize=False,
             parent=self.visualEditor.canvas,
             child=self.scaleParent,
             parentGetSizeFunction=self.visualEditor.cget,
@@ -98,6 +100,7 @@ class CanvasPanel():
             )
 
         self.elementHolderSizer = DirectAutoSizer(
+            #updateOnWindowResize=False,
             parent=self.scaleParent,
             child=self.elementHolder
             )
@@ -139,7 +142,7 @@ class CanvasPanel():
         directly propagate down to the actual background, which is the element
         holder."""
 
-        self.sizer.refresh()
+        #self.sizer.refresh()
 
         sizeChanged = False
         cs = self.getEditorCanvasSize()
@@ -364,7 +367,6 @@ class CanvasPanel():
         self.getEditorRootCanvas().setScale(s[0]*z, s[1], s[2]*z)
 
         base.messenger.send("setZoomValue", [self.getEditorRootCanvas().getScale()[0]])
-        #print(self.getEditorRootCanvas().getScale())
 
         # update scroll bars
         vr = self.visualEditor["verticalScroll_range"]

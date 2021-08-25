@@ -14,7 +14,8 @@ from panda3d.core import NodePath
 class JSONTools:
     functionMapping = {
         "base":{"initialText":"get"},
-        "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}}
+        #"text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}
+        }
 
     subOptionMapping = {
         "image":{"scale":"scale", "pos":"pos"}}
@@ -51,7 +52,17 @@ class JSONTools:
         jsonElements["EditorConfig"]["canvasSize"] = repr(getEditorFrame()["canvasSize"])
         jsonElements["ComponentList"] = {}
 
+        self.writtenRoots = []
+
         self.writeSortedContent(None, jsonElements)
+
+        # HACK: this should be made better.
+        #       Usually we expect all elements under the editor root canvas.
+        #       But elements can also be parented under placement parents like
+        #       topLeft, bottomCenter and so on
+        for name, elementInfo in self.guiElementsDict.items():
+            if elementInfo.parent not in self.writtenRoots:
+                self.writeSortedContent(elementInfo.parent, jsonElements)
 
         return jsonElements
 
@@ -61,6 +72,7 @@ class JSONTools:
         respectively their children."""
         for name, elementInfo in self.guiElementsDict.items():
             if elementInfo.parent == root:
+                if root not in self.writtenRoots: self.writtenRoots.append(root)
                 try:
                     jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
                 except Exception as e:

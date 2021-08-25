@@ -41,7 +41,7 @@ from DirectGuiDesigner.panels.CanvasPanel import CanvasPanel
 from DirectGuiDesigner.panels.MenuBar import MenuBar
 from DirectGuiDesigner.panels.ToolBar import ToolBar
 from DirectGuiDesigner.panels.ToolboxPanel import ToolboxPanel
-from DirectGuiDesigner.panels.PropertiesPanel import PropertiesPanel
+from DirectGuiDesigner.panels.PropertiesPanelNew import PropertiesPanel
 from DirectGuiDesigner.panels.StructurePanel import StructurePanel
 
 from DirectGuiDesigner.export.ExporterPy import ExporterPy
@@ -52,8 +52,8 @@ from DirectGuiDesigner.loader.PyScript import PyScriptLoader
 
 from DirectGuiDesigner.dialogs.SettingsDialog import GUI as SettingsDialog
 
-from DirectGuiDesigner.core.ElementHandler import ElementHandler
-from DirectGuiDesigner.core.ElementHandler import ElementInfo
+from DirectGuiDesigner.core.ElementHandlerNew import ElementHandler
+from DirectGuiDesigner.core.ElementHandlerNew import ElementInfo
 from DirectGuiDesigner.core.CustomWidgets import CustomWidgets
 from DirectGuiDesigner.core.KillRing import KillRing
 
@@ -190,6 +190,10 @@ class DirectGuiDesigner(ShowBase):
 
         self.copyOptionsElement = None
 
+        self.copiedElement = None
+
+        self.theCutElement = None
+
         # Delay initial setup by 0.5s to let the window set it's final
         # size and we'll be able to use the screen corner/edge variables
         taskMgr.doMethodLater(0.5, self.setupGui, "delayed setup", extraArgs = [])
@@ -223,41 +227,54 @@ class DirectGuiDesigner(ShowBase):
         self.mainBox = DirectBoxSizer(
             frameColor=(1,0,0,1),
             orientation=DGG.VERTICAL,
-            autoUpdateFrameSize=False)
+            autoUpdateFrameSize=False,
+            printSIze=False)
         self.mainSizer = DirectAutoSizer(
+            #updateOnWindowResize=False,
             parent=base.pixel2d,
             child=self.mainBox,
-            childUpdateSizeFunc=self.mainBox.refresh)
+            childUpdateSizeFunc=self.mainBox.refresh
+            )
 
-        menuBarHeight = 24
-        toolBarHeight = 48
+        self.menuBarHeight = 24
+        self.toolBarHeight = 48
 
         self.menuBarSizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=self.mainBox,
-            minSize=(0,0,-menuBarHeight/2, menuBarHeight/2),
+            minSize=(0,0,-self.menuBarHeight/2, self.menuBarHeight/2),
             extendVertical=False)
         self.toolBarSizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=self.mainBox,
-            minSize=(0,0,-toolBarHeight/2, toolBarHeight/2),
+            minSize=(0,0,-self.toolBarHeight/2, self.toolBarHeight/2),
             extendVertical=False)
-        self.mainBox.addItem(self.menuBarSizer)
-        self.mainBox.addItem(self.toolBarSizer)
+        self.mainBox.addItem(self.menuBarSizer, updateFunc=self.menuBarSizer.refresh, skipRefresh=True)
+        self.mainBox.addItem(self.toolBarSizer, updateFunc=self.toolBarSizer.refresh, skipRefresh=True)
 
         self.mainSplitter = DirectSplitFrame(
-            frameSize=(-self.screenWidthPx/2,self.screenWidthPx/2,0,self.screenHeightPx-menuBarHeight-toolBarHeight),
+            frameSize=self.getMainSplitterSize(),
             firstFrameMinSize=100,
             secondFrameMinSize=100,
             splitterWidth=splitterWidth,
             splitterPos=self.screenWidthPx/3,
-            pixel2d=True)
+            pixel2d=True,
+            printSIze=False,)
         self.mainSplitter.firstFrame["frameColor"] = (1,1,0,1)
         self.mainSplitter.secondFrame["frameColor"] = (0,1,1,1)
+
+        self.mainSplitter["frameColor"] = (1,0,1,1)
+        #self.mainSplitter.firstFrame.hide()
+        #self.mainSplitter.secondFrame.hide()
+
         self.mainSplitSizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=self.mainBox,
             child=self.mainSplitter,
             extendVertical=False,
-            childUpdateSizeFunc=self.mainSplitter.refresh)
-        self.mainBox.addItem(self.mainSplitSizer)
+            childUpdateSizeFunc=self.mainSplitter.refresh,
+            )
+        self.mainBox.addItem(self.mainSplitSizer, updateFunc=self.mainSplitSizer.refresh, skipRefresh=True)
         #self.mainSplitter["splitterPos"] = self.screenWidthPx/3
 
         self.sidebarSplitterA = DirectSplitFrame(
@@ -271,9 +288,11 @@ class DirectGuiDesigner(ShowBase):
         self.sidebarSplitterA.firstFrame["frameColor"] = (1,0,0,1)
         self.sidebarSplitterA.secondFrame["frameColor"] = (1,0,1,1)
         self.sideSplitSizerA = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=self.mainSplitter.firstFrame,
             child=self.sidebarSplitterA,
-            childUpdateSizeFunc=self.sidebarSplitterA.refresh)
+            childUpdateSizeFunc=self.sidebarSplitterA.refresh
+            )
         self.mainSplitter["firstFrameUpdateSizeFunc"] = self.sideSplitSizerA.refresh
         #self.sidebarSplitterA["splitterPos"] = DGH.getRealHeight(self.mainSplitter)/3*2
 
@@ -286,9 +305,11 @@ class DirectGuiDesigner(ShowBase):
         self.sidebarSplitterB.firstFrame["frameColor"] = (0,0,1,1)
         self.sidebarSplitterB.secondFrame["frameColor"] = (0,1,0,1)
         self.sideSplitSizerB = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=self.sidebarSplitterA.secondFrame,
             child=self.sidebarSplitterB,
-            childUpdateSizeFunc=self.sidebarSplitterB.refresh)
+            childUpdateSizeFunc=self.sidebarSplitterB.refresh
+            )
         self.sidebarSplitterA["secondFrameUpdateSizeFunc"] = self.sideSplitSizerB.refresh
 
         #
@@ -366,6 +387,7 @@ class DirectGuiDesigner(ShowBase):
         self.accept("removeElement", self.removeElement)
         self.accept("copyOptions", self.copyOptions)
         self.accept("pasteOptions", self.pasteOptions)
+        self.accept("cutElement", self.cutElement)
         self.accept("copyElement", self.copyElement)
         self.accept("pasteElement", self.pasteElement)
         self.accept("undo", self.undo)
@@ -429,28 +451,15 @@ class DirectGuiDesigner(ShowBase):
             logging.info("Removed crash session file")
         logging.debug("Startup complete")
 
-        # refresh all sizers
-        self.refreshAllSizers()
-
         # refresh the editor area.
         self.editorFrame.setVisualEditorParent(False)
 
-
-    def refreshAllSizers(self):
-        self.mainSizer.refresh()
-        self.mainBox.refresh()
-
-        self.menuBarSizer.refresh()
-        self.toolBarSizer.refresh()
-
-        self.mainSplitSizer.refresh()
-        self.mainSplitter.refresh()
-
-        self.sideSplitSizerA.refresh()
-        self.sideSplitSizerB.refresh()
-
-
-        self.editorFrame.sizer.refresh()
+    def getMainSplitterSize(self):
+        return (
+            -self.screenWidthPx/2,
+            self.screenWidthPx/2,
+            0,
+            self.screenHeightPx - self.menuBarHeight - self.toolBarHeight)
 
     def setDirty(self):
         wp = WindowProperties()
@@ -566,6 +575,7 @@ class DirectGuiDesigner(ShowBase):
         base.messenger.send("setDirtyFlag")
 
     def cycleKillRing(self):
+        """Cycles through the redo branches at the current depth of the kill ring"""
         self.undo()
         self.killRing.cycleChildren()
         self.redo()
@@ -577,9 +587,14 @@ class DirectGuiDesigner(ShowBase):
             self.lastFileNameWOExtension = os.path.splitext(os.path.basename(path))[0]
 
     def getEditorRootCanvas(self):
+        """ returns the canvas element which acts as the root parent for all
+        elements in the editors edit area """
         return self.editorFrame.getEditorRootCanvas()
 
     def getEditorPlacer(self, placerName):
+        """Returns the nodepath to a specific placer in the editor. Those
+        usually are located at the edges and corners of the editor and resemble
+        the a2d* counterparts from the engine"""
         return self.editorFrame.getEditorPlacer(placerName)
 
     def getEditorFrame(self):
@@ -624,6 +639,7 @@ class DirectGuiDesigner(ShowBase):
             "control-o": [self.load],
             "control-q": [self.quitApp],
             "control-c": [self.copyElement],
+            "control-x": [self.cutElement],
             "control-v": [self.pasteElement],
             "shift-control-c": [self.copyOptions],
             "shift-control-v": [self.pasteOptions],
@@ -684,17 +700,17 @@ class DirectGuiDesigner(ShowBase):
             self.screenHeightPx = base.getSize()[1]
 
             # resize the main splitter to fit the remaining window space
-            self.mainSplitter["frameSize"] = (
-                -self.screenWidthPx/2, self.screenWidthPx/2,
-                0, self.screenHeightPx-DGH.getRealHeight(self.menuBarSizer)-DGH.getRealHeight(self.toolBarSizer))
+            self.mainSplitter["frameSize"] = self.getMainSplitterSize()
 
-            # delay the refresh so we won't get stuck with a half sized editor
-            self.taskMgr.doMethodLater(0.5, self.refreshAllSizers, "delayed size fit", appendTask=False, extraArgs=[])
+            # TODO: Is there a better way to handle this?
+            #  Currently the mainSizer gets updated on window resize events
+            #  prior to this. Without that event, the mainSplitter won't be
+            #  placed correctly at this refresh call. If this refresh call is
+            #  removed on the other hand, the mainSplitter also won't be
+            #  placed correctly
+            self.mainSizer.refresh()
 
     def propertiesEditor(self, elementInfo):
-        self.propertiesFrame.clearPropertySelection()
-        self.propertiesFrame.propertyList["frameColor"] = True
-        self.propertiesFrame.propertyList["canvasSize"] = True
         self.propertiesFrame.setupProperties("Editor Properties", elementInfo, self.elementDict)
 
     def __refreshStructureTree(self):
@@ -935,9 +951,19 @@ class DirectGuiDesigner(ShowBase):
                     widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type)
                     if widget.removeItemFunction is not None:
                         # call custom widget remove function
-                        getattr(self.elementDict[name].parent.element, widget.removeItemFunction)(workOn)
+                        try:
+                            getattr(self.elementDict[name].parent.element, widget.removeItemFunction)(workOn)
+                        except:
+                            try:
+                                getattr(self.elementDict[name].parent.element, widget.removeItemFunction)()
+                            except Exception as e:
+                                logging.error("Error while calling remove item function {} of item {}".format(widget.removeItemFunction, name))
+                                logging.exception(e)
                 del self.elementDict[name]
-        workOn.stash()
+        try:
+            workOn.stash()
+        except Exception as e:
+            print(e)
 
         #workOn.destroy()
 
@@ -1021,8 +1047,21 @@ class DirectGuiDesigner(ShowBase):
         if self.selectedElement is None: return
         self.copiedElement = self.selectedElement
 
+    def cutElement(self):
+        if self.selectedElement is None: return
+        self.theCutElement = self.selectedElement
+
     def pasteElement(self):
+        # check if we want to have a cut or copy action
+
+        if self.theCutElement is not None:
+            # CUT
+            # the previous action was a cutting action, so we don't want to copy
+            return self.pasteCutElement()
+
         if self.copiedElement is None: return
+
+        # COPY
         # stores the ids of the source elements that have been copied already
         self.copyCreatedElementIds = []
         self.newElementIds = []
@@ -1053,6 +1092,19 @@ class DirectGuiDesigner(ShowBase):
                 self.__copyOptions(elementInfo.element, newElement.element, parent is not None)
 
                 self.__copyBranch(elementInfo, newElement.element)
+
+    def pasteCutElement(self):
+        if self.theCutElement is None: return
+        if self.theCutElement == self.selectedElement: return
+
+        parent = self.selectedElement
+        if self.selectedElement is None:
+            parent = editorFrame
+
+        self.theCutElement.element.reparentTo(self.selectedElement.element)
+        self.theCutElement = None
+
+        base.messenger.send("refreshStructureTree")
 
     def copyOptions(self):
         if self.selectedElement is None: return

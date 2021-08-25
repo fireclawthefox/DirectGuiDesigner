@@ -85,10 +85,7 @@ from panda3d.core import (
     LVecBase4f,
     TextNode
 )"""
-        if ConfigVariableBool("create-executable-scripts", False).getValue():
-            self.content += """
-# We need showbase to make this script directly runnable
-from direct.showbase.ShowBase import ShowBase"""
+
         self.content += """
 
 class GUI:
@@ -120,7 +117,7 @@ class GUI:
                     if widget.addItemFunction is not None:
                         self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
 
-            if elementInfo["parent"] == "root":
+            if elementInfo["parent"] == "root" or elementInfo["parent"].startswith("a2d"):
                 topLevelItems.append(name)
 
         # Create helper functions for toplevel elements
@@ -143,7 +140,8 @@ class GUI:
         # Make script executable if desired
         if ConfigVariableBool("create-executable-scripts", False).getValue():
             self.content += """
-# Create a ShowBase instance to make this gui directly runnable
+# We need a showbase instance to make this script directly runnable
+from direct.showbase.ShowBase import ShowBase
 app = ShowBase()\n"""
             if usePixel2D:
                 self.content += "GUI(app.pixel2d)\n"

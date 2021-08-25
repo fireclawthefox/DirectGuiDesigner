@@ -31,6 +31,7 @@ class StructurePanel():
             autoUpdateFrameSize=False,
             orientation=DGG.VERTICAL)
         self.sizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=parent,
             child=self.box,
             childUpdateSizeFunc=self.box.refresh)
@@ -82,11 +83,27 @@ class StructurePanel():
     def scroll(self, scrollStep, event):
         self.structureFrame.verticalScroll.scrollStep(scrollStep)
 
+    def recalcScrollSize(self):
+        a = self.structureFrame["canvasSize"][2]
+        b = abs(self.structureFrame["frameSize"][2]) + self.structureFrame["frameSize"][3]
+        scrollDefault = 200
+        s = -(scrollDefault / (a / b))
+
+        self.structureFrame["verticalScroll_scrollSize"] = s
+        self.structureFrame["verticalScroll_pageSize"] = s
+
+
     def resizeFrame(self):
+        preSize = self.sizer["frameSize"]
         self.sizer.refresh()
-        self.structureFrame["frameSize"] = (
-                self.parent["frameSize"][0], self.parent["frameSize"][1],
-                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+        postSize = self.sizer["frameSize"]
+
+        if preSize != postSize:
+            self.structureFrame["frameSize"] = (
+                    self.parent["frameSize"][0], self.parent["frameSize"][1],
+                    self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+
+            self.recalcScrollSize()
 
         #posZ = 0
         #height = DGH.getRealHeight(parent)
@@ -100,17 +117,22 @@ class StructurePanel():
     def refreshStructureTree(self, elementDict, selectedElement):
         self.elementDict = elementDict
         self.selectedElement = selectedElement
+
+        # cleanup the structure tree
         for element in self.structureFrame.getCanvas().getChildren():
             element.removeNode()
 
         self.maxWidth = self.parent["frameSize"][1]-20
         self.itemCounter = 0
+
+        # create the tree
         self.__fillStructureTree(self.getEditorRootCanvas(), 0, 0)
 
         self.structureFrame["canvasSize"] = (
             self.structureFrame["frameSize"][0], self.maxWidth,
             self.itemCounter*-16, 0)
         self.structureFrame.setCanvasSize()
+        self.recalcScrollSize()
 
     def __fillStructureTree(self, root, level, z):
         if "DirectGrid" in root.getName(): return

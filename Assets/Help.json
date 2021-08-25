@@ -1,0 +1,81 @@
+{
+  "ProjectVersion": "0.2a",
+  "EditorConfig": {
+    "usePixel2D": true,
+    "canvasSize": "(0, 1920, -1080, 0)"
+  },
+  "ComponentList": {
+    "frmMain": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameColor": "(1, 1, 1, 1)",
+        "frameSize": "(0.0, 800.0, -600.0, 0.0)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectFrame",
+      "parent": "root",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "autosizerMain": {
+      "element": {
+        "childUpdateSizeFunc": "<bound method DirectBoxSizer.refresh of render2d/pixel2d/DirectAutoSizer-pg2/DirectBoxSizer-pg1/DirectAutoSizer-pg9/DirectSplitFrame-pg5/DirectFrame-pg7/DirectAutoSizer-pg30/DirectScrolledFrame-pg20/canvas_parent/canvas/DirectAutoSizer-pg32/DirectFrame-pg29/DirectAutoSizer-pg33/DirectFrame-pg31/DirectFrame-pg1018/DirectAutoSizer-pg14943/DirectBoxSizer-pg15131>",
+        "frameSize": "[0.0, 800.0, -600.0, 0.0]",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "parentGetSizeFunction": "''",
+        "pos": "LPoint3f(0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectAutoSizer",
+      "parent": "frmMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {
+        "childUpdateSizeFunc": "self.boxMain.refresh"
+      }
+    },
+    "boxMain": {
+      "element": {
+        "autoUpdateFrameSize": "0",
+        "frameSize": "[0.0, 800.0, -600.0, 0.0]",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "itemAlign": "17",
+        "orientation": "'vertical'",
+        "pos": "LPoint3f(0, 0, 0)",
+        "transparency": "0"
+      },
+      "type": "DirectBoxSizer",
+      "parent": "autosizerMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {}
+    },
+    "pg15691": {
+      "element": {
+        "borderWidth": "(2, 2)",
+        "frameSize": "LVecBase4f(-27.6, 30, -2.7, 17.4)",
+        "hpr": "LVecBase3f(0, 0, 0)",
+        "pos": "LPoint3f(0, 0, -17.4)",
+        "scale": "LVecBase3f(1, 1, 1)",
+        "text": "'Label'",
+        "text0_align": "TextNode.A_center",
+        "text0_scale": "(24, 24)",
+        "text0_pos": "(0, 0)",
+        "text0_fg": "LVecBase4f(0, 0, 0, 1)",
+        "text0_bg": "LVecBase4f(0, 0, 0, 0)",
+        "text0_wordwrap": "None",
+        "transparency": "0"
+      },
+      "type": "DirectLabel",
+      "parent": "boxMain",
+      "command": null,
+      "extraArgs": null,
+      "extraOptions": {
+        "parentGetSizeFunction": ""
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ class ToolboxPanel:
             autoUpdateFrameSize=False,
             orientation=DGG.VERTICAL)
         self.sizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=parent,
             child=self.box,
             childUpdateSizeFunc=self.box.refresh)
@@ -120,13 +121,29 @@ class ToolboxPanel:
             -(len(self.toolboxEntries)*30), 0)
         self.toolboxFrame.setCanvasSize()
 
-    def resizeFrame(self):
-        self.sizer.refresh()
-        self.toolboxFrame["frameSize"] = (
-                self.parent["frameSize"][0], self.parent["frameSize"][1],
-                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+        self.recalcScrollSize()
 
-        self.createEntries()
+
+    def recalcScrollSize(self):
+        a = self.toolboxFrame["canvasSize"][2]
+        b = abs(self.toolboxFrame["frameSize"][2]) + self.toolboxFrame["frameSize"][3]
+        scrollDefault = 25
+        s = -(scrollDefault / (a / b))
+
+        self.toolboxFrame["verticalScroll_scrollSize"] = s
+        self.toolboxFrame["verticalScroll_pageSize"] = s
+
+    def resizeFrame(self):
+        preSize = self.sizer["frameSize"]
+        self.sizer.refresh()
+        postSize = self.sizer["frameSize"]
+
+        if preSize != postSize:
+            self.toolboxFrame["frameSize"] = (
+                    self.parent["frameSize"][0], self.parent["frameSize"][1],
+                    self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+
+            self.recalcScrollSize()
 
     def __createControl(self, name):
         base.messenger.send("createControl", [name])
