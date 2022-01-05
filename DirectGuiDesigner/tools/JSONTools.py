@@ -43,7 +43,7 @@ class JSONTools:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth", "initialText"]
 
-    def getProjectJSON(self, guiElementsDict, getEditorFrame, usePixel2D):
+    def getProjectJSON(self, guiElementsDict, getEditorFrame, getAllEditorPlacers, usePixel2D):
         self.guiElementsDict = guiElementsDict
         jsonElements = {}
         jsonElements["ProjectVersion"] = "0.2a"
@@ -54,15 +54,23 @@ class JSONTools:
 
         self.writtenRoots = []
 
-        self.writeSortedContent(None, jsonElements)
+        roots = [None] + getAllEditorPlacers()
 
-        # HACK: this should be made better.
-        #       Usually we expect all elements under the editor root canvas.
-        #       But elements can also be parented under placement parents like
-        #       topLeft, bottomCenter and so on
-        for name, elementInfo in self.guiElementsDict.items():
-            if elementInfo.parent not in self.writtenRoots:
-                self.writeSortedContent(elementInfo.parent, jsonElements)
+
+        '''
+        TODO: We need to gather all roots here and walk through them
+            Then we also need to fix the sorting of the written elements
+
+        roots = [
+            None,
+
+        ]'''
+
+        for root in roots:
+            self.writeSortedContent(root, jsonElements)
+            for name, elementInfo in self.guiElementsDict.items():
+                if elementInfo.parent not in self.writtenRoots:
+                    self.writeSortedContent(elementInfo.parent, jsonElements)
 
         return jsonElements
 
@@ -82,13 +90,13 @@ class JSONTools:
 
     def __createJSONEntry(self, elementInfo):
         return {
-                "element":self.__writeElement(elementInfo),
-                "type":elementInfo.type,
-                "parent":self.__writeParent(elementInfo.parent),
-                "command":elementInfo.command,
-                "extraArgs":elementInfo.extraArgs,
-                "extraOptions":elementInfo.extraOptions,
-            }
+            "element":self.__writeElement(elementInfo),
+            "type":elementInfo.type,
+            "parent":self.__writeParent(elementInfo.parent),
+            "command":elementInfo.command,
+            "extraArgs":elementInfo.extraArgs,
+            "extraOptions":elementInfo.extraOptions,
+        }
 
     def __writeParent(self, parent):
         if parent is None: return "root"

@@ -14,8 +14,9 @@
    - [X] Reset Zoom
    - [X] Zoom In
    - [X] Zoom Out
-* TODO Enhance help dialog (Maybe make it paged)
+* TODO Enhance help dialog
 ** TODO Move setup of this dialog outside into its own directory (probably something like help) with all description files and stuff.
+** TODO Make dialog paged with sub-categories like general, editing, saving, exporting, loading, etc
 * TODO New Element property handling
 ** TODO Add definition file with definitions for all widget !properties!
    Definition should define the following
@@ -28,9 +29,9 @@
    - [X] Support widget states
 
    What to get from the definition in the item itself?
-   - [ ] Default values
-   - [ ] sub-components and their types
-   - [ ] type of the widget
+   - [X] Default values
+   - [X] sub-components and their types
+   - [X] type of the widget
 
    widget.options() to get all options from that specific widget, no sub-options
    #TODO: We need this: keyword, [default, current, ...
@@ -58,6 +59,15 @@
                    print("sub component")
                    print(info)
                    break
-** TODO Rework and simplify property editor to simply walk through definitions for the given widget and sub-widgets and display them according to the property type definition
-* TODO 
+** DONE Rework and simplify property editor to simply walk through definitions for the given widget and sub-widgets and display them according to the property type definition
+   - [X] Walk through all element parts
+   - [X] Call function to set up correct property edit feature
+** TODO Fix not supported values
+   - [ ] Suppress Mouse
+   - [ ] Suppress Keyboard
+   - [X] All states
+
+* TODO New Element saving/storing handling
+** TODO Update the save feature to correctly handle all properties and sub-groups
+* TODO Add canvas size changing to either settings or task bar
 

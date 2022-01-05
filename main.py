@@ -6,6 +6,7 @@ import os
 import platform
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from logging import StreamHandler
 import tempfile
 
 from direct.showbase.ShowBase import ShowBase
@@ -41,7 +42,7 @@ from DirectGuiDesigner.panels.CanvasPanel import CanvasPanel
 from DirectGuiDesigner.panels.MenuBar import MenuBar
 from DirectGuiDesigner.panels.ToolBar import ToolBar
 from DirectGuiDesigner.panels.ToolboxPanel import ToolboxPanel
-from DirectGuiDesigner.panels.PropertiesPanelNew import PropertiesPanel
+from DirectGuiDesigner.panels.PropertiesPanel import PropertiesPanel
 from DirectGuiDesigner.panels.StructurePanel import StructurePanel
 
 from DirectGuiDesigner.export.ExporterPy import ExporterPy
@@ -52,8 +53,8 @@ from DirectGuiDesigner.loader.PyScript import PyScriptLoader
 
 from DirectGuiDesigner.dialogs.SettingsDialog import GUI as SettingsDialog
 
-from DirectGuiDesigner.core.ElementHandlerNew import ElementHandler
-from DirectGuiDesigner.core.ElementHandlerNew import ElementInfo
+from DirectGuiDesigner.core.ElementHandler import ElementHandler
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
 from DirectGuiDesigner.core.CustomWidgets import CustomWidgets
 from DirectGuiDesigner.core.KillRing import KillRing
 
@@ -70,6 +71,7 @@ from DirectGuiExtension.DirectSplitFrame import DirectSplitFrame
 loadPrcFileData(
     "",
     """
+    sync-video #t
     textures-power-2 none
     window-title DirectGUI Designer
     show-frame-rate-meter #t
@@ -106,9 +108,10 @@ for f in logfiles:
 
 logfile = os.path.join(logPath, "DirectGuiDesigner.log")
 handler = TimedRotatingFileHandler(logfile)
+consoleHandler = StreamHandler()
 logging.basicConfig(
     level=logging.DEBUG,
-    handlers=[handler])
+    handlers=[handler, consoleHandler])
 prcFileName = os.path.join(basePath, ".DirectGuiDesigner.prc")
 if os.path.exists(prcFileName):
     loadPrcFile(Filename.fromOsSpecific(prcFileName))
@@ -227,10 +230,8 @@ class DirectGuiDesigner(ShowBase):
         self.mainBox = DirectBoxSizer(
             frameColor=(1,0,0,1),
             orientation=DGG.VERTICAL,
-            autoUpdateFrameSize=False,
-            printSIze=False)
+            autoUpdateFrameSize=False)
         self.mainSizer = DirectAutoSizer(
-            #updateOnWindowResize=False,
             parent=base.pixel2d,
             child=self.mainBox,
             childUpdateSizeFunc=self.mainBox.refresh
@@ -258,8 +259,7 @@ class DirectGuiDesigner(ShowBase):
             secondFrameMinSize=100,
             splitterWidth=splitterWidth,
             splitterPos=self.screenWidthPx/3,
-            pixel2d=True,
-            printSIze=False,)
+            pixel2d=True)
         self.mainSplitter.firstFrame["frameColor"] = (1,1,0,1)
         self.mainSplitter.secondFrame["frameColor"] = (0,1,1,1)
 
@@ -376,13 +376,28 @@ class DirectGuiDesigner(ShowBase):
         self.accept("unregisterKeyboardEvents", self.ignoreKeyboardEvents)
         self.accept("reregisterKeyboardEvents", self.registerKeyboardEvents)
 
-        self.accept("createControl", self.__createControl)
+
+        self.accept("quitApp", self.quitApp)
+
+        # TASK AND MENU BAR FEATURES
         self.accept("newProject", self.new)
         self.accept("saveProject", self.save)
         self.accept("exportProject", self.export)
         self.accept("loadProject", self.load)
+        self.accept("toggleGrid", self.editorFrame.toggleGrid)
+        self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
+        self.accept("setVisualEditorParent", self.editorFrame.setVisualEditorParent)
+        self.accept("setVisualEditorCanvasSize", self.editorFrame.setVisualEditorCanvasSize)
+
+        # DATA
         self.accept("updateElementDict-afterLoad", self.updateElementDict)
+
+        # REFRESH PANELS
         self.accept("refreshStructureTree", self.__refreshStructureTree)
+        self.accept("refreshProperties", self.refreshProperties)
+
+        # Element handling
+        self.accept("createControl", self.__createControl)
         self.accept("selectElement", self.selectElement)
         self.accept("removeElement", self.removeElement)
         self.accept("copyOptions", self.copyOptions)
@@ -390,47 +405,52 @@ class DirectGuiDesigner(ShowBase):
         self.accept("cutElement", self.cutElement)
         self.accept("copyElement", self.copyElement)
         self.accept("pasteElement", self.pasteElement)
+        self.accept("moveElementInStructure", self.moveElementInStructure)
+        self.accept("setName", self.setName)
+
+        # DRAG AND DROP
+        self.accept("dragStart", self.dragStart)
+        self.accept("dragStop", self.dragStop)
+
+        # UNDO/REDO
         self.accept("undo", self.undo)
         self.accept("redo", self.redo)
         self.accept("cycleRedo", self.cycleKillRing)
         self.accept("toggleElementVisibility", self.toggleElementVisibility)
         self.accept("setParentOfElement", self.setParentOfElement)
-        self.accept("toggleGrid", self.editorFrame.toggleGrid)
-        self.accept("toggleVisualEditorParent", self.editorFrame.toggleVisualEditorParent)
-        self.accept("setVisualEditorParent", self.editorFrame.setVisualEditorParent)
-        self.accept("setVisualEditorCanvasSize", self.editorFrame.setVisualEditorCanvasSize)
+        self.accept("addToKillRing", self.addToKillRing)
+
+        # HELP DIALOG
+        self.accept("showHelp", self.showHelp)
+
+        # SETTINGS
+        self.accept("showSettings", self.showSettings)
+        self.accept("Settings_OK", self.hideSettings, [True])
+        self.accept("Settings_CANCEL", self.hideSettings, [False])
+
+        # ZOOM
         self.accept("setEditorZoom", self.editorFrame.setZoom)
         self.accept("resetZoom", self.editorFrame.resetZoom)
         self.accept("setZoomValeMinMax", self.toolBar.setZoomMinMax)
         self.accept("setZoomValue", self.toolBar.setZoomValue)
-        self.accept("showHelp", self.showHelp)
-        self.accept("quitApp", self.quitApp)
-        self.accept("showSettings", self.showSettings)
-        self.accept("Settings_OK", self.hideSettings, [True])
-        self.accept("Settings_CANCEL", self.hideSettings, [False])
         self.accept("zoom-in", self.editorFrame.zoom, extraArgs=[.1])
         self.accept("zoom-out", self.editorFrame.zoom, extraArgs=[-.1])
         self.accept("zoom-reset", self.editorFrame.resetZoom)
 
+        # SAVE INDICATOR
         self.accept("setDirtyFlag", self.setDirty)
         self.accept("clearDirtyFlag", self.setClean)
 
-        self.accept("addToKillRing", self.addToKillRing)
+        # SAVING/LOADING
+        self.accept("setLastPath", self.setLastPath)
 
-        self.accept("setName", self.setName)
-        self.accept("setCommand", self.setCommand)
-        self.accept("setExtraArgs", self.setExtraArgs)
-
-        self.accept("dragStart", self.dragStart)
-        self.accept("dragStop", self.dragStop)
-
+        # FEEDBACK
         self.accept("showWarning", self.showWarning)
         self.accept("showInfo", self.showInfo)
 
+        # WINDOW HANDLING
         self.screenSize = base.getSize()
         self.accept("window-event", self.windowEventHandler)
-
-        self.accept("setLastPath", self.setLastPath)
 
         sys.excepthook = self.excHandler
 
@@ -439,6 +459,7 @@ class DirectGuiDesigner(ShowBase):
         # Load user custom widgets
         self.customWidgetsHandler.loadCustomWidgets()
 
+        # Exception save-file-handling
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
@@ -477,8 +498,10 @@ class DirectGuiDesigner(ShowBase):
         self.hasSaved = True
 
     def addToKillRing(self, editObject, action, objectType, oldValue, newValue):
-        if action == "set" and oldValue.__eq__(newValue): return
-        logging.debug("Add to killring")
+        if action == "set" and oldValue == newValue:
+            logging.debug(f"action={action}, type={objectType} was not added to killring, reason: old={oldValue} equals new={newValue}")
+            return
+        logging.debug(f"Add to killring action={action}, type={objectType}, old={oldValue}, new={newValue}")
         self.killRing.push(editObject, action, objectType, oldValue, newValue)
 
     def undo(self):
@@ -489,39 +512,46 @@ class DirectGuiDesigner(ShowBase):
 
         if workOn.action == "set":
             if workOn.objectType == "pos":
+                logging.debug(f"undo Position to {workOn.oldValue}")
                 workOn.editObject.element.setPos(workOn.oldValue)
             elif workOn.objectType == "pressEffect":
+                logging.debug(f"try undo press effect to {workOn.oldValue}")
                 workOn.editObject.extraOptions["pressEffect"] = workOn.oldValue
+            elif workOn.objectType == "transparency":
+                workOn.editObject.element.setTransparency(workOn.oldValue)
             else:
                 try:
-                    if workOn.objectType == "text_fg": print("TEXT_FG", workOn.oldValue)
-                    workOn.editObject["text_fg"] = workOn.oldValue
+                    logging.debug(f"try undo {workOn.objectType} to {workOn.oldValue}")
+                    workOn.editObject.element[workOn.objectType] = workOn.oldValue
                 except:
-                    print("property ", workOn.objectType, " currently not supported by undo/redo")
+                    logging.exception(f"property {workOn.objectType} currently not supported by undo/redo")
 
         elif workOn.action == "add" and workOn.objectType == "element":
+            logging.debug(f"undo remove added element {workOn.editObject}")
             self.removeElement(workOn.editObject, False)
 
         elif workOn.action == "kill" and workOn.objectType == "element":
+            logging.debug(f"undo last kill {workOn.editObject}")
             workOn.editObject.unstash()
             self.elementDict[workOn.oldValue[0]] = workOn.oldValue[1]
             base.messenger.send("refreshStructureTree")
 
         elif workOn.action == "copy":
+            logging.debug(f"undo last copy {workOn.objectType}")
             if workOn.objectType == "element":
                 self.removeElement(workOn.editObject.element, False)
             elif workOn.objectType == "properties":
                 for key, value in workOn.oldValue.items():
                     if key == "pos":
-                        workOn.editObject.setPos(value)
+                        workOn.editObject.element.setPos(value)
                     elif key == "hpr":
-                        workOn.editObject.setHpr(value)
+                        workOn.editObject.element.setHpr(value)
                     elif key == "scale":
-                        workOn.editObject.setScale(value)
+                        workOn.editObject.element.setScale(value)
                     elif key == "text_fg":
-                        workOn.editObject["text_fg"] = value
+                        workOn.editObject.element["text_fg"] = value
                     else:
-                        workOn.editObject[key] = value[1]
+                        workOn.editObject.element[key] = value[1]
 
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
@@ -531,18 +561,23 @@ class DirectGuiDesigner(ShowBase):
         # redo this
         workOn = self.killRing.pull()
 
-        if workOn is None: return
+        if workOn is None:
+            logging.debug("nothing to redo")
+            return
 
         if workOn.action == "set":
             if workOn.objectType == "pos":
-                workOn.editObject.element.setPos(workOn.newValue)
+                if type(workOn.newValue) is list:
+                    workOn.editObject.element.setPos(*workOn.newValue)
+                else:
+                    workOn.editObject.element.setPos(workOn.newValue)
             elif workOn.objectType == "pressEffect":
                 workOn.editObject.extraOptions["pressEffect"] = workOn.newValue
             else:
                 try:
-                    workOn.editObject[workOn.objectType] = workOn.newValue
+                    workOn.editObject.element[workOn.objectType] = workOn.newValue
                 except:
-                    print("property ", workOn.objectType, " currently not supported by undo/redo")
+                    logging.exception(f"property {workOn.objectType} currently not supported by undo/redo")
 
         elif workOn.action == "add" and workOn.objectType == "element":
             workOn.editObject.unstash()
@@ -554,21 +589,21 @@ class DirectGuiDesigner(ShowBase):
 
         elif workOn.action == "copy":
             if workOn.objectType == "element":
-                workOn.editObject.element.unstash()
+                workOn.editObject.unstash()
                 self.elementDict[workOn.oldValue[0]] = workOn.oldValue[1]
                 base.messenger.send("refreshStructureTree")
             elif workOn.objectType == "properties":
                 for key, value in workOn.newValue.items():
                     if key == "pos":
-                        workOn.editObject.setPos(value)
+                        workOn.editObject.element.setPos(value)
                     elif key == "hpr":
-                        workOn.editObject.setHpr(value)
+                        workOn.editObject.element.setHpr(value)
                     elif key == "scale":
-                        workOn.editObject.setScale(value)
+                        workOn.editObject.element.setScale(value)
                     elif key == "text_fg":
-                        workOn.editObject["text_fg"] = value
+                        workOn.editObject.element["text_fg"] = value
                     else:
-                        workOn.editObject[key] = value[1]
+                        workOn.editObject.element[key] = value[1]
 
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
@@ -597,13 +632,16 @@ class DirectGuiDesigner(ShowBase):
         the a2d* counterparts from the engine"""
         return self.editorFrame.getEditorPlacer(placerName)
 
+    def getAllEditorPlacers(self):
+        return self.editorFrame.getAllEditorPlacers()
+
     def getEditorFrame(self):
         return self.editorFrame.visualEditor
 
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
         print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
-        ExporterProject("", self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
+        ExporterProject("", self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
 
     def autosaveTask(self, task):
         task.delayTime = ConfigVariableInt("autosave-delay", 60).getValue()
@@ -611,7 +649,7 @@ class DirectGuiDesigner(ShowBase):
             filename = ""
             if self.hasSaved:
                 filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json~")
-            ExporterProject(filename, self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, autosave=True)
+            ExporterProject(filename, self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, autosave=True)
         except Exception as e:
             logging.error("Autosave failed")
             logging.exception(e)
@@ -651,6 +689,8 @@ class DirectGuiDesigner(ShowBase):
             "control-y": [self.redo],
             "shift-control-y": [self.cycleKillRing],
 
+            "page_up": [self.moveElementInStructure, [1]],
+            "page_down": [self.moveElementInStructure, [-2]],
 
             "arrow_left": [self.moveElement, ["left"]],
             "arrow_right": [self.moveElement, ["right"]],
@@ -722,7 +762,10 @@ class DirectGuiDesigner(ShowBase):
         elementInfo = None
         widget = self.customWidgetsHandler.getWidget(element)
         if self.selectedElement is not None:
-            parent = self.selectedElement.element
+            if self.selectedElement.type == "DirectScrolledFrame":
+                parent = self.selectedElement.element.canvas
+            else:
+                parent = self.selectedElement.element
         if hasattr(self.elementHandler, funcName):
             if widget is None:
                 elementInfo = getattr(self.elementHandler, funcName)(parent)
@@ -733,6 +776,7 @@ class DirectGuiDesigner(ShowBase):
             return
 
         if elementInfo is None: return
+
         if type(elementInfo) is tuple:
             if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
                 self.selectedElement.element.addItem(elementInfo[0].element)
@@ -745,6 +789,8 @@ class DirectGuiDesigner(ShowBase):
             for entry in elementInfo:
                 if self.selectedElement is not None and entry.parent is None:
                     entry.parent = self.selectedElement
+                sort = self.getMaxSort(entry)
+                entry.element.reparentTo(entry.element.getParent(), sort)
                 self.elementDict[entry.element.guiId] = entry
         else:
             if self.selectedElement is not None:
@@ -756,6 +802,8 @@ class DirectGuiDesigner(ShowBase):
                     if widget.addItemFunction is not None:
                         # call custom widget add function
                         getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo.element)
+            sort = self.getMaxSort(elementInfo)
+            elementInfo.element.reparentTo(elementInfo.element.getParent(), sort)
             self.elementDict[elementInfo.element.guiId] = elementInfo
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
@@ -766,6 +814,8 @@ class DirectGuiDesigner(ShowBase):
         else:
             base.messenger.send("addToKillRing",
                 [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
+
+        self.fixElementSortAll()
 
         return elementInfo
 
@@ -947,6 +997,7 @@ class DirectGuiDesigner(ShowBase):
 
                 # Check if our parent is a custom widget
                 if self.elementDict[name].parent is not None \
+                and isinstance(self.elementDict[name].parent, ElementInfo) \
                 and self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type) is not None:
                     widget = self.customWidgetsHandler.getWidget(self.elementDict[name].parent.type)
                     if widget.removeItemFunction is not None:
@@ -974,6 +1025,7 @@ class DirectGuiDesigner(ShowBase):
 
         if selectEditor:
             self.selectElement(self.visualEditorInfo)
+        self.fixElementSortAll()
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
 
@@ -992,6 +1044,77 @@ class DirectGuiDesigner(ShowBase):
             workOn.hide()
         base.messenger.send("refreshStructureTree")
 
+    def getMaxSort(self, elementInfo):
+        """Returns the next sort value of the parent of the given "child" element"""
+        children = list(elementInfo.element.getParent().getChildren().getPaths())
+        if elementInfo.parent is None:
+            children = children[9:]
+        return len(children)+1
+
+    def fixElementSortAll(self):
+        fixedParents = []
+        for name, elementInfo in self.elementDict.items():
+            if elementInfo.parent in fixedParents:
+                continue
+            fixedParents.append(elementInfo.parent)
+
+            children = list(elementInfo.element.getParent().getChildren().getPaths())
+            if elementInfo.parent is None:
+                children = children[9:]
+
+            #sort = len(children)
+            sort = 1
+            print(sort)
+            for child in children:
+                child.reparentTo(child.getParent(), sort)
+                sort += 1
+                print(f"NEW SORT: {sort}")
+
+    def moveElementInStructure(self, direction=1, childElementInfo=None):
+        # make sure the sort values of all elements are correct
+        self.fixElementSortAll()
+
+        workOn = None
+        if childElementInfo is not None:
+            workOn = childElementInfo
+        elif self.selectedElement is not None:
+            workOn = self.selectedElement
+        else:
+            return
+
+        parent = workOn.element.getParent()
+        workOnParent = self.getElementInfo(parent)
+        #self.getElementSort(workOn)
+        newSort = max(0, workOn.element.getSort()+direction)
+
+        self.reparentElement(workOn, workOnParent, newSort)
+
+        # make sure the sort is correct afterward
+        self.fixElementSortAll()
+
+
+    def reparentElement(self, childElementInfo=None, parentElementInfo=None, sortInParent=0):
+        workOn = None
+        if childElementInfo is not None:
+            workOn = childElementInfo.element
+        elif self.selectedElement is not None:
+            workOn = self.selectedElement.element
+        else:
+            return
+
+        workOnParent = None
+        if parentElementInfo is not None:
+            workOnParent = parentElementInfo.element
+        else:
+            workOnParent = workOn.getParent()
+
+        workOn.reparentTo(workOnParent, sortInParent)
+
+        base.messenger.send("refreshStructureTree")
+
+        #TODO: Drag and drop in the strucutre view?
+        #TODO: Up/Down pgup/gpdown to move selected element up or down in the tree
+
     def __findFirstGUIElement(self, root):
         if hasattr(root, "getParent"):
             if not root.getParent().isEmpty():
@@ -1005,6 +1128,20 @@ class DirectGuiDesigner(ShowBase):
                 return None
         return None
 
+    def getElementInfo(self, nameOrElement):
+        """Returns the element info for the given GUI ID or GUI element or
+        None if it is not in the dictionary"""
+        if nameOrElement in self.elementDict:
+            return self.elementDict[nameOrElement]
+        elif type(nameOrElement) == str:
+            logging.error(f"couldn't find element info for GUI ID {nameOrElement}")
+            return None
+        else:
+            element = self.__findFirstGUIElement(nameOrElement)
+            if element is None:
+                logging.error(f"couldn't find element info for element {nameOrElement}")
+            return element
+
     def setName(self, elementInfo, name):
         guiId = elementInfo.element.guiId
         e = self.elementDict[guiId]
@@ -1015,12 +1152,6 @@ class DirectGuiDesigner(ShowBase):
                 parentID = e.parent.element.guiId
                 self.elementDict[parentID].extraOptions["entry"] = name
         base.messenger.send("refreshStructureTree")
-
-    def setCommand(self, elementInfo, command):
-        self.elementDict[elementInfo.element.guiId].command = command
-
-    def setExtraArgs(self, elementInfo, extraArgs):
-        self.elementDict[elementInfo.element.guiId].extraArgs = extraArgs
 
     def setParentOfElement(self, element, parent):
         self.canvasParents = [
@@ -1210,11 +1341,11 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        ExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
+        ExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        ExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.tt, not self.editorFrame.visEditorInAspect2D)
+        ExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.getAllEditorPlacers, self.tt, not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)

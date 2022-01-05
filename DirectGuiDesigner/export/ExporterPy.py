@@ -26,12 +26,12 @@ class ExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, tooltip, usePixel2D):
+    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, getAllEditorPlacers, tooltip, usePixel2D):
         self.guiElementsDict = guiElementsDict
         self.customWidgetHandler = customWidgetHandler
 
         jsonTools = JSONTools()
-        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, usePixel2D)
+        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, getAllEditorPlacers, usePixel2D)
         self.jsonElements = self.jsonFileContent["ComponentList"]
 
         self.createdParents = ["root"]
@@ -196,19 +196,23 @@ app = ShowBase()\n"""
     def __createElement(self, name, elementInfo):
         extraOptions = ""
         for optionName, optionValue in elementInfo["extraOptions"].items():
-            extraOptions += " "*12 + "{}={},\n".format(optionName, optionValue)
+            v = optionValue
+            if type(v) is list:
+                v = f"[{','.join(map(str, v))}]"
+            extraOptions += " "*12 + "{}={},\n".format(optionName, v)
         elementCode = """
         self.{} = {}(
-{}{}{}{}        )\n""".format(
+{}{}        )\n""".format(
             name,
             elementInfo["type"],
             self.__writeElementOptions(name, elementInfo),
-            " "*12 + "command={},\n".format(elementInfo["command"]) if elementInfo["command"] is not None else "",
-            " "*12 + "extraArgs=[{}],\n".format(elementInfo["extraArgs"]) if elementInfo["extraArgs"] is not None else "",
+            #" "*12 + "command={},\n".format(elementInfo["command"]) if elementInfo["command"] is not None else "",
+            #"BLUBB",
+            #" "*12 + "extraArgs=[{}],\n".format(",".join(map(str, elementInfo["extraArgs"]))) if elementInfo["extraArgs"] is not None else "",
             extraOptions,
             )
         if elementInfo["element"]["transparency"] != "M_none":
-            elementCode += " "*8 +"self.{}.setTransparency({})\n".format(name, elementInfo["element"]["transparency"])
+            elementCode += " "*8 +"self.{}.setTransparency({})\n"   .format(name, elementInfo["element"]["transparency"])
 
         if elementInfo["type"] == "DirectScrolledListItem":
             self.postSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo["parent"], name))
@@ -218,9 +222,6 @@ app = ShowBase()\n"""
     def __writeElementOptions(self, name, elementInfo):
         elementOptions = ""
         indent = " "*12
-
-        if elementInfo["type"] == "DirectOptionMenu":
-            elementOptions += indent + "items=['item1'],\n"
 
         for optionKey, optionValue in elementInfo["element"].items():
             if optionKey == "others":

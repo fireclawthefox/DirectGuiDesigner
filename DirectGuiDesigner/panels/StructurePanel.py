@@ -206,10 +206,11 @@ class StructurePanel():
             if self.selectedElement is not None and self.selectedElement == elementInfo:
                 btn.setColorScale(1,1,0,1)
 
+            x = self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0]
             # Delete Button
             btnX = DirectButton(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0], 0, z+shift),
+                pos=(x, 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__removeElement,
@@ -221,10 +222,11 @@ class StructurePanel():
             btnX.bind(DGG.MWDOWN, self.scroll, [0.01])
             btnX.bind(DGG.MWUP, self.scroll, [-0.01])
 
+            x += margin + btnX.getWidth()
             # Visibility Button
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z+shift),
+                pos=(x, 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__toggleElementVisibility,
@@ -240,6 +242,38 @@ class StructurePanel():
             btnV.bind(DGG.MWUP, self.scroll, [-0.01])
             self.maxWidth = max(self.maxWidth, btnV.getX() + 8)
 
+            x += margin + btnV.getWidth()
+            # Move Up Button
+            btnUp = DirectButton(
+                relief=DGG.FLAT,
+                pos=(x, 0, z+shift),
+                frameSize=(-8, 8, -8, 8),
+                frameColor=(0,0,0,0),
+                command=self.__moveElementInStructure,
+                extraArgs=[-2, elementInfo],
+                image="icons/ArrowUpSmall.png",
+                image_scale=8,
+                parent=self.structureFrame.getCanvas())
+            btnUp.setTransparency(TransparencyAttrib.M_multisample)
+            btnUp.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnUp.bind(DGG.MWUP, self.scroll, [-0.01])
+
+            x += margin + btnUp.getWidth()
+            # Move Down Button
+            btnDown = DirectButton(
+                relief=DGG.FLAT,
+                pos=(x, 0, z+shift),
+                frameSize=(-8, 8, -8, 8),
+                frameColor=(0,0,0,0),
+                command=self.__moveElementInStructure,
+                extraArgs=[1, elementInfo],
+                image="icons/ArrowDownSmall.png",
+                image_scale=8,
+                parent=self.structureFrame.getCanvas())
+            btnDown.setTransparency(TransparencyAttrib.M_multisample)
+            btnDown.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnDown.bind(DGG.MWUP, self.scroll, [-0.01])
+
     def __selectElement(self, elementInfo, args=None):
         if elementInfo is not None:
             base.messenger.send("selectElement", [elementInfo, args])
@@ -251,6 +285,10 @@ class StructurePanel():
     def __toggleElementVisibility(self, toggle, elementInfo):
         if elementInfo is not None:
             base.messenger.send("toggleElementVisibility", [elementInfo.element])
+
+    def __moveElementInStructure(self, direction, elementInfo):
+        if elementInfo is not None:
+            base.messenger.send("moveElementInStructure", [direction, elementInfo])
 
     def __collapseElement(self, collapse, elementInfo):
         if elementInfo is not None:

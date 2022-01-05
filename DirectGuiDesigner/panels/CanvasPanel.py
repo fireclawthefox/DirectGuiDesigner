@@ -207,6 +207,17 @@ class CanvasPanel():
         self.canvasBottomLeft.setPos(self.canvasLeft, 0, self.canvasBottom)
         self.canvasBottomRight.setPos(self.canvasRight, 0, self.canvasBottom)
 
+    def getAllEditorPlacers(self):
+        return [
+            self.canvasTopCenter,
+            self.canvasBottomCenter,
+            self.canvasLeftCenter,
+            self.canvasRightCenter,
+            self.canvasTopLeft,
+            self.canvasTopRight,
+            self.canvasBottomLeft,
+            self.canvasBottomRight]
+
     def getEditorPlacer(self, placerName):
         placerName = placerName.lower()
         placerName = placerName.replace("a2d", "canvas")
@@ -226,6 +237,8 @@ class CanvasPanel():
             return self.canvasBottomLeft
         elif placerName == "canvasBottomRight".lower():
             return self.canvasBottomRight
+        else:
+            return self.getEditorRootCanvas()
 
     def setElementHandler(self, elementHandler):
         self.elementHandler = elementHandler
