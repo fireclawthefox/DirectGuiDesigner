@@ -988,7 +988,15 @@ class PropertiesPanel():
         elif "image_" in updateAttribute:
             parts = updateAttribute.split("_")
             try:
-                if updateElement[parts[0]] is not None:
+                idx = 0
+                while len(parts) < idx or parts[idx] != "image":
+                    idx += 1
+
+                element = updateElement
+                for element_index in range(idx):
+                    element = element.component(parts[element_index])
+
+                if element["image"] is not None:
                     for i in range(n):
                         values[i] = updateElement[updateAttribute][i]
             except:
