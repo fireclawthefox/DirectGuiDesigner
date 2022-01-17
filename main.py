@@ -742,14 +742,6 @@ class DirectGuiDesigner(ShowBase):
             # resize the main splitter to fit the remaining window space
             self.mainSplitter["frameSize"] = self.getMainSplitterSize()
 
-            # TODO: Is there a better way to handle this?
-            #  Currently the mainSizer gets updated on window resize events
-            #  prior to this. Without that event, the mainSplitter won't be
-            #  placed correctly at this refresh call. If this refresh call is
-            #  removed on the other hand, the mainSplitter also won't be
-            #  placed correctly
-            self.mainSizer.refresh()
-
     def propertiesEditor(self, elementInfo):
         self.propertiesFrame.setupProperties("Editor Properties", elementInfo, self.elementDict)
 
