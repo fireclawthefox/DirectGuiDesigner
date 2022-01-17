@@ -30,9 +30,9 @@ To install them, using pip:
 Hit F1 to see the help screen
 
 ### Startup
-To start the DirectGUI Designer, simply run the DirectGuiDesigner.py script
+To start the DirectGUI Designer, simply run the main.py script
 
-<code>python DirectGuiDesigner.py</code>
+<code>python main.py</code>
 
 ### Build binaries
 To create binaries of the Designer, call the following
