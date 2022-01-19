@@ -79,6 +79,7 @@ loadPrcFileData(
     maximized #t
     model-path $MAIN_DIR/models/
     win-size 1280 720
+    ime-aware #t
     """)
 
 # check if we have a config file
@@ -358,6 +359,7 @@ class DirectGuiDesigner(ShowBase):
         #
         self.elementHandler = ElementHandler(self.propertiesFrame, self.getEditorRootCanvas)
         self.customWidgetsHandler = CustomWidgets(self.toolboxFrame, self.elementHandler)
+        self.propertiesFrame.setCustomWidgetDefinitions(self.customWidgetsHandler.getCustomWidgetDefinitions())
 
         # connect the handler with the editor frame
         self.editorFrame.setElementHandler(self.elementHandler)

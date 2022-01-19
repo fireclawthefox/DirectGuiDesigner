@@ -66,9 +66,9 @@ class PropertiesPanel(DirectObject):
     def __init__(self, parent, getEditorRootCanvas, getEditorPlacer, tooltip):
         height = DGH.getRealHeight(parent)
         # A list containing the prooperty information
-        self.customProperties = []
         self.tooltip = tooltip
         self.parent = parent
+        self.customWidgetDefinitions = {}
 
         self.box = DirectBoxSizer(
             frameColor=(0.25, 0.25, 0.25, 1),
@@ -123,6 +123,9 @@ class PropertiesPanel(DirectObject):
         self.getEditorRootCanvas = getEditorRootCanvas
         self.getEditorPlacer = getEditorPlacer
 
+    def setCustomWidgetDefinitions(self,customWidgetDefinitions):
+        self.customWidgetDefinitions = customWidgetDefinitions
+
     def scroll(self, scrollStep, event):
         """Scrolls the properties frame vertically with the given step.
         A negative step will scroll down while a positive step value will scroll
@@ -174,10 +177,12 @@ class PropertiesPanel(DirectObject):
         # Set up all the properties
         try:
 
+            allDefinitions = {**WidgetDefinition.DEFINITIONS, **self.customWidgetDefinitions}
+
             # check if we have a definition for this specific GUI element
-            if elementInfo.type in WidgetDefinition.DEFINITIONS:
+            if elementInfo.type in allDefinitions:
                 # create the main set of properties to edit
-                wd = WidgetDefinition.DEFINITIONS[elementInfo.type]
+                wd = allDefinitions[elementInfo.type]
                 # create a header for this type of element
                 self.__createInbetweenHeader(elementInfo.type)
 
@@ -214,11 +219,11 @@ class PropertiesPanel(DirectObject):
                         headerName = f"{wType} - [{widget}]"
 
                     # check if this component has definitions
-                    if wType in WidgetDefinition.DEFINITIONS:
+                    if wType in allDefinitions:
                         # write the header for this component
                         self.__createInbetweenHeader(headerName)
                         subsection = self.createSection()
-                        subWd = WidgetDefinition.DEFINITIONS[wType]
+                        subWd = allDefinitions[wType]
                         for definition in subWd:
                             # create the property for all the defined
                             self.createProperty(definition, subWidgetElementInfo)
@@ -226,50 +231,7 @@ class PropertiesPanel(DirectObject):
                         self.updateSection(subsection)
                         subsection.toggleCollapsed()
                         subsection.toggleCollapsed()
-                '''
-                # create properties for all sub groups
-                for group, definitions in groups.items():
-                    for definition in definitions:
-                        definition.elementGroup = group
-                    self.createProperty(definition, elementInfo)
 
-                print("================ OPTION INFO ================")
-                print("_optionInfo")
-                print(element._optionInfo)
-
-                print("")
-                print("options")
-                print(element.options())
-
-                print("")
-                # get sub-groups
-                groups = []
-                for key, value in element._DirectGuiBase__componentInfo.items():
-                    group = value[4]
-                    if group not in groups:
-                        groups.append(group)
-
-                print("================ GROUPS ================")
-                print(groups)
-
-                for component in groups:
-                    print(component)
-
-                    if component in element._DirectGuiBase__componentInfo:
-                        # Call cget on the component.
-                        print("component")
-                        print(element._DirectGuiBase__componentInfo[component])
-                    else:
-                        # If this is a group name, call cget for one of
-                        # the components in the group.
-                        for info in element._DirectGuiBase__componentInfo.values():
-                            if info[4] == component:
-                                print("sub component")
-                                print(info)
-                                subWd = WidgetDefinition.DEFINITIONS[info[2]]
-                                print(subWd)
-                                break
-                '''
         except:
             e = sys.exc_info()[1]
             base.messenger.send("showWarning", [str(e)])
@@ -347,32 +309,47 @@ class PropertiesPanel(DirectObject):
         section.updateFrameSize()
 
     def createProperty(self, definition, elementInfo):
-        if definition.editType is WidgetDefinition.PropertyEditTypes.integer:
+        if definition.editType == WidgetDefinition.PropertyEditTypes.integer:
+            logging.debug("create integer property")
             self.__createNumberInput(definition, elementInfo, int)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.float:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
+            logging.debug("create float property")
             self.__createNumberInput(definition, elementInfo, float)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.bool:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.bool:
+            logging.debug("create bool property")
             self.__createBoolProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.text:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.text:
+            #logging.debug("create text property")
             self.__createTextProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.base2:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base2:
+            #logging.debug("create base2 property")
             self.__createBaseNInput(definition, elementInfo, 2)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.base3:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base3:
+            #logging.debug("create base3 property")
             self.__createBaseNInput(definition, elementInfo, 3)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.base4:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base4:
+            #logging.debug("create base4 property")
             self.__createBaseNInput(definition, elementInfo, 4)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.command:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.command:
+            #logging.debug("create command property")
             self.__createCustomCommand(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.path:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.path:
+            #logging.debug("create path property")
             self.__createPathProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.optionMenu:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.optionMenu:
+            #logging.debug("create option menu property")
             self.__createOptionMenuProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.list:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.list:
+            #logging.debug("create list property")
             self.__createListProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.tuple:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.tuple:
+            #logging.debug("create tuple property")
             self.__createTupleProperty(definition, elementInfo)
-        elif definition.editType is WidgetDefinition.PropertyEditTypes.fitToChildren:
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.fitToChildren:
+            #logging.debug("create fit to children property")
             self.__createFitToChildren(definition, elementInfo)
+        else:
+            logging.error(f"Edit type {definition.editType} not in Edit type definitions")
 
     def clear(self):
         if self.mainBoxFrame is not None:
