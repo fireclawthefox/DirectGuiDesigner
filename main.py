@@ -74,7 +74,7 @@ loadPrcFileData(
     sync-video #t
     textures-power-2 none
     window-title DirectGUI Designer
-    show-frame-rate-meter #t
+    #show-frame-rate-meter #t
     #want-pstats #t
     maximized #t
     model-path $MAIN_DIR/models/
