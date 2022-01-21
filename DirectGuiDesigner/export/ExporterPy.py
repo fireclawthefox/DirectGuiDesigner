@@ -103,7 +103,7 @@ class GUI:
             self.content += line + "\n"
 
         for radioButton, others in self.radiobuttonDict.items():
-            self.content += " "*8 + "{}.setOthers([".format(radioButton)
+            self.content += " "*8 + f"{radioButton}.setOthers(["
             for other in others:
                 self.content += other + ","
             self.content += "])\n"
@@ -115,7 +115,7 @@ class GUI:
                 if name not in self.customWidgetAddDict: continue
                 for element in self.customWidgetAddDict[name]:
                     if widget.addItemFunction is not None:
-                        self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
+                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element})\n"
 
             if elementInfo["parent"] == "root" or elementInfo["parent"].startswith("a2d"):
                 topLevelItems.append(name)
@@ -125,17 +125,17 @@ class GUI:
             self.content += "\n"
             self.content += " "*4 + "def show(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.show()\n".format(name)
+                self.content += " "*8 + f"self.{name}.show()\n"
 
             self.content += "\n"
             self.content += " "*4 + "def hide(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.hide()\n".format(name)
+                self.content += " "*8 + f"self.{name}.hide()\n"
 
             self.content += "\n"
             self.content += " "*4 + "def destroy(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.destroy()\n".format(name)
+                self.content += " "*8 + f"self.{name}.destroy()\n"
 
         # Make script executable if desired
         if ConfigVariableBool("create-executable-scripts", False).getValue():
@@ -199,7 +199,9 @@ app = ShowBase()\n"""
             v = optionValue
             if type(v) is list:
                 v = f"[{','.join(map(str, v))}]"
-            extraOptions += " "*12 + "{}={},\n".format(optionName, v)
+            elif type(v) is str:
+                v = f"'{v}'"
+            extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """
         self.{} = {}(
 {}{}        )\n""".format(
@@ -212,10 +214,10 @@ app = ShowBase()\n"""
             extraOptions,
             )
         if elementInfo["element"]["transparency"] != "M_none":
-            elementCode += " "*8 +"self.{}.setTransparency({})\n"   .format(name, elementInfo["element"]["transparency"])
+            elementCode += " "*8 + f"self.{name}.setTransparency({elementInfo['element']['transparency']})\n"
 
         if elementInfo["type"] == "DirectScrolledListItem":
-            self.postSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo["parent"], name))
+            self.postSetupCalling.append(" "*8 + f"self.{elementInfo['parent']}.addItem(self.{name})")
 
         return elementCode
 
@@ -232,6 +234,8 @@ app = ShowBase()\n"""
                 continue
             elif optionKey == "transparency":
                 continue
+
+            if optionKey in elementInfo["extraOptions"].keys(): continue
 
             elementOptions += indent + optionKey + "=" + optionValue + ",\n"
 
