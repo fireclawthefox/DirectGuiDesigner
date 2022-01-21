@@ -6,12 +6,9 @@ Simplified BSD (BSD 2-Clause) License.
 See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 """
 
-#TODO: Remove startpos and replace by boxsizer placements
-#    Some functions return the element, some places them directly, handle accordingly
-#    remove unused functions
-#    cleanup
-
-import logging, sys, copy
+import logging
+import sys
+import copy
 
 from panda3d.core import (
     VBase4,
@@ -28,15 +25,11 @@ from panda3d.core import (
 from direct.showbase.DirectObject import DirectObject
 
 from direct.gui import DirectGuiGlobals as DGG
-DGG.BELOW = "below"
-MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
-MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
 from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectButton import DirectButton
-#from direct.gui.DirectOptionMenu import DirectOptionMenu
 from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectCheckButton import DirectCheckButton
 
@@ -49,6 +42,11 @@ from DirectGuiExtension.DirectCollapsibleFrame import DirectCollapsibleFrame
 
 from DirectGuiDesigner.core import WidgetDefinition
 
+DGG.BELOW = "below"
+MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
+MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
+
+
 class PropertyInfo:
     def __init__(self, displayName, propertyName, propertyType, customCommandName, customSelectionDict):
         self.displayName = displayName
@@ -57,7 +55,9 @@ class PropertyInfo:
         self.customCommandName = customCommandName
         self.customSelectionDict = customSelectionDict
 
+
 SCROLLBARWIDTH = 20
+
 
 class PropertiesPanel(DirectObject):
     scrollSpeedUp = -0.001
@@ -84,16 +84,16 @@ class PropertiesPanel(DirectObject):
             text="Properties",
             text_scale=16,
             text_align=TextNode.ALeft,
-            text_fg=(1,1,1,1),
+            text_fg=(1, 1, 1, 1),
             frameColor=VBase4(0, 0, 0, 0),
             )
         self.box.addItem(self.lblHeader, skipRefresh=True)
 
         color = (
-            (0.8, 0.8, 0.8, 1), # Normal
-            (0.9, 0.9, 1, 1), # Click
-            (0.8, 0.8, 1, 1), # Hover
-            (0.5, 0.5, 0.5, 1)) # Disabled
+            (0.8, 0.8, 0.8, 1),  # Normal
+            (0.9, 0.9, 1, 1),  # Click
+            (0.8, 0.8, 1, 1),  # Hover
+            (0.5, 0.5, 0.5, 1))  # Disabled
         self.propertiesFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
             frameSize=VBase4(
@@ -150,7 +150,7 @@ class PropertiesPanel(DirectObject):
         self.mainBoxFrame = DirectBoxSizer(
             orientation=DGG.VERTICAL,
             itemAlign=DirectBoxSizer.A_Left,
-            frameColor=VBase4(0,0,0,0),
+            frameColor=VBase4(0, 0, 0, 0),
             parent=self.propertiesFrame.getCanvas(),
             suppressMouse=True,
             state=DGG.NORMAL)
@@ -158,7 +158,7 @@ class PropertiesPanel(DirectObject):
         self.mainBoxFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
         # Create the header for the properties
-        l = DirectLabel(
+        lbl = DirectLabel(
             text=headerText,
             text_scale=18,
             text_pos=(-10, 0),
@@ -168,11 +168,11 @@ class PropertiesPanel(DirectObject):
                 self.propertiesFrame["frameSize"][1]-SCROLLBARWIDTH,
                 -10,
                 20),
-            frameColor=VBase4(0.7,0.7,0.7,1),
+            frameColor=VBase4(0.7, 0.7, 0.7, 1),
             state=DGG.NORMAL)
-        l.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-        self.mainBoxFrame.addItem(l)
+        lbl.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
+        lbl.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+        self.mainBoxFrame.addItem(lbl)
 
         # Set up all the properties
         try:
@@ -226,13 +226,15 @@ class PropertiesPanel(DirectObject):
                         subWd = allDefinitions[wType]
                         for definition in subWd:
                             # create the property for all the defined
-                            self.createProperty(definition, subWidgetElementInfo)
+                            self.createProperty(
+                                definition,
+                                subWidgetElementInfo)
 
                         self.updateSection(subsection)
                         subsection.toggleCollapsed()
                         subsection.toggleCollapsed()
 
-        except:
+        except Exception:
             e = sys.exc_info()[1]
             base.messenger.send("showWarning", [str(e)])
             logging.exception("Error while loading properties panel")
@@ -260,11 +262,10 @@ class PropertiesPanel(DirectObject):
         self.propertiesFrame["verticalScroll_scrollSize"] = s
         self.propertiesFrame["verticalScroll_pageSize"] = s
 
-
     def createSection(self):
         section = DirectCollapsibleFrame(
             collapsed=True,
-            frameColor=(1,1,1,1),
+            frameColor=(1, 1, 1, 1),
             headerheight=24,
             frameSize=(
                 -self.propertiesFrame["frameSize"][1],
@@ -284,14 +285,14 @@ class PropertiesPanel(DirectObject):
 
         self.mainBoxFrame.addItem(section)
         self.boxFrame = DirectBoxSizer(
-            pos=(0,0,-section["headerheight"]),#DGH.getRealLeft(section)
+            pos=(0, 0, -section["headerheight"]),
             frameSize=(
                 -self.propertiesFrame["frameSize"][1],
                 self.propertiesFrame["frameSize"][1]-SCROLLBARWIDTH,
                 0, 0),
             orientation=DGG.VERTICAL,
             itemAlign=DirectBoxSizer.A_Left,
-            frameColor=VBase4(0,0,0,0),
+            frameColor=VBase4(0, 0, 0, 0),
             parent=section,
             suppressMouse=True,
             state=DGG.NORMAL)
@@ -310,43 +311,30 @@ class PropertiesPanel(DirectObject):
 
     def createProperty(self, definition, elementInfo):
         if definition.editType == WidgetDefinition.PropertyEditTypes.integer:
-            logging.debug("create integer property")
             self.__createNumberInput(definition, elementInfo, int)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
-            logging.debug("create float property")
             self.__createNumberInput(definition, elementInfo, float)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.bool:
-            logging.debug("create bool property")
             self.__createBoolProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.text:
-            #logging.debug("create text property")
             self.__createTextProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base2:
-            #logging.debug("create base2 property")
             self.__createBaseNInput(definition, elementInfo, 2)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base3:
-            #logging.debug("create base3 property")
             self.__createBaseNInput(definition, elementInfo, 3)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base4:
-            #logging.debug("create base4 property")
             self.__createBaseNInput(definition, elementInfo, 4)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.command:
-            #logging.debug("create command property")
             self.__createCustomCommand(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.path:
-            #logging.debug("create path property")
             self.__createPathProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.optionMenu:
-            #logging.debug("create option menu property")
             self.__createOptionMenuProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.list:
-            #logging.debug("create list property")
             self.__createListProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.tuple:
-            #logging.debug("create tuple property")
             self.__createTupleProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.fitToChildren:
-            #logging.debug("create fit to children property")
             self.__createFitToChildren(definition, elementInfo)
         else:
             logging.error(f"Edit type {definition.editType} not in Edit type definitions")
@@ -362,7 +350,7 @@ class PropertiesPanel(DirectObject):
             text_pos=(-10, 0),
             text_align=TextNode.ACenter,
             frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], -10, 20),
-            frameColor=VBase4(0.85,0.85,0.85,1),
+            frameColor=VBase4(0.85, 0.85, 0.85, 1),
             state=DGG.NORMAL)
         l.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
@@ -375,7 +363,7 @@ class PropertiesPanel(DirectObject):
             text_pos=(self.propertiesFrame["frameSize"][0], 0),
             text_align=TextNode.ALeft,
             frameSize=VBase4(self.propertiesFrame["frameSize"][0], self.propertiesFrame["frameSize"][1], -10, 20),
-            frameColor=VBase4(0.85,0.85,0.85,1),
+            frameColor=VBase4(0.85, 0.85, 0.85, 1),
             state=DGG.NORMAL)
         l.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
@@ -411,31 +399,25 @@ class PropertiesPanel(DirectObject):
             try:
                 if type(definition.getFunctionName) == str:
                     value = getattr(elementInfo.element, definition.getFunctionName)()
-                    #logging.debug(f"Try get property by function name. {definition.getFunctionName}={value}")
                     return value
                 else:
-                    #logging.debug(f"Try get property by function pointer. {definition.getFunctionName}")
                     return definition.getFunctionName()
-            except:
+            except Exception:
                 logging.exception(f"couldn't get value of {propName} by function {definition.getFunctionName}")
         else:
             value = None
             try:
                 value = elementInfo.element[propName]
-                #logging.debug(f"Try get property by direkt key access. {propName}={value}")
-            except:
+            except Exception:
                 component = elementInfo.element
                 prop = propName
                 if propName == "text_align":
                     return elementInfo.element.component("text0").align
                 if "_" in propName:
-                    #subElements = split(propName, "_")
-                    #for subElement in subElements:
                     component = elementInfo.element.component(propName)
                     prop = propName.split("_")[-1]
                 if hasattr(component, prop):
                     value = getattr(component, prop)
-                    #logging.debug(f"Try get property by sub-component. {prop}={value}")
                 else:
                     logging.debug(f"Couldn't get value for {propName}")
                     raise
@@ -470,7 +452,7 @@ class PropertiesPanel(DirectObject):
                     else:
                         logging.debug(f"Additionally store value as extra options. {propName}={value}")
                         elementInfo.extraOptions[propName] = value
-            except:
+            except Exception:
                 # setting the element failed, revert to old value in case it was
                 # partly set
                 logging.exception(f"couldn't set value of {propName} to value {value}")
@@ -494,7 +476,7 @@ class PropertiesPanel(DirectObject):
                     else:
                         logging.debug(f"Additionally store value as extra options. {propName}={value}")
                         elementInfo.extraOptions[propName] = value
-            except:
+            except Exception:
                 # setting the element failed, revert to old value in case it was
                 # partly set
                 logging.exception(f"couldn't set value of {propName} to value {value}")
@@ -537,13 +519,14 @@ class PropertiesPanel(DirectObject):
     #
     def __createBaseNInput(self, definition, elementInfo, n, numberType=float):
         entryList = []
+
         def update(text, elementInfo):
             base.messenger.send("setDirtyFlag")
             values = []
             for value in entryList:
                 try:
                     values.append(numberType(value.get(True)))
-                except:
+                except Exception:
                     if value.get(True) == "":
                         values.append(None)
                     else:
@@ -566,8 +549,10 @@ class PropertiesPanel(DirectObject):
             allValuesSet = True
             allValuesNone = True
             for value in values:
-                if value is None: allValuesSet = False
-                if value is not None: allValuesNone = False
+                if value is None:
+                    allValuesSet = False
+                if value is not None:
+                    allValuesNone = False
             if allValuesNone:
                 values = None
             elif allValuesSet:
@@ -596,7 +581,7 @@ class PropertiesPanel(DirectObject):
             value = numberType(0)
             try:
                 value = numberType(text)
-            except:
+            except Exception:
                 if text == "" and definition.nullable:
                     value = None
                 else:
@@ -605,7 +590,7 @@ class PropertiesPanel(DirectObject):
             try:
                 oldValue = self.__getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
-            except:
+            except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
             self.__setValue(definition, elementInfo, value)
         self.__createPropertyHeader(definition.visiblename)
@@ -661,13 +646,13 @@ class PropertiesPanel(DirectObject):
             value = []
 
             for entry in entries:
-                if entry.get() != "":
-                    value.append(entry.get())
+                #if entry.get() != "":
+                value.append(entry.get())
 
             try:
                 oldValue = self.__getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
-            except:
+            except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
             self.__setValue(definition, elementInfo, value)
@@ -686,7 +671,7 @@ class PropertiesPanel(DirectObject):
 
             if updateMainBox:
                 entriesBox.refresh()
-                self.boxFrame.refresh()
+                self.boxFrame.refresh(id(entriesBox))
                 self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
@@ -709,7 +694,7 @@ class PropertiesPanel(DirectObject):
         entries = []
         for i in range(len(listItems)):
             text = listItems[i]
-            addEntry(text, i==len(listItems)-1, i==len(listItems)-1)
+            addEntry(text, i == len(listItems)-1, i == len(listItems)-1)
         btn = DirectButton(
             text="Add entry",
             pad=(0.25,0.25),
@@ -734,7 +719,7 @@ class PropertiesPanel(DirectObject):
             try:
                 oldValue = self.__getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
-            except:
+            except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
             self.__setValue(definition, elementInfo, value)
@@ -797,7 +782,7 @@ class PropertiesPanel(DirectObject):
             if text:
                 try:
                     command = eval(text)
-                except:
+                except Exception:
                     logging.debug(f"command evaluation not supported: {text}")
                     logging.debug("set command without evalution")
                     command = text
@@ -805,7 +790,7 @@ class PropertiesPanel(DirectObject):
             try:
                 base.messenger.send("addToKillRing",
                     [updateElement, "set", updateAttribute, curCommand, text])
-            except:
+            except Exception:
                 logging.debug(f"{updateAttribute} not supported by undo/redo yet")
 
             if updateAttribute in self.initOpDict:
@@ -828,6 +813,7 @@ class PropertiesPanel(DirectObject):
         self.boxFrame.addItem(entry, skipRefresh=True)
 
     def __createPathProperty(self, definition, elementInfo):
+
         def update(text):
             value = text
             if text == "" and definition.nullable:
@@ -838,15 +824,16 @@ class PropertiesPanel(DirectObject):
                         value = eval(definition.loaderFunc)
                     else:
                         value = definition.loaderFunc(value)
-                except:
+                except Exception:
                     logging.exception("Couldn't load path with loader function")
                     value = text
             base.messenger.send("setDirtyFlag")
             try:
                 self.__setValue(definition, elementInfo, value, text)
-            except:
+            except Exception:
                 logging.exception("Couldn't load font: {}".format(text))
                 updateElement[updateAttribute] = None
+
         def setPath(path):
             update(path)
 
@@ -856,10 +843,12 @@ class PropertiesPanel(DirectObject):
             if v is None:
                 v = ""
             entry.set(v)
+
         def selectPath(confirm):
             if confirm:
                 setPath(self.browser.get())
             self.browser.hide()
+
         def showBrowser():
             self.browser = DirectFolderBrowser(
                 selectPath,
@@ -978,7 +967,8 @@ class PropertiesPanel(DirectObject):
 
         def fitToChildren(elementInfo, l, r, b, t):
             l, r, b, t = getMaxSize(elementInfo.element, elementInfo, l, r, b, t)
-            if l is None or r is None or b is None or t is None: return
+            if l is None or r is None or b is None or t is None:
+                return
             elementInfo.element["frameSize"] = [l, r, b, t]
 
         btn = DirectButton(
@@ -1039,59 +1029,3 @@ class PropertiesPanel(DirectObject):
         createReparentButton("Bottom Left", "canvasBottomLeft")
         createReparentButton("Bottom Right", "canvasBottomRight")
         createReparentButton("Bottom Center", "canvasBottomCenter")
-
-
-    #
-    # OLD...
-    #
-
-    def __createOthersSelectorProperty(self, startPos, parent, updateElement):
-        def update(selected, selection):
-            base.messenger.send("setDirtyFlag")
-            if selected:
-                updateElement["others"].append(selection.element)
-            else:
-                updateElement["others"].remove(selection.element)
-        x = startPos.getX()
-        z = startPos.getZ()
-        self.__createPropertyHeader("Others", z, parent)
-        z = startPos.getZ()
-        z -= (0.06)
-
-        height = 120
-
-        selectionFrame = DirectScrolledFrame(
-            pos=(x,0,z),
-            frameColor=(1,1,1,1),
-            frameSize=(0,parent["frameSize"][1]-20,-height,0),
-            canvasSize=(0,parent["frameSize"][1]-20,-height,0),
-            scrollBarWidth=20,
-            state=DGG.NORMAL,
-            parent=parent,
-        )
-        selectionFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-        selectionFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-        innerZ = 0
-        nextZ = 30
-        for keys, radioButton in self.elementDict.items():
-            if radioButton.type != "DirectRadioButton": continue
-            cb = DirectCheckButton(
-                text=radioButton.name,
-                pos=(0, 0, innerZ-12),
-                indicatorValue=radioButton.element in updateElement["others"],
-                boxPlacement="right",
-                scale=12,
-                text_align=TextNode.ALeft,
-                command=update,
-                extraArgs=[radioButton],
-                parent=selectionFrame.getCanvas())
-            cb.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
-            cb.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
-            innerZ -= 20
-        selectionFrame["canvasSize"] = (
-            0,selectionFrame["frameSize"][1]-20,
-            innerZ, 0)
-        selectionFrame.setCanvasSize()
-        self.startPos.setZ(self.startPos.getZ() - height)
-        self.frameSize += height
-
