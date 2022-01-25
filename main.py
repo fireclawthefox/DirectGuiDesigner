@@ -5,6 +5,7 @@ import sys
 import os
 import platform
 import logging
+from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from logging import StreamHandler
 import tempfile
@@ -108,6 +109,19 @@ for f in logfiles:
     shutil.move(os.path.join(home, f), os.path.join(logPath, f))
 # END Move old files
 
+# Remove log files older than 30 days
+for f in os.listdir(logPath):
+    fParts = f.split(".")
+    fDate = datetime.now()
+    try:
+        fDate = datetime.strptime(fParts[-1], "%Y-%m-%d_%H")
+        delta = datetime.now() - fDate
+        if delta.days > 30:
+            #print(f"remove {os.path.join(logPath, f)}")
+            os.remove(os.path.join(logPath, f))
+    except Exception:
+        # this file does not have a date ending
+        pass
 
 logfile = os.path.join(logPath, "DirectGuiDesigner.log")
 handler = TimedRotatingFileHandler(logfile)
