@@ -172,22 +172,22 @@ DEFAULT_DEFINITIONS = [
 ]
 
 GEOM_DEFINITIONS = [
-    Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True),
+    Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True, getFunctionName="getGeom", setFunctionName="setGeom"),
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
-    SCALE_DEFINITION,
-    COLOR_DEFINITION,
+    Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
+    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, getFunctionName="getColor", setFunctionName="setColor", nullable=True)
     #Definition('parent', '', object),
-    Definition('sort', 'Sort', int)
+    #Definition('sort', 'Sort', int)
 ]
 IMAGE_DEFINITIONS = [
-    Definition('image', 'Image', object, editType=t.path, addToExtraOptions=True),
+    Definition('image', 'Image', object, editType=t.path, addToExtraOptions=True, getFunctionName="getImage", setFunctionName="setImage"),
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
-    SCALE_DEFINITION,
-    COLOR_DEFINITION,
+    Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
+    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, getFunctionName="getColor", setFunctionName="setColor", nullable=True)
     #Definition('parent', '', object),
-    Definition('sort', '', int)
+    #Definition('sort', '', int)
 ]
 TEXT_DEFINITIONS = [
     Definition('text','Text', str),
@@ -195,20 +195,20 @@ TEXT_DEFINITIONS = [
     Definition('pos', 'Position (X/Y)', object, editType=t.base2),
     Definition('roll', 'Roll', int),
     Definition('scale', 'Scale', object, editType=t.base2, nullable=True),
-    Definition('fg', 'Foreground Color', object, editType=t.base4),
-    Definition('bg', 'Backgrond Color', object, editType=t.base4),
-    Definition('shadow', 'Shadow Color', object, editType=t.base4),
+    Definition('fg', 'Foreground Color', object, editType=t.base4, nullable=True),
+    Definition('bg', 'Backgrond Color', object, editType=t.base4, nullable=True),
+    Definition('shadow', 'Shadow Color', object, editType=t.base4, nullable=True),
     #Definition('shadowOffset', 'Shadow Offset', tuple, editType=t.base2), # needs to be set on the textNode, there is no way to set this through OnscreenText
-    Definition('frame', 'Frame', object, editType=t.base4),
+    Definition('frame', 'Frame', object, editType=t.base4, nullable=True),
     Definition('align', 'Align', object, editType=t.optionMenu, valueOptions={"Left":0,"Right":1,"Center":2,"Boxed Left":3,"Boxed Right":4,"Boxed Center":5}),
     #Definition('wordwrap', 'Wordwrap', object, editType=t.float), #TODO
-    #Definition('drawOrder', 'Draw Order', object, editType=t.integer), #TODO
+    #Definition('drawOrder', 'Draw Order', object, editType=t.integer, nullable=True), #TODO
     Definition('decal', 'Decal', int),
-    Definition('font', 'Font', object, editType=t.path, addToExtraOptions=True, loaderFunc="loader.loadFont(value)"),
+    Definition('font', 'Font', object, editType=t.path, addToExtraOptions=True, loaderFunc="loader.loadFont(value)", nullable=True),
     #Definition('parent', 'Parent', object),
-    Definition('sort', 'Sort', int),
+    #Definition('sort', 'Sort', int, getFunctionName="textNode.getSort", nullable=True),
     Definition('mayChange', 'May Change', bool),
-    #Definition('direction', 'Direction', object)
+    #Definition('direction', 'Direction', object, nullable=True)
 ]
 
 
@@ -364,7 +364,7 @@ DEFINITIONS = {
         # value is the value to be set when this radio button is selected
         Definition('value', 'Value', list),
         # others is a list of other radio buttons sharing same variable
-        Definition('others', 'Radio button grouping', list),
+        Definition('others', 'Radio button grouping', list, addToExtraOptions=True),
         # boxBorder defines the space created around the check box
         Definition('boxBorder', 'Box Border', int),
         # boxPlacement maps left, above, right, below

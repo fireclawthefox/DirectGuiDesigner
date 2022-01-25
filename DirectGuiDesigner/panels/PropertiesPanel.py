@@ -41,20 +41,11 @@ from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 from DirectGuiExtension.DirectCollapsibleFrame import DirectCollapsibleFrame
 
 from DirectGuiDesigner.core import WidgetDefinition
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 DGG.BELOW = "below"
 MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
 MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
-
-
-class PropertyInfo:
-    def __init__(self, displayName, propertyName, propertyType, customCommandName, customSelectionDict):
-        self.displayName = displayName
-        self.propertyName = propertyName
-        self.propertyType = propertyType
-        self.customCommandName = customCommandName
-        self.customSelectionDict = customSelectionDict
-
 
 SCROLLBARWIDTH = 20
 
@@ -369,127 +360,6 @@ class PropertiesPanel(DirectObject):
         l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(l, skipRefresh=True)
 
-    def __getFormated(self, value, isInt=False):
-        if type(value) is int or isInt:
-            return "{}".format(int(value))
-        elif type(value) is not str:
-            return "{:0.3f}".format(value)
-        else:
-            return value
-
-    def __getPropertyName(self, definition):
-        propName = definition.internalName
-        if definition.elementGroup != "":
-            # prepent the group
-            propName = f"{definition.elementGroup}_{propName}"
-        return propName
-
-    def __getValues(self, definition, elementInfo):
-        propName = self.__getPropertyName(definition)
-        if propName in elementInfo.extraOptions:
-            value = elementInfo.extraOptions[propName]
-            logging.debug(f"Get property from extra options. {propName}={value}")
-            return value
-        elif not definition.canGetValueFromElement:
-            # this has to come from the extra options, otherwise we just return
-            # an empty string
-            logging.debug(f"Can't get value of property {propName} from the element")
-            return ""
-        elif definition.getFunctionName:
-            try:
-                if type(definition.getFunctionName) == str:
-                    value = getattr(elementInfo.element, definition.getFunctionName)()
-                    return value
-                else:
-                    return definition.getFunctionName()
-            except Exception:
-                logging.exception(f"couldn't get value of {propName} by function {definition.getFunctionName}")
-        else:
-            value = None
-            try:
-                value = elementInfo.element[propName]
-            except Exception:
-                component = elementInfo.element
-                prop = propName
-                if propName == "text_align":
-                    return elementInfo.element.component("text0").align
-                if "_" in propName:
-                    component = elementInfo.element.component(propName)
-                    prop = propName.split("_")[-1]
-                if hasattr(component, prop):
-                    value = getattr(component, prop)
-                else:
-                    logging.debug(f"Couldn't get value for {propName}")
-                    raise
-            return value
-
-    def __setValue(self, definition, elementInfo, value, valueAsString=""):
-        propName = self.__getPropertyName(definition)
-        if definition.isInitOption:
-            # This is an initialization option, so we just store it as extra options
-            if valueAsString != "":
-                logging.debug(f"Store value as string in extra options. {propName}={valueAsString}")
-                # if the value as string is set, this is probably the one we
-                # want to store (e.g. paths to models, fonts, etc)
-                elementInfo.extraOptions[propName] = valueAsString
-            else:
-                # if no string value is given, store the real value
-                logging.debug(f"Store value as extra options. {propName}={value}")
-                elementInfo.extraOptions[propName] = value
-        elif definition.setFunctionName:
-            try:
-                if type(definition.setFunctionName) == str:
-                    logging.debug(f"Try set value via function name. func: {definition.setFunctionName} value: {value}")
-                    getattr(elementInfo.element, definition.setFunctionName)(value)
-                else:
-                    logging.debug(f"Try set value via function pointer. ptr: {definition.setFunctionName} value: {value}")
-                    definition.setFunctionName(value)
-                if definition.addToExtraOptions:
-                    # check if we want to store it as a string or the real value
-                    if valueAsString != "":
-                        logging.debug(f"Additionally store value as string in extra options. {propName}={valueAsString}")
-                        elementInfo.extraOptions[propName] = valueAsString
-                    else:
-                        logging.debug(f"Additionally store value as extra options. {propName}={value}")
-                        elementInfo.extraOptions[propName] = value
-            except Exception:
-                # setting the element failed, revert to old value in case it was
-                # partly set
-                logging.exception(f"couldn't set value of {propName} to value {value}")
-                elementInfo.element[propName] = oldValue
-        else:
-            # get the old value of the property
-            oldValue = self.__getValues(definition, elementInfo)
-            try:
-                logging.debug(f"Try set value by direct key access. {propName}={value}")
-                # try to set the new value on the property
-                elementInfo.element[propName] = value
-
-                # in addition, if this should be stored in extra options
-                # (e.g. if we can't get the property value from the element
-                # itself in other ways)
-                if definition.addToExtraOptions:
-                    # check if we want to store it as a string or the real value
-                    if valueAsString != "":
-                        logging.debug(f"Additionally store value as string in extra options. {propName}={valueAsString}")
-                        elementInfo.extraOptions[propName] = valueAsString
-                    else:
-                        logging.debug(f"Additionally store value as extra options. {propName}={value}")
-                        elementInfo.extraOptions[propName] = value
-            except Exception:
-                # setting the element failed, revert to old value in case it was
-                # partly set
-                logging.exception(f"couldn't set value of {propName} to value {value}")
-                elementInfo.element[propName] = oldValue
-
-        if definition.postProcessFunctionName is not None:
-            if type(definition.postProcessFunctionName) == str:
-                logging.debug(f"Run postprocess command by name. {definition.postProcessFunctionName}")
-                getattr(elementInfo.element, definition.postProcessFunctionName)()
-            else:
-                logging.debug(f"Run postprocess command by pointer. {definition.postProcessFunctionName}")
-                definition.postProcessFunctionName()
-
     def __addToKillRing(self, elementInfo, definition, oldValue, newValue):
         base.messenger.send("addToKillRing",
             [elementInfo, "set", definition.internalName, oldValue, newValue])
@@ -533,7 +403,7 @@ class PropertiesPanel(DirectObject):
                         logging.exception("ERROR: NAN", value.get(True))
                         values.append(numberType(0))
             try:
-                oldValue = self.__getValues(definition, elementInfo)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
                 differ = False
                 if oldValue is not None:
                     for i in range(n):
@@ -558,9 +428,9 @@ class PropertiesPanel(DirectObject):
             elif allValuesSet:
                 values = tuple(values)
             if allValuesNone or allValuesSet:
-                self.__setValue(definition, elementInfo, values)
+                PropertyHelper.setValue(definition, elementInfo, values)
         self.__createPropertyHeader(definition.visiblename)
-        values = self.__getValues(definition, elementInfo)
+        values = PropertyHelper.getValues(definition, elementInfo)
         if type(values) is int or type(values) is float:
             values = [values] * n
         if definition.nullable:
@@ -569,7 +439,7 @@ class PropertiesPanel(DirectObject):
         width = (DGH.getRealWidth(self.boxFrame) - 2*SCROLLBARWIDTH) / n
         entryBox = DirectBoxSizer()
         for i in range(n):
-            value = self.__getFormated(values[i])
+            value = PropertyHelper.getFormated(values[i])
             entry = self.__createTextEntry(str(value), width, update, [elementInfo])
             entryList.append(entry)
             entryBox.addItem(entry)
@@ -588,17 +458,17 @@ class PropertiesPanel(DirectObject):
                     logging.exception("ERROR: NAN", value)
                     value = numberType(0)
             try:
-                oldValue = self.__getValues(definition, elementInfo)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
             except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
-            self.__setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value)
         self.__createPropertyHeader(definition.visiblename)
-        valueA = self.__getValues(definition, elementInfo)
+        valueA = PropertyHelper.getValues(definition, elementInfo)
         if valueA is None and not definition.nullable:
             logging.error(f"Got None value for not nullable element {definition.internalName}")
         if valueA is not None:
-            valueA = self.__getFormated(valueA, numberType is int)
+            valueA = PropertyHelper.getFormated(valueA, numberType is int)
         width = DGH.getRealWidth(self.boxFrame)
         entry = self.__createTextEntry(str(valueA), width, update, [elementInfo])
         self.boxFrame.addItem(entry, skipRefresh=True)
@@ -607,14 +477,14 @@ class PropertiesPanel(DirectObject):
         def update(text, elementInfo):
             base.messenger.send("setDirtyFlag")
             try:
-                oldValue = self.__getValues(definition, elementInfo)
-                self.__addToKillRing(elementInfo.element, definition.internalName, oldValue, text)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
+                self.__addToKillRing(elementInfo, definition, oldValue, text)
             except:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
-            self.__setValue(definition, elementInfo, text)
+            PropertyHelper.setValue(definition, elementInfo, text)
         self.__createPropertyHeader(definition.visiblename)
-        text = self.__getValues(definition, elementInfo)
+        text = PropertyHelper.getValues(definition, elementInfo)
         width = DGH.getRealWidth(self.boxFrame)
         entry = self.__createTextEntry(text, width, update, [elementInfo])
         self.boxFrame.addItem(entry, skipRefresh=True)
@@ -623,13 +493,13 @@ class PropertiesPanel(DirectObject):
         def update(value):
             base.messenger.send("setDirtyFlag")
             try:
-                oldValue = self.__getValues(definition, elementInfo)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
             except:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
-            self.__setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value)
         self.__createPropertyHeader(definition.visiblename)
-        valueA = self.__getValues(definition, elementInfo)
+        valueA = PropertyHelper.getValues(definition, elementInfo)
         btn = DirectCheckButton(
             indicatorValue=valueA,
             scale=24,
@@ -650,12 +520,12 @@ class PropertiesPanel(DirectObject):
                 value.append(entry.get())
 
             try:
-                oldValue = self.__getValues(definition, elementInfo)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
             except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
-            self.__setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value)
 
         def addEntry(text="", updateEntries=True, updateMainBox=True):
             entry = self.__createTextEntry(text, width, update, [elementInfo])
@@ -675,7 +545,7 @@ class PropertiesPanel(DirectObject):
                 self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
-        listItems = self.__getValues(definition, elementInfo)
+        listItems = PropertyHelper.getValues(definition, elementInfo)
 
         # make sure we have a list
         if listItems is None or isinstance(listItems, str):
@@ -717,12 +587,12 @@ class PropertiesPanel(DirectObject):
             value = tuple(value)
 
             try:
-                oldValue = self.__getValues(definition, elementInfo)
+                oldValue = PropertyHelper.getValues(definition, elementInfo)
                 self.__addToKillRing(elementInfo, definition, oldValue, value)
             except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
-            self.__setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value)
 
         def addEntry(text="", updateEntries=True, updateMainBox=True):
             entry = self.__createTextEntry(text, width, update, [elementInfo])
@@ -742,7 +612,7 @@ class PropertiesPanel(DirectObject):
                 self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
-        listItems = self.__getValues(definition, elementInfo)
+        listItems = PropertyHelper.getValues(definition, elementInfo)
         width = DGH.getRealWidth(self.boxFrame)
         entriesBox = DirectBoxSizer(
             orientation=DGG.VERTICAL,
@@ -829,7 +699,7 @@ class PropertiesPanel(DirectObject):
                     value = text
             base.messenger.send("setDirtyFlag")
             try:
-                self.__setValue(definition, elementInfo, value, text)
+                PropertyHelper.setValue(definition, elementInfo, value, text)
             except Exception:
                 logging.exception("Couldn't load font: {}".format(text))
                 updateElement[updateAttribute] = None
@@ -839,7 +709,7 @@ class PropertiesPanel(DirectObject):
 
             # make sure to take the actual value to write it to the textbox in
             # case something hapened while updating the value
-            v = self.__getValues(definition, elementInfo)
+            v = PropertyHelper.getValues(definition, elementInfo)
             if v is None:
                 v = ""
             entry.set(v)
@@ -858,7 +728,7 @@ class PropertiesPanel(DirectObject):
                 tooltip=self.tooltip)
             self.browser.show()
         self.__createPropertyHeader(definition.visiblename)
-        path = self.__getValues(definition, elementInfo)
+        path = PropertyHelper.getValues(definition, elementInfo)
         if type(path) is not str:
             path = ""
         width = DGH.getRealWidth(self.boxFrame)
@@ -878,7 +748,7 @@ class PropertiesPanel(DirectObject):
 
     def __createOptionMenuProperty(self, definition, elementInfo):
         def update(selection):
-            oldValue = self.__getValues(definition, elementInfo)
+            oldValue = PropertyHelper.getValues(definition, elementInfo)
             value = definition.valueOptions[selection]
             # Undo/Redo setup
             try:
@@ -888,12 +758,12 @@ class PropertiesPanel(DirectObject):
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
             # actually set the value on the element
-            self.__setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value)
 
         self.__createPropertyHeader(definition.visiblename)
         if definition.valueOptions is None:
             return
-        value = self.__getValues(definition, elementInfo)
+        value = PropertyHelper.getValues(definition, elementInfo)
         selectedElement = list(definition.valueOptions.keys())[0]
         for k, v in definition.valueOptions.items():
             if v == value:
@@ -985,7 +855,6 @@ class PropertiesPanel(DirectObject):
     #
     # Designer specific input fields
     #
-
     def __createNameProperty(self, elementInfo):
         def update(text):
             base.messenger.send("setDirtyFlag")

@@ -68,6 +68,8 @@ from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 from DirectGuiExtension.DirectSplitFrame import DirectSplitFrame
 
+from DirectGuiDesigner.core import WidgetDefinition
+
 loadPrcFileData(
     "",
     """
@@ -112,7 +114,7 @@ handler = TimedRotatingFileHandler(logfile)
 consoleHandler = StreamHandler()
 logging.basicConfig(
     level=logging.DEBUG,
-    handlers=[handler, consoleHandler])
+    handlers=[handler])#, consoleHandler])
 prcFileName = os.path.join(basePath, ".DirectGuiDesigner.prc")
 if os.path.exists(prcFileName):
     loadPrcFile(Filename.fromOsSpecific(prcFileName))
@@ -465,7 +467,17 @@ class DirectGuiDesigner(ShowBase):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
-            projectLoader = ProjectLoader(tmpPath, self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, True)
+            allWidgetDefinitions = {
+                **WidgetDefinition.DEFINITIONS,
+                **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+            projectLoader = ProjectLoader(
+                tmpPath,
+                self.visualEditorInfo,
+                self.elementHandler,
+                self.customWidgetsHandler,
+                self.getEditorPlacer,
+                allWidgetDefinitions,
+                True)
             self.elementDict = projectLoader.get()
             base.messenger.send("refreshStructureTree")
             base.messenger.send("setDirtyFlag")
@@ -643,7 +655,17 @@ class DirectGuiDesigner(ShowBase):
     def excHandler(self, ex_type, ex_value, ex_traceback):
         logging.error("Unhandled exception", exc_info=(ex_type, ex_value, ex_traceback))
         print("Try to save file after unhandled exception. Please restart the app to automatically load the exception save file!")
-        ExporterProject("", self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, exceptionSave=True)
+        allWidgetDefinitions = {
+            **WidgetDefinition.DEFINITIONS,
+            **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+        ExporterProject(
+            "",
+            self.elementDict,
+            self.getEditorFrame,
+            self.getAllEditorPlacers,
+            not self.editorFrame.visEditorInAspect2D,
+            allWidgetDefinitions,
+            exceptionSave=True)
 
     def autosaveTask(self, task):
         task.delayTime = ConfigVariableInt("autosave-delay", 60).getValue()
@@ -651,7 +673,17 @@ class DirectGuiDesigner(ShowBase):
             filename = ""
             if self.hasSaved:
                 filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json~")
-            ExporterProject(filename, self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, autosave=True)
+            allWidgetDefinitions = {
+                **WidgetDefinition.DEFINITIONS,
+                **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+            ExporterProject(
+                filename,
+                self.elementDict,
+                self.getEditorFrame,
+                self.getAllEditorPlacers,
+                not self.editorFrame.visEditorInAspect2D,
+                allWidgetDefinitions,
+                autosave=True)
         except Exception as e:
             logging.error("Autosave failed")
             logging.exception(e)
@@ -1058,11 +1090,9 @@ class DirectGuiDesigner(ShowBase):
 
             #sort = len(children)
             sort = 1
-            print(sort)
             for child in children:
                 child.reparentTo(child.getParent(), sort)
                 sort += 1
-                print(f"NEW SORT: {sort}")
 
     def moveElementInStructure(self, direction=1, childElementInfo=None):
         # make sure the sort values of all elements are correct
@@ -1192,6 +1222,8 @@ class DirectGuiDesigner(ShowBase):
         self.newElementIds = []
         self.__copyBranch(self.copiedElement, self.selectedElement)
 
+        if self.newElementIds == []:
+            return
         e = self.elementDict[self.newElementIds[0]]
         base.messenger.send("addToKillRing",
             [e, "copy", "element", (self.newElementIds[0], e), None])
@@ -1268,7 +1300,6 @@ class DirectGuiDesigner(ShowBase):
                 for compName in elementTo.components():
                     comp = elementTo.component(compName)
                     if hasattr(comp, "fg"):
-                        print("fg:", comp.fg)
                         oldOptions["text_fg"] = comp.fg
                         break
 
@@ -1335,15 +1366,49 @@ class DirectGuiDesigner(ShowBase):
 
     def save(self):
         self.selectElement(self.visualEditorInfo)
-        ExporterProject(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.elementDict, self.getEditorFrame, self.getAllEditorPlacers, not self.editorFrame.visEditorInAspect2D, tooltip=self.tt)
+        allWidgetDefinitions = {
+            **WidgetDefinition.DEFINITIONS,
+            **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+        ExporterProject(
+            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"),
+            self.elementDict,
+            self.getEditorFrame,
+            self.getAllEditorPlacers,
+            allWidgetDefinitions,
+            not self.editorFrame.visEditorInAspect2D,
+            tooltip=self.tt)
 
     def export(self):
         self.selectElement(self.visualEditorInfo)
-        ExporterPy(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"), self.elementDict, self.customWidgetsHandler, self.getEditorFrame, self.getAllEditorPlacers, self.tt, not self.editorFrame.visEditorInAspect2D)
+        allWidgetDefinitions = {
+            **WidgetDefinition.DEFINITIONS,
+            **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+        ExporterPy(
+            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".py"),
+            self.elementDict,
+            self.customWidgetsHandler,
+            self.getEditorFrame,
+            self.getAllEditorPlacers,
+            allWidgetDefinitions,
+            self.tt,
+            not self.editorFrame.visEditorInAspect2D)
 
     def load(self):
         self.selectElement(self.visualEditorInfo)
-        projectLoader = ProjectLoader(os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"), self.visualEditorInfo, self.elementHandler, self.customWidgetsHandler, self.getEditorPlacer, False, self.tt, self.new)
+
+        allWidgetDefinitions = {
+            **WidgetDefinition.DEFINITIONS,
+            **self.customWidgetsHandler.getCustomWidgetDefinitions()}
+        projectLoader = ProjectLoader(
+            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"),
+            self.visualEditorInfo,
+            self.elementHandler,
+            self.customWidgetsHandler,
+            self.getEditorPlacer,
+            allWidgetDefinitions,
+            False,
+            self.tt,
+            self.new)
 
     def updateElementDict(self, newDict):
         self.elementDict.update(newDict)

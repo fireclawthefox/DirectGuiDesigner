@@ -5,7 +5,6 @@ import importlib
 import pathlib
 import types
 from panda3d.core import ConfigVariableString
-from DirectGuiDesigner.panels.PropertiesPanel import PropertyInfo
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 
 class CustomWidget():

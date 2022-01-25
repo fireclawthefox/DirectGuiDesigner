@@ -10,6 +10,8 @@ import logging
 
 from direct.gui import DirectGuiGlobals as DGG
 from panda3d.core import NodePath
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 class JSONTools:
     functionMapping = {
@@ -43,8 +45,9 @@ class JSONTools:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth", "initialText"]
 
-    def getProjectJSON(self, guiElementsDict, getEditorFrame, getAllEditorPlacers, usePixel2D):
+    def getProjectJSON(self, guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D):
         self.guiElementsDict = guiElementsDict
+        self.allWidgetDefinitions = allWidgetDefinitions
         jsonElements = {}
         jsonElements["ProjectVersion"] = "0.2a"
         jsonElements["EditorConfig"] = {}
@@ -54,17 +57,9 @@ class JSONTools:
 
         self.writtenRoots = []
 
+        self.getAllEditorPlacers = getAllEditorPlacers
+
         roots = [None] + getAllEditorPlacers()
-
-
-        '''
-        TODO: We need to gather all roots here and walk through them
-            Then we also need to fix the sorting of the written elements
-
-        roots = [
-            None,
-
-        ]'''
 
         for root in roots:
             self.writeSortedContent(root, jsonElements)
@@ -100,11 +95,9 @@ class JSONTools:
 
     def __writeParent(self, parent):
         if parent is None: return "root"
-        self.canvasParents = [
-            "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
-            "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
+        canvasParents = self.getAllEditorPlacers()
         if type(parent) == type(NodePath()):
-            if parent.getName() in self.canvasParents:
+            if parent in canvasParents:
                 return parent.getName().replace("canvas", "a2d")
             else:
                 return parent.getName()
@@ -113,11 +106,6 @@ class JSONTools:
         return parent.element.guiId
 
     def __getAllSubcomponents(self, componentName, component, componentPath):
-        # we only respect the first state for now
-        #if componentName[-1:].isdigit():
-        #    if not componentName[-1:].endswith("0"):
-        #        return
-
         if componentPath == "":
             componentPath = componentName
         else:
@@ -149,10 +137,6 @@ class JSONTools:
                 reprFunc = lambda x: x
             else:
                 reprFunc = repr
-            #if name[-1:].isdigit():
-            #    if name[-1:].endswith("0"):
-            #        # first state of this component
-            #        name = name[:-1]
             if name != "":
                 name += "_"
             for key in self.functionMapping.keys():
@@ -171,6 +155,57 @@ class JSONTools:
                     for option, value in self.subOptionMapping[key].items():
                         optionValue = reprFunc(element[value])
                         elementJson[name + option] = optionValue
+
+            if type(element).__name__ in self.allWidgetDefinitions:
+                wdList = self.allWidgetDefinitions[type(element).__name__]
+                for wd in wdList:
+                    if wd.internalName != "":
+                        subElementInfo = ElementInfo(
+                            element,
+                            elementInfo.type,
+                            elementInfo.name,
+                            elementInfo.parent,
+                            elementInfo.extraOptions,
+                            elementInfo.createAfter,
+                            elementInfo.customImportPath)
+                        #subElementInfo.element = element
+
+                        hasChanged = True
+                        value = PropertyHelper.getValues(wd, subElementInfo)
+                        if hasattr(element, "options"):
+                            for option in element.options():
+                                if option[DGG._OPT_DEFAULT] == wd.internalName \
+                                and option[DGG._OPT_VALUE] == value:
+                                    hasChanged = False
+                                    break
+                        else:
+                            newWidget = type(element)()
+                            needCheck = True
+                            if wd.getFunctionName is not None:
+                                if type(wd.getFunctionName) == str:
+                                    try:
+                                        origWidgetValue = getattr(
+                                            newWidget,
+                                            wd.getFunctionName)()
+                                    except Exception:
+                                        # this may happen if something hasn't
+                                        # been set in the vanilla widget. E.g.
+                                        # the geom of an OnscreenGeom. So there
+                                        # must have been changes in the widget
+                                        needCheck = False
+                                else:
+                                    origWidgetValue = wd.getFunctionName()
+                            else:
+                                origWidgetValue = getattr(
+                                    newWidget,
+                                    wd.internalName)
+
+                            if needCheck and value == origWidgetValue:
+                                hasChanged = False
+
+                        if hasChanged:
+                            elementJson[name + wd.internalName] = reprFunc(value)
+
             if not hasattr(element, "options"): continue
 
             for option in element.options():
@@ -178,7 +213,8 @@ class JSONTools:
 
                 containsIgnore = False
                 for ignoreOption in self.ignoreOptionsWithSub:
-                    if option[DGG._OPT_DEFAULT] in self.keepExactIgnoreOptionsWithSub: continue
+                    if option[DGG._OPT_DEFAULT] in self.keepExactIgnoreOptionsWithSub:
+                        continue
                     if option[DGG._OPT_DEFAULT].startswith(ignoreOption):
                         containsIgnore
                         break
