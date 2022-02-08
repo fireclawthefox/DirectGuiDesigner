@@ -180,6 +180,9 @@ class JSONTools:
                             elementInfo.customImportPath)
                         #subElementInfo.element = element
 
+                        if type(element).__name__ == "OnscreenText":
+                            print(wd.internalName)
+
                         value = PropertyHelper.getValues(wd, subElementInfo)
                         if hasattr(element, "options"):
                             for option in element.options():
@@ -188,36 +191,48 @@ class JSONTools:
                                     hasChanged = False
                                     break
 
+                                n = name + option[DGG._OPT_DEFAULT]
+                                notInValueHasChanged = (
+                                    n not in elementInfo.valueHasChanged \
+                                    or not elementInfo.valueHasChanged[n])
+
                                 hasChanged = True
                                 if option[DGG._OPT_DEFAULT] == wd.internalName \
-                                and (name + option[DGG._OPT_DEFAULT] not in elementInfo.valueHasChanged \
-                                or not elementInfo.valueHasChanged[name + option[DGG._OPT_DEFAULT]]):
+                                and notInValueHasChanged:
                                     hasChanged = False
                                     break
                         else:
                             newWidget = type(element)()
                             needCheck = True
-                            if wd.getFunctionName is not None:
-                                if type(wd.getFunctionName) == str:
-                                    try:
-                                        origWidgetValue = getattr(
-                                            newWidget,
-                                            wd.getFunctionName)()
-                                    except Exception:
-                                        # this may happen if something hasn't
-                                        # been set in the vanilla widget. E.g.
-                                        # the geom of an OnscreenGeom. So there
-                                        # must have been changes in the widget
-                                        needCheck = False
-                                else:
-                                    origWidgetValue = wd.getFunctionName()
-                            else:
-                                origWidgetValue = getattr(
-                                    newWidget,
-                                    wd.internalName)
+                            n = name + wd.internalName
+                            skipCheck = False
+                            if n in elementInfo.valueHasChanged \
+                            and elementInfo.valueHasChanged[n]:
+                                hasChanged = True
+                                skipCheck = True
 
-                            if needCheck and value == origWidgetValue:
-                                hasChanged = False
+                            if not skipCheck:
+                                if wd.getFunctionName is not None:
+                                    if type(wd.getFunctionName) == str:
+                                        try:
+                                            origWidgetValue = getattr(
+                                                newWidget,
+                                                wd.getFunctionName)()
+                                        except Exception:
+                                            # this may happen if something hasn't
+                                            # been set in the vanilla widget. E.g.
+                                            # the geom of an OnscreenGeom. So there
+                                            # must have been changes in the widget
+                                            needCheck = False
+                                    else:
+                                        origWidgetValue = wd.getFunctionName()
+                                else:
+                                    origWidgetValue = getattr(
+                                        newWidget,
+                                        wd.internalName)
+
+                                if needCheck and value == origWidgetValue:
+                                    hasChanged = False
 
                         if hasChanged:
                             elementJson[name + wd.internalName] = reprFunc(value)
