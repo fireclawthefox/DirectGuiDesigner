@@ -143,7 +143,7 @@ class ToolboxPanel:
                     self.parent["frameSize"][0], self.parent["frameSize"][1],
                     self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
 
-            self.recalcScrollSize()
+            self.createEntries()
 
     def __createControl(self, name):
         base.messenger.send("createControl", [name])
