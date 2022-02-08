@@ -8,11 +8,10 @@ from panda3d.core import ConfigVariableString
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 
 class CustomWidget():
-    def __init__(self, dispName, clsName, clsFile, enabledProps, module, addItemFunction, removeItemFunction, importPath):
+    def __init__(self, dispName, clsName, clsFile, module, addItemFunction, removeItemFunction, importPath):
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile
-        self.enabledProperties = enabledProps
         self.module = module
         self.addItemFunction = addItemFunction
         self.removeItemFunction = removeItemFunction
@@ -120,7 +119,6 @@ class CustomWidgets():
                 configFileContent["displayName"],
                 configFileContent["className"],
                 configFileContent["classfilePath"],
-                configFileContent["enabledProperties"],
                 module,
                 configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
                 configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,

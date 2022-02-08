@@ -119,7 +119,6 @@ A .widget definition file is necessary to add support for your custom widget in 
 |displayName|String|The name of the widget as it will be displayed in the toolbox|No|
 |className|String|The class name in the module which should be used|No|
 |classfilePath|String|Path to the python file which should be imported|No|
-|enabledProperties|List|A list of properties that should be enabled for the widget in the properties editor|No|
 |baseWidget|String|The name of the widget this custom widget is based uppon, e.g. DirectFrame or DirectButton|Yes|
 |customProperties|List|A list information for custom properties|No|
 |addItemFunctionName|String|A special function name which should be called when other elements get parented to this widget|Yes|
@@ -127,8 +126,8 @@ A .widget definition file is necessary to add support for your custom widget in 
 |importPath|String|The import statement which should be added to exported python file|No|
 
 #### Custom Properties
-The customProperties list can contain any custom options that are not available through the enabledProperties definition.
-This list consist of dictionaries of the following structure:
+The customProperties list will contain definition dictionaries of your widgets properties.
+These dictionaries will have the following structure, not all options are mandatory though, see below for further information:
 <code><pre>{
 &emsp;&emsp;&emsp;&emsp;"internalName":"thePropertiesName",
 &emsp;&emsp;&emsp;&emsp;"visiblename":"The display name",
