@@ -22,7 +22,7 @@ setup(
         "build_apps": {
             "include_patterns": include,
             "gui_apps": {
-                "directguidesigner": "DirectGuiDesigner.py",
+                "directguidesigner": "main.py",
             },
             "plugins": [
                 "pandagl",
