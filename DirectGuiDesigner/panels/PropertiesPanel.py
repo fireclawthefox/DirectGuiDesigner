@@ -204,10 +204,15 @@ class PropertiesPanel(DirectObject):
                     # store the sub widget as an element info object
                     subWidgetElementInfo = copy.copy(elementInfo)
                     subWidgetElementInfo.element = widget
+                    subWidgetElementInfo.subComponentName = componentName
 
                     headerName = componentName
                     if group is not None:
-                        headerName = f"{wType} - [{widget}]"
+                        widgetNPName = str(widget)
+                        if len(widgetNPName) > 35:
+                            widgetNPName = widgetNPName[-35:]
+                            widgetNPName = "..." + widgetNPName
+                        headerName = f"{wType} - [{widgetNPName}]"
 
                     # check if this component has definitions
                     if wType in allDefinitions:

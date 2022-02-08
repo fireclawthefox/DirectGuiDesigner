@@ -83,10 +83,20 @@ class ElementHandler:
                 parent=parent,
                 pos=pos,
                 text_scale=24,
-                borderWidth=(2, 2),
-                scale=1)
+                borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectButton")
         elementInfo.extraOptions["pressEffect"] = element["pressEffect"]
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -108,6 +118,16 @@ class ElementHandler:
                 parent=parent,
                 scale=24)
         elementInfo = ElementInfo(element, "DirectEntry")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text_scale": True,
+                "pos": True,
+                "borderWidth": True,
+                "scale": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -154,9 +174,17 @@ class ElementHandler:
                     pos=pos,
                     borderWidth=(2, 2),
                     parent=parent,
-                    clipSize=(-50, 50, -25, 25),
-                    scale=1)
+                    clipSize=(-50, 50, -25, 25))
             elementInfo = ElementInfo(element, "DirectEntryScroll")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "clipSize": True,
+                "pos": True,
+                "borderWidth": True}
             self.setupBind(elementInfo)
             return elementInfo
 
@@ -180,9 +208,16 @@ class ElementHandler:
                 #image="icons/minusnode.gif",
                 #uncheckedImage="icons/minusnode.gif",
                 #checkedImage="icons/plusnode.gif",
-                parent=parent,
-                scale=1)
+                parent=parent)
         elementInfo = ElementInfo(element, "DirectCheckBox")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -205,10 +240,22 @@ class ElementHandler:
                 text="Checkbutton",
                 indicator_text_scale=24,
                 indicator_borderWidth=(2, 2),
-                parent=parent,
-                scale=1)
+                parent=parent)
 
         elementInfo = ElementInfo(element, "DirectCheckButton")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "pos": True,
+                "indicator_text_scale": True,
+                "indicator_borderWidth": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -231,6 +278,17 @@ class ElementHandler:
                 items=["item1"],
                 scale=24)
         elementInfo = ElementInfo(element, "DirectOptionMenu")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "items": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "items": True,
+                "borderWidth": True,
+                "scale": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -253,12 +311,25 @@ class ElementHandler:
                 text_scale=24,
                 borderWidth=(2, 2),
                 indicator_text_scale=24,
-                indicator_borderWidth=(2, 2),
-                scale=1)
+                indicator_borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectRadioButton")
 
         elementInfo.extraOptions["variable"] = []
         elementInfo.extraOptions["value"] = []
+
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "indicator_text_scale": True,
+                "indicator_borderWidth": True,
+                "pos": True,
+                "borderWidth": True}
 
         self.setupBind(elementInfo)
         return elementInfo
@@ -283,6 +354,18 @@ class ElementHandler:
                 borderWidth=(2, 2),
                 scale=150)
         elementInfo = ElementInfo(element, "DirectSlider")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text_scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -302,6 +385,14 @@ class ElementHandler:
                 scale=150,
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectScrollBar")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -373,6 +464,55 @@ class ElementHandler:
 
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectScrolledList")
+
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text_scale": True,
+                "text_pos": True,
+                "state": True,
+                "decButton_pos": True,
+                "decButton_text": True,
+                "decButton_text_scale": True,
+                "decButton_text_align": True,
+                "decButton_borderWidth": True,
+                "incButton_pos": True,
+                "incButton_text": True,
+                "incButton_text_scale": True,
+                "incButton_text_align": True,
+                "incButton_borderWidth": True,
+                "forceHeight": True,
+                "numItemsVisible": True,
+                "itemFrame_frameSize": True,
+                "itemFrame_frameColor": True,
+                "frameSize": True,
+                "frameColor": True,
+                "itemFrame_pos": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text_scale": True,
+                "text_pos": True,
+                "state": True,
+                "decButton_pos": True,
+                "decButton_text": True,
+                "decButton_text_scale": True,
+                "decButton_text_align": True,
+                "decButton_borderWidth": True,
+                "incButton_pos": True,
+                "incButton_text": True,
+                "incButton_text_scale": True,
+                "incButton_text_align": True,
+                "incButton_borderWidth": True,
+                "forceHeight": True,
+                "numItemsVisible": True,
+                "itemFrame_frameSize": True,
+                "itemFrame_frameColor": True,
+                "frameSize": True,
+                "frameColor": True,
+                "itemFrame_pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -397,11 +537,20 @@ class ElementHandler:
                 borderWidth=(2, 2),
                 parent=parent,
                 command=base.messenger.send,
-                extraArgs=["select_list_item_changed"],
-                scale=1)
+                extraArgs=["select_list_item_changed"])
         elementInfo = ElementInfo(element, "DirectScrolledListItem")
         elementInfo.command = "base.messenger.send"
         elementInfo.extraArgs = "'select_list_item_changed'"
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -424,9 +573,21 @@ class ElementHandler:
                 state = DGG.NORMAL,
                 pos=pos,
                 text_scale=24,
-                borderWidth=(2, 2),
-                scale=1)
+                borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectLabel")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "state": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -452,6 +613,20 @@ class ElementHandler:
                 state = DGG.NORMAL,
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectWaitBar")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text_scale": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text_scale": True,
+                "scale": True,
+                "state": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -474,6 +649,17 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "OkDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -497,6 +683,17 @@ class ElementHandler:
                 parent=parent)
 
         elementInfo = ElementInfo(element, "OkCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -519,6 +716,17 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "YesNoDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -539,6 +747,17 @@ class ElementHandler:
                 pos=self.editorCenter,
                 parent=self.getEditorRootCanvas())
         elementInfo = ElementInfo(element, "YesNoCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -561,6 +780,17 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "RetryCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -586,6 +816,20 @@ class ElementHandler:
                 parent=parent,
                 state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectFrame")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "frameColor": True,
+                "frameSize": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "frameColor": True,
+                "text_scale": True,
+                "frameSize": True,
+                "state": True,
+                "borderWidth": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
@@ -614,6 +858,23 @@ class ElementHandler:
                 parent=parent,
                 state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectScrolledFrame")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "frameColor": True,
+                "frameSize": True,
+                "canvasSize": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "frameColor": True,
+                "text_scale": True,
+                "canvasSize": True,
+                "frameSize": True,
+                "scrollBarWidth": True,
+                "state": True,
+                "borderWidth": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 

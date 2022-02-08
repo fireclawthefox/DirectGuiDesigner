@@ -57,18 +57,29 @@ class PropertyHelper:
 
     def setValue(definition, elementInfo, value, valueAsString=""):
         propName = PropertyHelper.getPropertyName(definition)
+        nameAdd = f"{elementInfo.subComponentName}_" if elementInfo.subComponentName != "" else ""
         if definition.isInitOption:
             # This is an initialization option, so we just store it as extra options
             if valueAsString != "":
                 logging.debug(f"Store value as string in extra options. {propName}={valueAsString}")
+
+                if elementInfo.extraOptions[propName] != valueAsString:
+                    elementInfo.valueHasChanged[nameAdd + propName] = True
+
                 # if the value as string is set, this is probably the one we
                 # want to store (e.g. paths to models, fonts, etc)
                 elementInfo.extraOptions[propName] = valueAsString
             else:
                 # if no string value is given, store the real value
                 logging.debug(f"Store value as extra options. {propName}={value}")
+                if propName not in elementInfo.extraOptions \
+                or elementInfo.extraOptions[propName] != value:
+                    elementInfo.valueHasChanged[nameAdd + propName] = True
                 elementInfo.extraOptions[propName] = value
         elif definition.setFunctionName:
+            if getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
+                elementInfo.valueHasChanged[nameAdd + propName] = True
+            oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
                 if type(definition.setFunctionName) == str:
                     logging.debug(f"Try set value via function name. func: {definition.setFunctionName} value: {value}")
@@ -94,6 +105,8 @@ class PropertyHelper:
             oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
                 logging.debug(f"Try set value by direct key access. {propName}={value}")
+                if getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
+                    elementInfo.valueHasChanged[nameAdd + propName] = True
                 # try to set the new value on the property
                 elementInfo.element[propName] = value
 

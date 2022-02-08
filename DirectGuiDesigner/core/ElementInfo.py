@@ -34,3 +34,6 @@ class ElementInfo:
             self.createAfter = []
 
         self.customImportPath = customImportPath
+
+        self.subComponentName = ""
+        self.valueHasChanged = {}

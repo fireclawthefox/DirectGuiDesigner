@@ -139,9 +139,15 @@ class JSONTools:
                 reprFunc = repr
             if name != "":
                 name += "_"
+
             for key in self.functionMapping.keys():
                 if key in name:
                     for option, value in self.functionMapping[key].items():
+                        if name + option not in elementInfo.valueHasChanged \
+                        or not elementInfo.valueHasChanged[name + option]:
+                            # skip unchanged values
+                            continue
+
                         if callable(getattr(element, value)):
                             optionValue = reprFunc(getattr(element, value)())
                         else:
@@ -153,6 +159,10 @@ class JSONTools:
             for key in self.subOptionMapping.keys():
                 if key in name:
                     for option, value in self.subOptionMapping[key].items():
+                        if name + option not in elementInfo.valueHasChanged \
+                        or not elementInfo.valueHasChanged[name + option]:
+                            # skip unchanged values
+                            continue
                         optionValue = reprFunc(element[value])
                         elementJson[name + option] = optionValue
 
@@ -170,12 +180,18 @@ class JSONTools:
                             elementInfo.customImportPath)
                         #subElementInfo.element = element
 
-                        hasChanged = True
                         value = PropertyHelper.getValues(wd, subElementInfo)
                         if hasattr(element, "options"):
                             for option in element.options():
                                 if option[DGG._OPT_DEFAULT] == wd.internalName \
                                 and option[DGG._OPT_VALUE] == value:
+                                    hasChanged = False
+                                    break
+
+                                hasChanged = True
+                                if option[DGG._OPT_DEFAULT] == wd.internalName \
+                                and (name + option[DGG._OPT_DEFAULT] not in elementInfo.valueHasChanged \
+                                or not elementInfo.valueHasChanged[name + option[DGG._OPT_DEFAULT]]):
                                     hasChanged = False
                                     break
                         else:
@@ -210,6 +226,10 @@ class JSONTools:
 
             for option in element.options():
                 if option[DGG._OPT_DEFAULT] in self.ignoreOptions: continue
+                if name + option[DGG._OPT_DEFAULT] not in elementInfo.valueHasChanged \
+                or not elementInfo.valueHasChanged[name + option[DGG._OPT_DEFAULT]]:
+                    # skip unchanged values
+                    continue
 
                 containsIgnore = False
                 for ignoreOption in self.ignoreOptionsWithSub:
