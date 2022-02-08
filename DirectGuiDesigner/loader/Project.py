@@ -240,15 +240,32 @@ class ProjectLoader(DirectObject):
                 parts = name.split("_")
                 componentName = "_".join(parts[:-1])
                 optionName = parts[-1]
-                element = elementInfo.element.component(componentName)
-                subElementInfo = ElementInfo(
-                    element,
-                    type(element).__name__,
-                    elementInfo.name,
-                    elementInfo.parent,
-                    elementInfo.extraOptions,
-                    elementInfo.createAfter,
-                    elementInfo.customImportPath)
+
+                if elementInfo.element.hascomponent(componentName):
+                    element = elementInfo.element.component(componentName)
+
+                    subElementInfo = ElementInfo(
+                        element,
+                        type(element).__name__,
+                        elementInfo.name,
+                        elementInfo.parent,
+                        elementInfo.extraOptions,
+                        elementInfo.createAfter,
+                        elementInfo.customImportPath)
+                elif elementInfo.element.hascomponent(componentName + "0"):
+                    # we do have stated component here
+                    for i in range(elementInfo.element['numStates']):
+                        element = elementInfo.element.component(componentName + f"{i}")
+
+                        subElementInfo = ElementInfo(
+                            element,
+                            type(element).__name__,
+                            elementInfo.name,
+                            elementInfo.parent,
+                            elementInfo.extraOptions,
+                            elementInfo.createAfter,
+                            elementInfo.customImportPath)
+
             ei = subElementInfo if subElementInfo is not None else elementInfo
             wdList = self.allWidgetDefinitions[ei.type]
             for wd in wdList:
