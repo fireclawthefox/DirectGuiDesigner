@@ -677,8 +677,8 @@ class DirectGuiDesigner(ShowBase):
             self.elementDict,
             self.getEditorFrame,
             self.getAllEditorPlacers,
-            not self.editorFrame.visEditorInAspect2D,
             allWidgetDefinitions,
+            not self.editorFrame.visEditorInAspect2D,
             exceptionSave=True)
 
     def autosaveTask(self, task):
@@ -695,8 +695,8 @@ class DirectGuiDesigner(ShowBase):
                 self.elementDict,
                 self.getEditorFrame,
                 self.getAllEditorPlacers,
-                not self.editorFrame.visEditorInAspect2D,
                 allWidgetDefinitions,
+                not self.editorFrame.visEditorInAspect2D,
                 autosave=True)
         except Exception as e:
             logging.error("Autosave failed")
