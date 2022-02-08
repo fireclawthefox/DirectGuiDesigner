@@ -170,6 +170,8 @@ class PropertiesPanel(DirectObject):
 
             allDefinitions = {**WidgetDefinition.DEFINITIONS, **self.customWidgetDefinitions}
 
+            self.boxFrames = {}
+
             # check if we have a definition for this specific GUI element
             if elementInfo.type in allDefinitions:
                 # create the main set of properties to edit
@@ -241,6 +243,9 @@ class PropertiesPanel(DirectObject):
         self.updateCanvasSize()
 
     def updateCanvasSize(self):
+        for section, boxFrame in self.boxFrames.items():
+            boxFrame.refresh()
+
         self.mainBoxFrame.refresh()
 
         self.propertiesFrame["canvasSize"] = (
@@ -294,14 +299,17 @@ class PropertiesPanel(DirectObject):
             state=DGG.NORMAL)
         self.boxFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         self.boxFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
+
+        self.boxFrames[section] = self.boxFrame
+
         return section
 
     def sectionCollapsed(self, section):
         self.updateCanvasSize()
 
     def updateSection(self, section):
-        self.boxFrame.refresh()
-        fs = self.boxFrame["frameSize"]
+        self.boxFrames[section].refresh()
+        fs = self.boxFrames[section]["frameSize"]
         section["frameSize"] = (fs[0], fs[1], fs[2]-section["headerheight"], fs[3])
         section.updateFrameSize()
 
@@ -546,7 +554,8 @@ class PropertiesPanel(DirectObject):
 
             if updateMainBox:
                 entriesBox.refresh()
-                self.boxFrame.refresh(id(entriesBox))
+                for section, boxFrame in self.boxFrames.items():
+                    boxFrame.refresh()
                 self.resizeFrame()
 
         self.__createPropertyHeader(definition.visiblename)
