@@ -197,6 +197,8 @@ app = ShowBase()\n"""
         extraOptions = ""
         for optionName, optionValue in elementInfo["extraOptions"].items():
             v = optionValue
+            if "others" in optionName:
+                continue
             if type(v) is list:
                 v = f"[{','.join(map(str, v))}]"
             elif type(v) is str:
@@ -208,9 +210,6 @@ app = ShowBase()\n"""
             name,
             elementInfo["type"],
             self.__writeElementOptions(name, elementInfo),
-            #" "*12 + "command={},\n".format(elementInfo["command"]) if elementInfo["command"] is not None else "",
-            #"BLUBB",
-            #" "*12 + "extraArgs=[{}],\n".format(",".join(map(str, elementInfo["extraArgs"]))) if elementInfo["extraArgs"] is not None else "",
             extraOptions,
             )
         if elementInfo["element"]["transparency"] != "M_none":
@@ -226,18 +225,21 @@ app = ShowBase()\n"""
         indent = " "*12
 
         for optionKey, optionValue in elementInfo["element"].items():
+            if optionKey.endswith("transparency"):
+                continue
+
+            if optionKey in elementInfo["extraOptions"].keys():
+                continue
+
+            elementOptions += f"{indent}{optionKey} = {optionValue},\n"
+
+        for optionKey, optionValue in elementInfo["extraOptions"].items():
             if optionKey == "others":
                 others = []
                 for other in optionValue:
                     others.append("self.{}".format(other))
                 self.radiobuttonDict["self.{}".format(name)] = others
                 continue
-            elif optionKey == "transparency":
-                continue
-
-            if optionKey in elementInfo["extraOptions"].keys(): continue
-
-            elementOptions += indent + optionKey + "=" + optionValue + ",\n"
 
         if elementInfo["parent"] != "root":
             self.canvasParents = [
