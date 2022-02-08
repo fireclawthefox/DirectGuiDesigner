@@ -219,7 +219,7 @@ DIRECT_FRAME_DEFINITIONS = DEFAULT_DEFINITIONS + [
     # A midground geometry item
     Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True),
     # A foreground text node
-    Definition('text', 'Text', object, editType=t.list),
+    Definition('text', 'Text', object, editType=t.list, nullable=True),
     # Change default value of text mayChange flag from 0
     # (OnscreenTexeditType=t.py) to 1
     Definition('textMayChange', 'Text May Change', bool)
@@ -239,7 +239,7 @@ DIRECT_BUTTON_DEFINITIONS = DIRECT_FRAME_DEFINITIONS + [
     Definition('pressEffect', 'Press Effect', bool, isInitOption=True),
 ]
 
-DEFAULT_DIALOG_DEFINITIONS = [
+DEFAULT_DIALOG_DEFINITIONS = DIRECT_FRAME_DEFINITIONS + [
     # Define type of DirectGuiWidget
     Definition('dialogName', 'Dialog Name', str),
     # Default position is slightly forward in Y, so as not to
@@ -364,7 +364,7 @@ DEFINITIONS = {
         # value is the value to be set when this radio button is selected
         Definition('value', 'Value', list),
         # others is a list of other radio buttons sharing same variable
-        Definition('others', 'Radio button grouping', list, addToExtraOptions=True),
+        Definition('others', 'Radio button grouping', list, canGetValueFromElement=False, addToExtraOptions=True, isInitOption=True),
         # boxBorder defines the space created around the check box
         Definition('boxBorder', 'Box Border', int),
         # boxPlacement maps left, above, right, below
