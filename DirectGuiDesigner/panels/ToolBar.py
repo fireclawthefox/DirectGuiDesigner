@@ -218,12 +218,18 @@ class ToolBar(DirectObject):
         self.toolBar.addItem(zoomHolder)
         self.zoomSlider = DirectSlider(
             zoomHolder,
+            text="Zoom",
+            text_scale=(0.25, 0.15),
+            text_pos=(0,.25),
+            text_fg=(1,1,1,1),
             scale=(48, 1, 96),
             pos=(0,0,0),
             range=(0.1, 1.5),
             command=self.zoomSliderChanged)
+        tf = self.zoomSlider.thumb["frameSize"]
         self.zoomSlider.bind(DGG.ENTER, self.tt.show, ["Zoom"])
         self.zoomSlider.bind(DGG.EXIT, self.tt.hide)
+        self.zoomSlider.thumb["frameSize"] = (tf[0]*3, tf[1]*3, tf[2]*2.5, tf[3]*2.5)
         #self.toolBar.addItem(self.zoomSlider)
 
         placeholder = DirectFrame(
