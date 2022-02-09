@@ -10,16 +10,12 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
-#from direct.gui.DirectEntryScroll import DirectEntryScroll
 from directGuiOverrides.DirectEntryScroll import DirectEntryScroll
 from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.DirectCheckButton import DirectCheckButton
-#from direct.gui.DirectOptionMenu import DirectOptionMenu
 from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectRadioButton import DirectRadioButton
-#from direct.gui.DirectSlider import DirectSlider
 from directGuiOverrides.DirectSlider import DirectSlider
-#from direct.gui.DirectScrollBar import DirectScrollBar
 from directGuiOverrides.DirectScrollBar import DirectScrollBar
 from direct.gui.DirectScrolledList import DirectScrolledList
 from direct.gui.DirectScrolledList import DirectScrolledListItem
@@ -31,41 +27,7 @@ from direct.gui.DirectDialog import YesNoCancelDialog
 from direct.gui.DirectDialog import RetryCancelDialog
 
 from panda3d.core import TextNode
-
-class ElementInfo:
-    def __init__(self, element, elementType, name=None, parent=None, extraOptions=None, createAfter=None, customImportPath=None):
-        # The actual GUI element
-        self.element = element
-
-        # Name of the element type
-        self.type = elementType
-
-        # Visible Name (Node-Name) of the element
-        if name is not None:
-            self.name = name
-        else:
-            self.name = element.guiId.replace("-","")
-
-        # The ElementInfo of the Parent of this element
-        self.parent = parent
-
-        # A dictionary of options and their values
-        if extraOptions is not None:
-            self.extraOptions = extraOptions
-        else:
-            self.extraOptions = {}
-
-        # The command to be called by the element
-        self.command = None
-
-        # Extra arguments to be passed to the command
-        self.extraArgs = None
-        if createAfter is not None:
-            self.createAfter = createAfter
-        else:
-            self.createAfter = []
-
-        self.customImportPath = customImportPath
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 class ElementHandler:
     def __init__(self, propertiesFrame, getEditorRootCanvas):
@@ -101,11 +63,6 @@ class ElementHandler:
         return elementInfo
 
     def propertiesMethod(self, element, elementDict, widget):
-        self.propertiesFrame.defaultPropertySelection()
-        for propName in widget.enabledProperties:
-            self.propertiesFrame.propertyList[propName] = True
-        for prop in widget.customProperties:
-            self.propertiesFrame.customProperties.append(prop)
         self.propertiesFrame.setupProperties("{} Properties".format(widget.displayName), element, elementDict)
 
     def createCustomWidgetMethods(self, widget):
@@ -126,18 +83,24 @@ class ElementHandler:
                 parent=parent,
                 pos=pos,
                 text_scale=24,
-                borderWidth=(2, 2),
-                scale=1)
+                borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectButton")
         elementInfo.extraOptions["pressEffect"] = element["pressEffect"]
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["pressEffect"] = True
         self.propertiesFrame.setupProperties("Button Properties", element, elementDict)
 
     def createDirectEntry(self, parent=None):
@@ -155,18 +118,20 @@ class ElementHandler:
                 parent=parent,
                 scale=24)
         elementInfo = ElementInfo(element, "DirectEntry")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text0_scale": True,
+                "pos": True,
+                "borderWidth": True,
+                "scale": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectEntry(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["initialText"] = True
-        self.propertiesFrame.propertyList["width"] = True
-        self.propertiesFrame.propertyList["numLines"] = True
-        self.propertiesFrame.propertyList["overflow"] = True
-        self.propertiesFrame.propertyList["obscured"] = True
         self.propertiesFrame.setupProperties("Entry Properties", element, elementDict)
 
     def createDirectEntryScroll(self, parent=None, createEntry=True):
@@ -209,15 +174,21 @@ class ElementHandler:
                     pos=pos,
                     borderWidth=(2, 2),
                     parent=parent,
-                    clipSize=(-50, 50, -25, 25),
-                    scale=1)
+                    clipSize=(-50, 50, -25, 25))
             elementInfo = ElementInfo(element, "DirectEntryScroll")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "clipSize": True,
+                "pos": True,
+                "borderWidth": True}
             self.setupBind(elementInfo)
             return elementInfo
 
     def propertiesDirectEntryScroll(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["clipSize"] = True
         self.propertiesFrame.setupProperties("Scrolled Entry Properties", element, elementDict)
 
     def createDirectCheckBox(self, parent=None):
@@ -237,22 +208,20 @@ class ElementHandler:
                 #image="icons/minusnode.gif",
                 #uncheckedImage="icons/minusnode.gif",
                 #checkedImage="icons/plusnode.gif",
-                parent=parent,
-                scale=1)
+                parent=parent)
         elementInfo = ElementInfo(element, "DirectCheckBox")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectCheckBox(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["text"] = True
-        self.propertiesFrame.propertyList["text_align"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["uncheckedImage"] = True
-        self.propertiesFrame.propertyList["checkedImage"] = True
-        self.propertiesFrame.propertyList["isChecked"] = True
         self.propertiesFrame.setupProperties("Checkbox Properties", element, elementDict)
 
     def createDirectCheckButton(self, parent=None):
@@ -271,28 +240,26 @@ class ElementHandler:
                 text="Checkbutton",
                 indicator_text_scale=24,
                 indicator_borderWidth=(2, 2),
-                parent=parent,
-                scale=1)
+                parent=parent)
 
         elementInfo = ElementInfo(element, "DirectCheckButton")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "pos": True,
+                "indicator_text_scale": True,
+                "indicator_borderWidth": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectCheckButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["boxBorder"] = True
-        self.propertiesFrame.propertyList["boxPlacement"] = True
-        self.propertiesFrame.propertyList["boxImage"] = True
-        self.propertiesFrame.propertyList["boxImageScale"] = True
-        self.propertiesFrame.propertyList["boxImageColor"] = True
-        self.propertiesFrame.propertyList["boxRelief"] = True
-        self.propertiesFrame.propertyList["indicator_text_scale"] = True
-        self.propertiesFrame.propertyList["indicator_text_pos"] = True
-        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Check Button Properties", element, elementDict)
 
     def createDirectOptionMenu(self, parent=None):
@@ -311,20 +278,21 @@ class ElementHandler:
                 items=["item1"],
                 scale=24)
         elementInfo = ElementInfo(element, "DirectOptionMenu")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "items": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "items": True,
+                "borderWidth": True,
+                "scale": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectOptionMenu(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["popupMarkerBorder"] = True
-        self.propertiesFrame.propertyList["popupMarker_pos"] = True
-        self.propertiesFrame.propertyList["popupMenuLocation"] = True
-        self.propertiesFrame.propertyList["highlightColor"] = True
-        self.propertiesFrame.propertyList["highlightScale"] = True
         self.propertiesFrame.setupProperties("Option Menu Properties", element, elementDict)
 
     def createDirectRadioButton(self, parent=None):
@@ -343,33 +311,30 @@ class ElementHandler:
                 text_scale=24,
                 borderWidth=(2, 2),
                 indicator_text_scale=24,
-                indicator_borderWidth=(2, 2),
-                scale=1)
+                indicator_borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectRadioButton")
 
         elementInfo.extraOptions["variable"] = []
         elementInfo.extraOptions["value"] = []
 
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "indicator_text_scale": True,
+                "indicator_borderWidth": True,
+                "pos": True,
+                "borderWidth": True}
+
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectRadioButton(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["boxBorder"] = True
-        self.propertiesFrame.propertyList["boxPlacement"] = True
-        self.propertiesFrame.propertyList["boxImage"] = True
-        self.propertiesFrame.propertyList["boxImageScale"] = True
-        self.propertiesFrame.propertyList["boxImageColor"] = True
-        self.propertiesFrame.propertyList["boxRelief"] = True
-        self.propertiesFrame.propertyList["others"] = True
-        self.propertiesFrame.propertyList["indicatorValue"] = True
-        self.propertiesFrame.propertyList["indicator_text_scale"] = True
-        self.propertiesFrame.propertyList["indicator_text_pos"] = True
-        self.propertiesFrame.propertyList["indicator_borderWidth"] = True
         self.propertiesFrame.setupProperties("Radio Button Properties", element, elementDict)
 
     def createDirectSlider(self, parent=None):
@@ -389,29 +354,22 @@ class ElementHandler:
                 borderWidth=(2, 2),
                 scale=150)
         elementInfo = ElementInfo(element, "DirectSlider")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text0_scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectSlider(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-
-        self.propertiesFrame.propertyList["SB-range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["scrollSize"] = True
-        self.propertiesFrame.propertyList["pageSize"] = True
-        self.propertiesFrame.propertyList["orientation"] = True
-
-        self.propertiesFrame.propertyList["thumb_pos"] = True
-        self.propertiesFrame.propertyList["thumb_hpr"] = True
-        self.propertiesFrame.propertyList["thumb_scale"] = True
-        self.propertiesFrame.propertyList["thumb_frameColor"] = True
-        self.propertiesFrame.propertyList["thumb_frameSize"] = True
-        self.propertiesFrame.propertyList["thumb_image"] = True
-        self.propertiesFrame.propertyList["thumb_image_scale"] = True
         self.propertiesFrame.setupProperties("Slider Properties", element, elementDict)
 
     def createDirectScrollBar(self, parent=None):
@@ -427,48 +385,18 @@ class ElementHandler:
                 scale=150,
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectScrollBar")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "scale": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectScrollBar(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["text"] = True
-        self.propertiesFrame.propertyList["text_align"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["SB-range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["scrollSize"] = True
-        self.propertiesFrame.propertyList["pageSize"] = True
-        self.propertiesFrame.propertyList["orientation"] = True
-        self.propertiesFrame.propertyList["manageButtons"] = True
-        self.propertiesFrame.propertyList["resizeThumb"] = True
-
-        self.propertiesFrame.propertyList["incButton_pos"] = True
-        self.propertiesFrame.propertyList["incButton_hpr"] = True
-        self.propertiesFrame.propertyList["incButton_scale"] = True
-        self.propertiesFrame.propertyList["incButton_frameColor"] = True
-        self.propertiesFrame.propertyList["incButton_frameSize"] = True
-        self.propertiesFrame.propertyList["incButton_image"] = True
-        self.propertiesFrame.propertyList["incButton_image_scale"] = True
-
-        self.propertiesFrame.propertyList["decButton_pos"] = True
-        self.propertiesFrame.propertyList["decButton_hpr"] = True
-        self.propertiesFrame.propertyList["decButton_scale"] = True
-        self.propertiesFrame.propertyList["decButton_frameColor"] = True
-        self.propertiesFrame.propertyList["decButton_frameSize"] = True
-        self.propertiesFrame.propertyList["decButton_image"] = True
-        self.propertiesFrame.propertyList["decButton_image_scale"] = True
-
-        self.propertiesFrame.propertyList["thumb_pos"] = True
-        self.propertiesFrame.propertyList["thumb_hpr"] = True
-        self.propertiesFrame.propertyList["thumb_scale"] = True
-        self.propertiesFrame.propertyList["thumb_frameColor"] = True
-        self.propertiesFrame.propertyList["thumb_frameSize"] = True
-        self.propertiesFrame.propertyList["thumb_image"] = True
-        self.propertiesFrame.propertyList["thumb_image_scale"] = True
-
         self.propertiesFrame.setupProperties("Scroll Bar Properties", element, elementDict)
 
     def createDirectScrolledList(self, parent=None):
@@ -536,17 +464,71 @@ class ElementHandler:
 
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectScrolledList")
+
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text0_scale": True,
+                "text_pos": True,
+                "state": True,
+                "decButton_pos": True,
+                "decButton_text": True,
+                "decButton_text0_scale": True,
+                "decButton_text1_scale": True,
+                "decButton_text2_scale": True,
+                "decButton_text3_scale": True,
+                "decButton_text0_align": True,
+                "decButton_text1_align": True,
+                "decButton_text2_align": True,
+                "decButton_text3_align": True,
+                "decButton_borderWidth": True,
+                "incButton_pos": True,
+                "incButton_text": True,
+                "incButton_text0_scale": True,
+                "incButton_text1_scale": True,
+                "incButton_text2_scale": True,
+                "incButton_text3_scale": True,
+                "incButton_text0_align": True,
+                "incButton_text1_align": True,
+                "incButton_text2_align": True,
+                "incButton_text3_align": True,
+                "incButton_borderWidth": True,
+                "forceHeight": True,
+                "numItemsVisible": True,
+                "itemFrame_frameSize": True,
+                "itemFrame_frameColor": True,
+                "frameSize": True,
+                "frameColor": True,
+                "itemFrame_pos": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text0_scale": True,
+                "text_pos": True,
+                "state": True,
+                "decButton_pos": True,
+                "decButton_text": True,
+                "decButton_text_scale": True,
+                "decButton_text_align": True,
+                "decButton_borderWidth": True,
+                "incButton_pos": True,
+                "incButton_text": True,
+                "incButton_text_scale": True,
+                "incButton_text_align": True,
+                "incButton_borderWidth": True,
+                "forceHeight": True,
+                "numItemsVisible": True,
+                "itemFrame_frameSize": True,
+                "itemFrame_frameColor": True,
+                "frameSize": True,
+                "frameColor": True,
+                "itemFrame_pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectScrolledList(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        for key in self.propertiesFrame.propertyList.keys():
-            if key.startswith("incButton") or key.startswith("decButton"):
-                self.propertiesFrame.propertyList[key] = True
         self.propertiesFrame.setupProperties("Scrolled List Properties", element, elementDict)
 
     def createDirectScrolledListItem(self, parent=None):
@@ -567,19 +549,24 @@ class ElementHandler:
                 borderWidth=(2, 2),
                 parent=parent,
                 command=base.messenger.send,
-                extraArgs=["select_list_item_changed"],
-                scale=1)
+                extraArgs=["select_list_item_changed"])
         elementInfo = ElementInfo(element, "DirectScrolledListItem")
         elementInfo.command = "base.messenger.send"
         elementInfo.extraArgs = "'select_list_item_changed'"
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectScrolledListItem(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Scrolled List Item Properties", element, elementDict)
 
     def createDirectLabel(self, parent=None):
@@ -598,17 +585,25 @@ class ElementHandler:
                 state = DGG.NORMAL,
                 pos=pos,
                 text_scale=24,
-                borderWidth=(2, 2),
-                scale=1)
+                borderWidth=(2, 2))
         elementInfo = ElementInfo(element, "DirectLabel")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True,
+                "scale": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "state": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectLabel(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Label Properties", element, elementDict)
 
     def createDirectWaitBar(self, parent=None):
@@ -630,20 +625,24 @@ class ElementHandler:
                 state = DGG.NORMAL,
                 parent=parent)
         elementInfo = ElementInfo(element, "DirectWaitBar")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "text0_scale": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "text0_scale": True,
+                "scale": True,
+                "state": True,
+                "pos": True,
+                "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectWaitBar(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
-        self.propertiesFrame.propertyList["range"] = True
-        self.propertiesFrame.propertyList["value"] = True
-        self.propertiesFrame.propertyList["barBorderWidth"] = True
-        self.propertiesFrame.propertyList["barColor"] = True
-        self.propertiesFrame.propertyList["barTexture"] = True
-        self.propertiesFrame.propertyList["barRelief"] = True
         self.propertiesFrame.setupProperties("Wait Bar Properties", element, elementDict)
 
     def createOkDialog(self, parent=None):
@@ -662,15 +661,21 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "OkDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesOkDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Dialog Properties", element, elementDict)
 
     def createOkCancelDialog(self, parent=None):
@@ -690,15 +695,21 @@ class ElementHandler:
                 parent=parent)
 
         elementInfo = ElementInfo(element, "OkCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesOkCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Ok Cancel Dialog Properties", element, elementDict)
 
     def createYesNoDialog(self, parent=None):
@@ -717,15 +728,21 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "YesNoDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesYesNoDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Dialog Properties", element, elementDict)
 
     def createYesNoCancelDialog(self, parent=None):
@@ -742,15 +759,21 @@ class ElementHandler:
                 pos=self.editorCenter,
                 parent=self.getEditorRootCanvas())
         elementInfo = ElementInfo(element, "YesNoCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesYesNoCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Yes No Cancel Dialog Properties", element, elementDict)
 
     def createRetryCancelDialog(self, parent=None):
@@ -769,15 +792,21 @@ class ElementHandler:
                 pos=pos,
                 parent=parent)
         elementInfo = ElementInfo(element, "RetryCancelDialog")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "text": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "text": True,
+                "state": True,
+                "scale": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesRetryCancelDialog(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.defaultTextPropertySelection()
-        self.propertiesFrame.propertyList["command"] = True
-        self.propertiesFrame.propertyList["image"] = True
-        self.propertiesFrame.propertyList["image_scale"] = True
         self.propertiesFrame.setupProperties("Retry Cancel Dialog Properties", element, elementDict)
 
     def createDirectFrame(self, parent=None):
@@ -799,15 +828,24 @@ class ElementHandler:
                 parent=parent,
                 state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectFrame")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "frameColor": True,
+                "frameSize": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "frameColor": True,
+                "text0_scale": True,
+                "frameSize": True,
+                "state": True,
+                "borderWidth": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectFrame(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        if element.element['text'] == None:
-            self.propertiesFrame.propertyList["text"] = True
-        else:
-            self.propertiesFrame.defaultTextPropertySelection()
         self.propertiesFrame.setupProperties("Frame Properties", element, elementDict)
 
     def createDirectScrolledFrame(self, parent=None):
@@ -832,11 +870,25 @@ class ElementHandler:
                 parent=parent,
                 state = DGG.NORMAL)
         elementInfo = ElementInfo(element, "DirectScrolledFrame")
+        if self.visEditorInAspect2D:
+            elementInfo.valueHasChanged = {
+                "pos": True,
+                "frameColor": True,
+                "frameSize": True,
+                "canvasSize": True,
+                "state": True}
+        else:
+            elementInfo.valueHasChanged = {
+                "frameColor": True,
+                "text0_scale": True,
+                "canvasSize": True,
+                "frameSize": True,
+                "scrollBarWidth": True,
+                "state": True,
+                "borderWidth": True,
+                "pos": True}
         self.setupBind(elementInfo)
         return elementInfo
 
     def propertiesDirectScrolledFrame(self, element, elementDict):
-        self.propertiesFrame.defaultPropertySelection()
-        self.propertiesFrame.propertyList["canvasSize"] = True
-        self.propertiesFrame.propertyList["scrollBarWidth"] = True
         self.propertiesFrame.setupProperties("Scrolled Frame Properties", element, elementDict)

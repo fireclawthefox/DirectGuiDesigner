@@ -31,6 +31,7 @@ class StructurePanel():
             autoUpdateFrameSize=False,
             orientation=DGG.VERTICAL)
         self.sizer = DirectAutoSizer(
+            updateOnWindowResize=False,
             parent=parent,
             child=self.box,
             childUpdateSizeFunc=self.box.refresh)
@@ -82,11 +83,27 @@ class StructurePanel():
     def scroll(self, scrollStep, event):
         self.structureFrame.verticalScroll.scrollStep(scrollStep)
 
+    def recalcScrollSize(self):
+        a = self.structureFrame["canvasSize"][2]
+        b = abs(self.structureFrame["frameSize"][2]) + self.structureFrame["frameSize"][3]
+        scrollDefault = 200
+        s = -(scrollDefault / (a / b))
+
+        self.structureFrame["verticalScroll_scrollSize"] = s
+        self.structureFrame["verticalScroll_pageSize"] = s
+
+
     def resizeFrame(self):
+        preSize = self.sizer["frameSize"]
         self.sizer.refresh()
-        self.structureFrame["frameSize"] = (
-                self.parent["frameSize"][0], self.parent["frameSize"][1],
-                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+        postSize = self.sizer["frameSize"]
+
+        if preSize != postSize:
+            self.structureFrame["frameSize"] = (
+                    self.parent["frameSize"][0], self.parent["frameSize"][1],
+                    self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+
+            self.recalcScrollSize()
 
         #posZ = 0
         #height = DGH.getRealHeight(parent)
@@ -100,17 +117,22 @@ class StructurePanel():
     def refreshStructureTree(self, elementDict, selectedElement):
         self.elementDict = elementDict
         self.selectedElement = selectedElement
+
+        # cleanup the structure tree
         for element in self.structureFrame.getCanvas().getChildren():
             element.removeNode()
 
         self.maxWidth = self.parent["frameSize"][1]-20
         self.itemCounter = 0
+
+        # create the tree
         self.__fillStructureTree(self.getEditorRootCanvas(), 0, 0)
 
         self.structureFrame["canvasSize"] = (
             self.structureFrame["frameSize"][0], self.maxWidth,
             self.itemCounter*-16, 0)
         self.structureFrame.setCanvasSize()
+        self.recalcScrollSize()
 
     def __fillStructureTree(self, root, level, z):
         if "DirectGrid" in root.getName(): return
@@ -184,10 +206,11 @@ class StructurePanel():
             if self.selectedElement is not None and self.selectedElement == elementInfo:
                 btn.setColorScale(1,1,0,1)
 
+            x = self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0]
             # Delete Button
             btnX = DirectButton(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin + 20*parentsLevel + btn.getWidth()*btn.getScale()[0], 0, z+shift),
+                pos=(x, 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__removeElement,
@@ -199,10 +222,11 @@ class StructurePanel():
             btnX.bind(DGG.MWDOWN, self.scroll, [0.01])
             btnX.bind(DGG.MWUP, self.scroll, [-0.01])
 
+            x += margin + btnX.getWidth()
             # Visibility Button
             btnV = DirectCheckBox(
                 relief=DGG.FLAT,
-                pos=(self.structureFrame["frameSize"][0] + 8 + margin*2 + 20*parentsLevel + btn.getWidth()*btn.getScale()[0] + btnX.getWidth(), 0, z+shift),
+                pos=(x, 0, z+shift),
                 frameSize=(-8, 8, -8, 8),
                 frameColor=(0,0,0,0),
                 command=self.__toggleElementVisibility,
@@ -218,6 +242,38 @@ class StructurePanel():
             btnV.bind(DGG.MWUP, self.scroll, [-0.01])
             self.maxWidth = max(self.maxWidth, btnV.getX() + 8)
 
+            x += margin + btnV.getWidth()
+            # Move Up Button
+            btnUp = DirectButton(
+                relief=DGG.FLAT,
+                pos=(x, 0, z+shift),
+                frameSize=(-8, 8, -8, 8),
+                frameColor=(0,0,0,0),
+                command=self.__moveElementInStructure,
+                extraArgs=[-2, elementInfo],
+                image="icons/ArrowUpSmall.png",
+                image_scale=8,
+                parent=self.structureFrame.getCanvas())
+            btnUp.setTransparency(TransparencyAttrib.M_multisample)
+            btnUp.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnUp.bind(DGG.MWUP, self.scroll, [-0.01])
+
+            x += margin + btnUp.getWidth()
+            # Move Down Button
+            btnDown = DirectButton(
+                relief=DGG.FLAT,
+                pos=(x, 0, z+shift),
+                frameSize=(-8, 8, -8, 8),
+                frameColor=(0,0,0,0),
+                command=self.__moveElementInStructure,
+                extraArgs=[1, elementInfo],
+                image="icons/ArrowDownSmall.png",
+                image_scale=8,
+                parent=self.structureFrame.getCanvas())
+            btnDown.setTransparency(TransparencyAttrib.M_multisample)
+            btnDown.bind(DGG.MWDOWN, self.scroll, [0.01])
+            btnDown.bind(DGG.MWUP, self.scroll, [-0.01])
+
     def __selectElement(self, elementInfo, args=None):
         if elementInfo is not None:
             base.messenger.send("selectElement", [elementInfo, args])
@@ -229,6 +285,10 @@ class StructurePanel():
     def __toggleElementVisibility(self, toggle, elementInfo):
         if elementInfo is not None:
             base.messenger.send("toggleElementVisibility", [elementInfo.element])
+
+    def __moveElementInStructure(self, direction, elementInfo):
+        if elementInfo is not None:
+            base.messenger.send("moveElementInStructure", [direction, elementInfo])
 
     def __collapseElement(self, collapse, elementInfo):
         if elementInfo is not None:

@@ -119,41 +119,64 @@ A .widget definition file is necessary to add support for your custom widget in 
 |displayName|String|The name of the widget as it will be displayed in the toolbox|No|
 |className|String|The class name in the module which should be used|No|
 |classfilePath|String|Path to the python file which should be imported|No|
-|enabledProperties|List|A list of properties that should be enabled for the widget in the properties editor|No|
+|baseWidget|String|The name of the widget this custom widget is based uppon, e.g. DirectFrame or DirectButton|Yes|
 |customProperties|List|A list information for custom properties|No|
 |addItemFunctionName|String|A special function name which should be called when other elements get parented to this widget|Yes|
 |removeItemFunctionName|String|A special function name which should be called when other elements get removed from this widget|Yes|
 |importPath|String|The import statement which should be added to exported python file|No|
 
 #### Custom Properties
-The customProperties list can contain any custom options that are not available through the enabledProperties definition.
-This list consist of dictionaries of the following structure:
+The customProperties list will contain definition dictionaries of your widgets properties.
+These dictionaries will have the following structure, not all options are mandatory though, see below for further information:
 <code><pre>{
-&emsp;&emsp;&emsp;&emsp;"displayName":"The display name",
-&emsp;&emsp;&emsp;&emsp;"propertyName":"thePropertiesName",
-&emsp;&emsp;&emsp;&emsp;"propertyType":"type",
-&emsp;&emsp;&emsp;&emsp;"customCommandName":"someOptionalCustomCommandName"
-}</pre></code>
+&emsp;&emsp;&emsp;&emsp;"internalName":"thePropertiesName",
+&emsp;&emsp;&emsp;&emsp;"visiblename":"The display name",
+&emsp;&emsp;&emsp;&emsp;"internalType":"int",
+&emsp;&emsp;&emsp;&emsp;"editType":"integer",
+&emsp;&emsp;&emsp;&emsp;"nullable":false,
+&emsp;&emsp;&emsp;&emsp;"supportStates":false,
+&emsp;&emsp;&emsp;&emsp;"valueOptions":"",
+&emsp;&emsp;&emsp;&emsp;"isInitOption":"",
+&emsp;&emsp;&emsp;&emsp;"getFunctionName":"",
+&emsp;&emsp;&emsp;&emsp;"setFunctionName":"",
+&emsp;&emsp;&emsp;&emsp;"addToExtraOptions":"",
+&emsp;&emsp;&emsp;&emsp;"loaderFunc":"",
+&emsp;&emsp;&emsp;&emsp;"postProcessFunctionName":"",
+&emsp;&emsp;&emsp;&emsp;"canGetValueFromElement":""
+}
+</pre></code>
 
-The <code>displayName</code> could be anything and will be used to display as header in the properties editor on top of that specific property.<br />
-The <code>propertyName</code> is the actual name of the property by which it can be set on the widget<br />
-The <code>propertyType</code> must be one of from the list below<br />
-The <code>customCommandName</code> a name of a function that will be available through the getattr command on the widget (Note: "command" must be set as propertyType for this to have any effect)
+|Name|Type|Description|Optional|values|
+|---|---|---|---|---|
+|internalName|String|The name of this property as it is used on the widget e.g. widget["internalName"]|No||
+|visiblename|String|The visible name of this property as it will be shown in the Designer|No||
+|internalType|String|The data type representation for this property|Yes|int", "float", "bool", "str", "function", "list", "tuple", "object"|
+|editType|String|The edit type of this property. This value can also be automatically determined by the internalType|Yes|"integer", "float", "bool", "text", "base2", "base3", "base4", "command", "path", "optionmenu", "list", "tuple", "resetFrameSize", "fitToChildren"|
+|nullable|Bool|Determines if this property can be set to None|Yes||
+|supportStates|Bool|Determines if this property support the multiple states of a widget (e.g. the Buttons normal/hover/clicked/disabled state)|Yes||
+|valueOptions|Value|The value or values stored in here will be used dependent on the type of property. In case it's a selectable option, the value must be a dictionary consisting of user visible key and code value If it is a runnable command, it should be the name of the function to be called from the element itself.|Yes||
+|isInitOption|Bool|define if this is a value only to be set at initialization time.|Yes||
+|getFunctionName|String|Function name to get the property|Yes||
+|setFunctionName|String|Function name to set the property|Yes||
+|addToExtraOptions|Bool|This is for special properties which can not be directly set on the item in the editor but should rather be stored seprately|Yes||
+|loaderFunc|String|A function which is passed the value entered in the editor to process it prior to setting it in the property (e.g. loadFont or loadModel) The value can be given to the function by using value. E.g. "loader.loadFont(value) which will call the load Font given the properties value|Yes||
+|postProcessFunctionName|String|A Function name which will be called after setting this property|Yes||
+|canGetValueFromElement|Bool|Determines if the value of this property can be got directly from it using the ["internalName"]|Yes||
 
+The values for the internalType are defined as follow:
 |Name|Description|
 |---|---|
-|int|Integer values|
+|integer|Integer values|
 |float|Floating point values|
-|vbase2|Two floating point values|
-|vbase3|Three floating point values|
-|vbase4|Four floating point values|
+|base2|Two floating point values|
+|base3|Three floating point values|
+|base4|Four floating point values|
 |text|A String entry|
-|image|An image path selection|
+|path|A path selection|
 |bool|A Bolean selection|
-|orientation|An orientation (Horizontal/Vertical/Inverted Vertical) selection|
-|relief|A selection for the relief value|
-|placement|A selection of top/left/right/bottom|
+|tuple|An extendable list of values representing a python tuple|
+|list|An extendable list of values representing a python list|
+|optionMenu|A selection using the values in valueOptions|
 |command|Used in combination with the customCommandName value to create a button that will call the command|
-
-## Known Bugs and missing features
-- Some element specific options aren't available in the properties editor yet
+|resetFrameSize|A special command to reset the widgets frameSize|
+|fitToChildren|A special command to fit the widgets frameSize to its children|

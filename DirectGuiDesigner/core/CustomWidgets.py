@@ -3,16 +3,15 @@ import logging
 import json
 import importlib
 import pathlib
+import types
 from panda3d.core import ConfigVariableString
-from DirectGuiDesigner.panels.PropertiesPanel import PropertyInfo
+from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 
 class CustomWidget():
-    def __init__(self, dispName, clsName, clsFile, enabledProps, customProperties, module, addItemFunction, removeItemFunction, importPath):
+    def __init__(self, dispName, clsName, clsFile, module, addItemFunction, removeItemFunction, importPath):
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile
-        self.enabledProperties = enabledProps
-        self.customProperties = customProperties
         self.module = module
         self.addItemFunction = addItemFunction
         self.removeItemFunction = removeItemFunction
@@ -30,6 +29,10 @@ class CustomWidgets():
         self.toolbox = toolbox
         self.elementHandler = elementHandler
         self.customWidgetsDict = {}
+        self.customWidgetDefinitions = {}
+
+    def getCustomWidgetDefinitions(self):
+        return self.customWidgetDefinitions
 
     def loadCustomWidgets(self):
         configFiles = []
@@ -63,19 +66,59 @@ class CustomWidgets():
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            customProperties = []
+            if configFileContent["className"] not in self.customWidgetDefinitions:
+               self.customWidgetDefinitions[configFileContent["className"]] = []
+
+            if "baseWidget" in configFileContent:
+                if configFileContent["baseWidget"] in DEFINITIONS:
+                    self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[configFileContent["baseWidget"]]
+
             if "customProperties" in configFileContent:
                 for prop in configFileContent["customProperties"]:
-                    command = prop["customCommandName"] if "customCommandName" in prop else None
-                    selectionDict = prop["customSelectionDict"] if "customSelectionDict" in prop else None
-                    customProperties.append(PropertyInfo(prop["displayName"], prop["propertyName"], prop["propertyType"], command, selectionDict))
+
+                    t = None
+                    if "internalType" in prop:
+                        if prop["internalType"] == "int":
+                            t = int
+                        elif prop["internalType"] == "float":
+                            t = float
+                        elif prop["internalType"] == "bool":
+                            t = bool
+                        elif prop["internalType"] == "str":
+                            t = str
+                        elif prop["internalType"] == "function":
+                            t = types.FunctionType
+                        elif prop["internalType"] == "list":
+                            t = list
+                        elif prop["internalType"] == "tuple":
+                            t = tuple
+                        elif prop["internalType"] == "object":
+                            t = object
+
+                    self.customWidgetDefinitions[configFileContent["className"]].append(
+                        Definition(
+                            prop["internalName"],
+                            prop["visiblename"],
+                            t,
+                            prop["editType"] if "editType" in prop else None,
+                            prop["nullable"] if "nullable" in prop else False,
+                            prop["supportStates"] if "supportStates" in prop else False,
+                            prop["valueOptions"] if "valueOptions" in prop else None,
+                            prop["isInitOption"] if "isInitOption" in prop else False,
+                            prop["getFunctionName"] if "getFunctionName" in prop else None,
+                            prop["setFunctionName"] if "setFunctionName" in prop else None,
+                            prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
+                            prop["loaderFunc"] if "loaderFunc" in prop else None,
+                            prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
+                            prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True
+                        ))
+
+
 
             self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
                 configFileContent["displayName"],
                 configFileContent["className"],
                 configFileContent["classfilePath"],
-                configFileContent["enabledProperties"],
-                customProperties,
                 module,
                 configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
                 configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,

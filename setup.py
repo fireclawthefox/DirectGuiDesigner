@@ -1,3 +1,4 @@
+import sys
 from setuptools import setup
 
 include = [
@@ -7,6 +8,12 @@ include = [
     "**/models/**",
 ]
 
+linux64 = "manylinux1_x86_64"
+if sys.version_info >= (3, 10):
+    linux64 = "manylinux2010_x86_64"
+mac64 = "macosx_10_6_x86_64"
+win64 = "win_amd64"
+
 setup(
     name="DirectGuiDesigner",
     author = "Fireclaw the Fox",
@@ -15,15 +22,15 @@ setup(
         "build_apps": {
             "include_patterns": include,
             "gui_apps": {
-                "directguidesigner": "DirectGuiDesigner.py",
+                "directguidesigner": "main.py",
             },
             "plugins": [
                 "pandagl",
             ],
             "platforms": [
-                "manylinux1_x86_64",
-                #"macosx_10_6_x86_64",
-                "win_amd64",
+                linux64,
+                #mac64,
+                win64,
             ],
 
             # make sure to contain the icon directory of the browser

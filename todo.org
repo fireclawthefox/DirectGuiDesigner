@@ -1,0 +1,73 @@
+* DONE Maximize problem
+  - If maximized with the maximize button, the gui isn't refreshed corectly in it's height
+* DONE Property Editor
+  - [X] Entries are wrongly indented after frame reset buttons
+  - [X] Only show in-between headers if needed
+  - [X] Some textfields don't have correct size and buttons next to them are to far right
+* DONE Correctly rename files for git
+* DONE Fix up DirectGuiExtension things
+* DONE Scroll bar fixes when zoomed-in/-out
+* DONE Add a slider to controll the zoom level
+* TODO Zoom interaction
+** TODO Add Button to reset zoom level
+** DONE Add Menu entries to controll zoom level and reset zoom
+   - [X] Reset Zoom
+   - [X] Zoom In
+   - [X] Zoom Out
+* TODO Enhance help dialog
+** TODO Move setup of this dialog outside into its own directory (probably something like help) with all description files and stuff.
+** TODO Make dialog paged with sub-categories like general, editing, saving, exporting, loading, etc
+* TODO New Element property handling
+** TODO Add definition file with definitions for all widget !properties!
+   Definition should define the following
+   - [X] Internal Name
+   - [X] Visible Name
+   - [X] Internal Type
+   - [X] Editor Type
+   - [X] Nullable
+   - [ ] Translatable
+   - [X] Support widget states
+
+   What to get from the definition in the item itself?
+   - [X] Default values
+   - [X] sub-components and their types
+   - [X] type of the widget
+
+   widget.options() to get all options from that specific widget, no sub-options
+   #TODO: We need this: keyword, [default, current, ...
+   print(self.btn._optionInfo)
+
+   # get sub-groups
+   groups = []
+   for key, value in self.btn._DirectGuiBase__componentInfo.items():
+       group = value[4]
+       if group not in groups:
+           groups.append(group)
+
+   for component in groups:
+       print(component)
+       
+       if component in self.btn._DirectGuiBase__componentInfo:
+           # Call cget on the component.
+	   print("component")
+	   print(self.btn._DirectGuiBase__componentInfo[component])
+       else:
+           # If this is a group name, call cget for one of
+           # the components in the group.
+           for info in self.btn._DirectGuiBase__componentInfo.values():
+               if info[4] == component:
+                   print("sub component")
+                   print(info)
+                   break
+** DONE Rework and simplify property editor to simply walk through definitions for the given widget and sub-widgets and display them according to the property type definition
+   - [X] Walk through all element parts
+   - [X] Call function to set up correct property edit feature
+** TODO Fix not supported values
+   - [ ] Suppress Mouse
+   - [ ] Suppress Keyboard
+   - [X] All states
+
+* TODO New Element saving/storing handling
+** TODO Update the save feature to correctly handle all properties and sub-groups
+* TODO Add canvas size changing to either settings or task bar
+

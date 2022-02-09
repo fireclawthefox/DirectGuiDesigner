@@ -10,11 +10,15 @@ import logging
 
 from direct.gui import DirectGuiGlobals as DGG
 from panda3d.core import NodePath
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
+from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes
 
 class JSONTools:
     functionMapping = {
         "base":{"initialText":"get"},
-        "text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}}
+        #"text":{"align":"align", "scale":"scale", "pos":"pos", "fg":"fg", "bg":"bg", "wordwrap":"wordwrap"}
+        }
 
     subOptionMapping = {
         "image":{"scale":"scale", "pos":"pos"}}
@@ -42,8 +46,9 @@ class JSONTools:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth", "initialText"]
 
-    def getProjectJSON(self, guiElementsDict, getEditorFrame, usePixel2D):
+    def getProjectJSON(self, guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D):
         self.guiElementsDict = guiElementsDict
+        self.allWidgetDefinitions = allWidgetDefinitions
         jsonElements = {}
         jsonElements["ProjectVersion"] = "0.2a"
         jsonElements["EditorConfig"] = {}
@@ -51,7 +56,17 @@ class JSONTools:
         jsonElements["EditorConfig"]["canvasSize"] = repr(getEditorFrame()["canvasSize"])
         jsonElements["ComponentList"] = {}
 
-        self.writeSortedContent(None, jsonElements)
+        self.writtenRoots = []
+
+        self.getAllEditorPlacers = getAllEditorPlacers
+
+        roots = [None] + getAllEditorPlacers()
+
+        for root in roots:
+            self.writeSortedContent(root, jsonElements)
+            for name, elementInfo in self.guiElementsDict.items():
+                if elementInfo.parent not in self.writtenRoots:
+                    self.writeSortedContent(elementInfo.parent, jsonElements)
 
         return jsonElements
 
@@ -61,6 +76,7 @@ class JSONTools:
         respectively their children."""
         for name, elementInfo in self.guiElementsDict.items():
             if elementInfo.parent == root:
+                if root not in self.writtenRoots: self.writtenRoots.append(root)
                 try:
                     jsonElements["ComponentList"][elementInfo.name] = self.__createJSONEntry(elementInfo)
                 except Exception as e:
@@ -70,21 +86,19 @@ class JSONTools:
 
     def __createJSONEntry(self, elementInfo):
         return {
-                "element":self.__writeElement(elementInfo),
-                "type":elementInfo.type,
-                "parent":self.__writeParent(elementInfo.parent),
-                "command":elementInfo.command,
-                "extraArgs":elementInfo.extraArgs,
-                "extraOptions":elementInfo.extraOptions,
-            }
+            "element":self.__writeElement(elementInfo),
+            "type":elementInfo.type,
+            "parent":self.__writeParent(elementInfo.parent),
+            "command":elementInfo.command,
+            "extraArgs":elementInfo.extraArgs,
+            "extraOptions":elementInfo.extraOptions,
+        }
 
     def __writeParent(self, parent):
         if parent is None: return "root"
-        self.canvasParents = [
-            "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
-            "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
+        canvasParents = self.getAllEditorPlacers()
         if type(parent) == type(NodePath()):
-            if parent.getName() in self.canvasParents:
+            if parent in canvasParents:
                 return parent.getName().replace("canvas", "a2d")
             else:
                 return parent.getName()
@@ -93,11 +107,6 @@ class JSONTools:
         return parent.element.guiId
 
     def __getAllSubcomponents(self, componentName, component, componentPath):
-        # we only respect the first state for now
-        #if componentName[-1:].isdigit():
-        #    if not componentName[-1:].endswith("0"):
-        #        return
-
         if componentPath == "":
             componentPath = componentName
         else:
@@ -129,15 +138,17 @@ class JSONTools:
                 reprFunc = lambda x: x
             else:
                 reprFunc = repr
-            #if name[-1:].isdigit():
-            #    if name[-1:].endswith("0"):
-            #        # first state of this component
-            #        name = name[:-1]
             if name != "":
                 name += "_"
+
             for key in self.functionMapping.keys():
                 if key in name:
                     for option, value in self.functionMapping[key].items():
+                        if name + option not in elementInfo.valueHasChanged \
+                        or not elementInfo.valueHasChanged[name + option]:
+                            # skip unchanged values
+                            continue
+
                         if callable(getattr(element, value)):
                             optionValue = reprFunc(getattr(element, value)())
                         else:
@@ -149,16 +160,96 @@ class JSONTools:
             for key in self.subOptionMapping.keys():
                 if key in name:
                     for option, value in self.subOptionMapping[key].items():
+                        if name + option not in elementInfo.valueHasChanged \
+                        or not elementInfo.valueHasChanged[name + option]:
+                            # skip unchanged values
+                            continue
                         optionValue = reprFunc(element[value])
                         elementJson[name + option] = optionValue
+
+            if type(element).__name__ in self.allWidgetDefinitions:
+                wdList = self.allWidgetDefinitions[type(element).__name__]
+                for wd in wdList:
+                    if wd.internalName == "" \
+                    or wd.editType == PropertyEditTypes.command:
+                        continue
+                    subElementInfo = ElementInfo(
+                        element,
+                        elementInfo.type,
+                        elementInfo.name,
+                        elementInfo.parent,
+                        elementInfo.extraOptions,
+                        elementInfo.createAfter,
+                        elementInfo.customImportPath)
+                    #subElementInfo.element = element
+
+                    value = PropertyHelper.getValues(wd, subElementInfo)
+                    if hasattr(element, "options"):
+                        for option in element.options():
+                            if option[DGG._OPT_DEFAULT] == wd.internalName \
+                            and option[DGG._OPT_VALUE] == value:
+                                hasChanged = False
+                                break
+
+                            n = name + option[DGG._OPT_DEFAULT]
+                            notInValueHasChanged = (
+                                n not in elementInfo.valueHasChanged \
+                                or not elementInfo.valueHasChanged[n])
+
+                            hasChanged = True
+                            if option[DGG._OPT_DEFAULT] == wd.internalName \
+                            and notInValueHasChanged:
+                                hasChanged = False
+                                break
+                    else:
+                        newWidget = type(element)()
+                        needCheck = True
+                        n = name + wd.internalName
+                        skipCheck = False
+                        if n in elementInfo.valueHasChanged \
+                        and elementInfo.valueHasChanged[n]:
+                            hasChanged = True
+                            skipCheck = True
+
+                        if not skipCheck:
+                            if wd.getFunctionName is not None:
+                                if type(wd.getFunctionName) == str:
+                                    try:
+                                        origWidgetValue = getattr(
+                                            newWidget,
+                                            wd.getFunctionName)()
+                                    except Exception:
+                                        # this may happen if something hasn't
+                                        # been set in the vanilla widget. E.g.
+                                        # the geom of an OnscreenGeom. So there
+                                        # must have been changes in the widget
+                                        needCheck = False
+                                else:
+                                    origWidgetValue = wd.getFunctionName()
+                            else:
+                                origWidgetValue = getattr(
+                                    newWidget,
+                                    wd.internalName)
+
+                            if needCheck and value == origWidgetValue:
+                                hasChanged = False
+
+                    if hasChanged:
+                        elementJson[name + wd.internalName] = reprFunc(value)
+
             if not hasattr(element, "options"): continue
 
             for option in element.options():
                 if option[DGG._OPT_DEFAULT] in self.ignoreOptions: continue
+                if name + option[DGG._OPT_DEFAULT] not in elementInfo.valueHasChanged \
+                or not elementInfo.valueHasChanged[name + option[DGG._OPT_DEFAULT]]:
+                    # skip unchanged values
+                    continue
 
                 containsIgnore = False
                 for ignoreOption in self.ignoreOptionsWithSub:
-                    if option[DGG._OPT_DEFAULT] in self.keepExactIgnoreOptionsWithSub: continue
+                    if option[DGG._OPT_DEFAULT] in self.keepExactIgnoreOptionsWithSub:
+                        continue
                     if option[DGG._OPT_DEFAULT].startswith(ignoreOption):
                         containsIgnore
                         break

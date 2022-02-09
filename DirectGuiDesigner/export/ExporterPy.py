@@ -26,12 +26,12 @@ class ExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, tooltip, usePixel2D):
+    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, tooltip, usePixel2D):
         self.guiElementsDict = guiElementsDict
         self.customWidgetHandler = customWidgetHandler
 
         jsonTools = JSONTools()
-        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, usePixel2D)
+        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D)
         self.jsonElements = self.jsonFileContent["ComponentList"]
 
         self.createdParents = ["root"]
@@ -85,10 +85,7 @@ from panda3d.core import (
     LVecBase4f,
     TextNode
 )"""
-        if ConfigVariableBool("create-executable-scripts", False).getValue():
-            self.content += """
-# We need showbase to make this script directly runnable
-from direct.showbase.ShowBase import ShowBase"""
+
         self.content += """
 
 class GUI:
@@ -106,7 +103,7 @@ class GUI:
             self.content += line + "\n"
 
         for radioButton, others in self.radiobuttonDict.items():
-            self.content += " "*8 + "{}.setOthers([".format(radioButton)
+            self.content += " "*8 + f"{radioButton}.setOthers(["
             for other in others:
                 self.content += other + ","
             self.content += "])\n"
@@ -118,9 +115,9 @@ class GUI:
                 if name not in self.customWidgetAddDict: continue
                 for element in self.customWidgetAddDict[name]:
                     if widget.addItemFunction is not None:
-                        self.content += " "*8 + "self.{}.{}({})\n".format(name, widget.addItemFunction, element)
+                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element})\n"
 
-            if elementInfo["parent"] == "root":
+            if elementInfo["parent"] == "root" or elementInfo["parent"].startswith("a2d"):
                 topLevelItems.append(name)
 
         # Create helper functions for toplevel elements
@@ -128,22 +125,23 @@ class GUI:
             self.content += "\n"
             self.content += " "*4 + "def show(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.show()\n".format(name)
+                self.content += " "*8 + f"self.{name}.show()\n"
 
             self.content += "\n"
             self.content += " "*4 + "def hide(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.hide()\n".format(name)
+                self.content += " "*8 + f"self.{name}.hide()\n"
 
             self.content += "\n"
             self.content += " "*4 + "def destroy(self):\n"
             for name in topLevelItems:
-                self.content += " "*8 + "self.{}.destroy()\n".format(name)
+                self.content += " "*8 + f"self.{name}.destroy()\n"
 
         # Make script executable if desired
         if ConfigVariableBool("create-executable-scripts", False).getValue():
             self.content += """
-# Create a ShowBase instance to make this gui directly runnable
+# We need a showbase instance to make this script directly runnable
+from direct.showbase.ShowBase import ShowBase
 app = ShowBase()\n"""
             if usePixel2D:
                 self.content += "GUI(app.pixel2d)\n"
@@ -198,22 +196,27 @@ app = ShowBase()\n"""
     def __createElement(self, name, elementInfo):
         extraOptions = ""
         for optionName, optionValue in elementInfo["extraOptions"].items():
-            extraOptions += " "*12 + "{}={},\n".format(optionName, optionValue)
+            v = optionValue
+            if "others" in optionName:
+                continue
+            if type(v) is list:
+                v = f"[{','.join(map(str, v))}]"
+            elif type(v) is str:
+                v = f"'{v}'"
+            extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """
         self.{} = {}(
-{}{}{}{}        )\n""".format(
+{}{}        )\n""".format(
             name,
             elementInfo["type"],
             self.__writeElementOptions(name, elementInfo),
-            " "*12 + "command={},\n".format(elementInfo["command"]) if elementInfo["command"] is not None else "",
-            " "*12 + "extraArgs=[{}],\n".format(elementInfo["extraArgs"]) if elementInfo["extraArgs"] is not None else "",
             extraOptions,
             )
         if elementInfo["element"]["transparency"] != "M_none":
-            elementCode += " "*8 +"self.{}.setTransparency({})\n".format(name, elementInfo["element"]["transparency"])
+            elementCode += " "*8 + f"self.{name}.setTransparency({elementInfo['element']['transparency']})\n"
 
         if elementInfo["type"] == "DirectScrolledListItem":
-            self.postSetupCalling.append(" "*8 + "self.{}.addItem(self.{})".format(elementInfo["parent"], name))
+            self.postSetupCalling.append(" "*8 + f"self.{elementInfo['parent']}.addItem(self.{name})")
 
         return elementCode
 
@@ -221,20 +224,22 @@ app = ShowBase()\n"""
         elementOptions = ""
         indent = " "*12
 
-        if elementInfo["type"] == "DirectOptionMenu":
-            elementOptions += indent + "items=['item1'],\n"
-
         for optionKey, optionValue in elementInfo["element"].items():
+            if optionKey.endswith("transparency"):
+                continue
+
+            if optionKey in elementInfo["extraOptions"].keys():
+                continue
+
+            elementOptions += f"{indent}{optionKey} = {optionValue},\n"
+
+        for optionKey, optionValue in elementInfo["extraOptions"].items():
             if optionKey == "others":
                 others = []
                 for other in optionValue:
                     others.append("self.{}".format(other))
                 self.radiobuttonDict["self.{}".format(name)] = others
                 continue
-            elif optionKey == "transparency":
-                continue
-
-            elementOptions += indent + optionKey + "=" + optionValue + ",\n"
 
         if elementInfo["parent"] != "root":
             self.canvasParents = [

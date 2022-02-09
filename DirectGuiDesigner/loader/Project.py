@@ -14,11 +14,13 @@ import tempfile
 from direct.showbase.DirectObject import DirectObject
 from direct.gui import DirectGuiGlobals as DGG
 from DirectGuiDesigner.dialogs.PathSelect import PathSelect
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 from panda3d.core import TextNode
+from panda3d.core import NodePath
 from panda3d.core import LVecBase2f, LVecBase3f, LVecBase4f, LPoint2f, LPoint3f, LPoint4f
 from panda3d.core import LVecBase2, LVecBase3, LVecBase4, LPoint2, LPoint3, LPoint4
-
 
 import importlib.util
 
@@ -33,7 +35,7 @@ class ProjectLoader(DirectObject):
     ignoreMap = []#"state"]
     ignoreComponentSplit = ["text", "image"]
 
-    def __init__(self, filePath, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, exceptionLoading=False, tooltip=None, newProjectCall=None):
+    def __init__(self, filePath, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, allWidgetDefinitions, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
@@ -45,6 +47,7 @@ class ProjectLoader(DirectObject):
         self.visualEditor = visualEditorInfo.element
         self.getEditorPlacer = getEditorPlacer
         self.hasErrors = False
+        self.allWidgetDefinitions = allWidgetDefinitions
         if exceptionLoading:
             self.excLoad()
         else:
@@ -155,7 +158,8 @@ class ProjectLoader(DirectObject):
             if elementInfo is None: return
 
             if parentName in self.canvasParents:
-                elementInfo.element.reparentTo(self.getEditorPlacer(parentName))
+                parent = self.getEditorPlacer(parentName)
+                elementInfo.element.reparentTo(parent)
 
             # load the extra definitions of the element info
             elementInfo.command = jsonElementInfo["command"]
@@ -183,6 +187,13 @@ class ProjectLoader(DirectObject):
                     self.__setProperties(entry, jsonElementInfo)
                     self.elementDict[entry.element.guiId] = entry
                     self.parentMap[jsonElementName] = entry.element.guiId
+            elif type(parent) == type(NodePath()):
+                elementInfo.parent = parent
+                self.__setProperties(elementInfo, jsonElementInfo)
+                if elementInfo.type == "DirectScrolledFrame":
+                    elementInfo.element.setScrollBarWidth()
+                self.elementDict[elementInfo.element.guiId] = elementInfo
+                self.parentMap[jsonElementName] = elementInfo.element.guiId
             else:
                 elementInfo.parent = parent
                 if parent is not None and "DirectScrolledList" == parent.type:
@@ -195,6 +206,7 @@ class ProjectLoader(DirectObject):
                     if parentWidget.addItemFunction is not None:
                         # call custom widget add function
                         getattr(parent.element, parentWidget.addItemFunction)(elementInfo.element)
+
                 self.__setProperties(elementInfo, jsonElementInfo)
                 if elementInfo.type == "DirectScrolledFrame":
                     elementInfo.element.setScrollBarWidth()
@@ -211,51 +223,53 @@ class ProjectLoader(DirectObject):
             if name in self.prioList:
                 tempOptionDict[name] = value
             else:
-                self.__setProp(elementInfo, name, value)
+                self.__setProperty(elementInfo, name, value)
 
         for name, value in tempOptionDict.items():
-            self.__setProp(elementInfo, name, value)
+            self.__setProperty(elementInfo, name, value)
 
         if "frameSize" not in tempOptionDict.keys():
             elementInfo.element.resetFrameSize()
 
-    def __setProp(self, elementInfo, name, value):
-        try:
-            options = self.extraOptions + elementInfo.element.options()
-            if name in self.ignoreMap: return
-            if name in options:
-                self.__setPropValue(name, elementInfo.element, value)
-            else:
-                components = name.split("_")
-                found = False
-                for comp in components:
-                    if comp in self.ignoreComponentSplit:
-                        found = True
-                if len(components) > 1 and not found:
-                    componentName = components[0]
-                    if elementInfo.element.hascomponent(componentName):
-                        component = elementInfo.element.component(componentName)
-                        optionName = components[-1]
-                        self.__setPropValue(optionName, component, value)
-                    else:
-                        try:
-                            self.__setPropValue(name, elementInfo.element, value)
-                        except Exception as e:
-                            logging.exception("Unsupported Property or item {}".format(name))
-                else:
-                    self.__setPropValue(name, elementInfo.element, value)
-        except Exception as e:
-            logging.exception("Couldn't set Property with Name '{}' to {}".format(name, value))
-            self.hasErrors = True
+    def __setProperty(self, elementInfo, name, value):
+        if elementInfo.type in self.allWidgetDefinitions:
+            element = elementInfo.element
+            subElementInfo = None
+            optionName = name
+            if "_" in name:
+                parts = name.split("_")
+                componentName = "_".join(parts[:-1])
+                optionName = parts[-1]
 
-    def __setPropValue(self, optionName, component, value):
-        funcName = "set{}{}".format(optionName[0].upper(), optionName[1:])
-        if optionName in self.setAsOption:
-            component[optionName] = eval(value)
-        elif optionName in self.funcMap.keys():
-            funcName = self.funcMap[optionName]
-            getattr(component, funcName)(eval(value))
-        elif hasattr(component, funcName):
-            getattr(component, funcName)(eval(value))
+                if elementInfo.element.hascomponent(componentName):
+                    element = elementInfo.element.component(componentName)
+
+                    subElementInfo = ElementInfo(
+                        element,
+                        type(element).__name__,
+                        elementInfo.name,
+                        elementInfo.parent,
+                        elementInfo.extraOptions,
+                        elementInfo.createAfter,
+                        elementInfo.customImportPath)
+                elif elementInfo.element.hascomponent(componentName + "0"):
+                    # we do have stated component here
+                    for i in range(elementInfo.element['numStates']):
+                        element = elementInfo.element.component(componentName + f"{i}")
+
+                        subElementInfo = ElementInfo(
+                            element,
+                            type(element).__name__,
+                            elementInfo.name,
+                            elementInfo.parent,
+                            elementInfo.extraOptions,
+                            elementInfo.createAfter,
+                            elementInfo.customImportPath)
+
+            ei = subElementInfo if subElementInfo is not None else elementInfo
+            wdList = self.allWidgetDefinitions[ei.type]
+            for wd in wdList:
+                if wd.internalName == optionName:
+                    PropertyHelper.setValue(wd, ei, eval(value))
         else:
-            component[optionName] = eval(value)
+            logging.error(f"Couldn't load property {name}. No Definition available.")

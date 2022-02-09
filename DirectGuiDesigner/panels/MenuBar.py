@@ -100,6 +100,7 @@ class MenuBar(DirectObject):
             DirectMenuSeparator(),
             DirectMenuItemEntry("Delete Element", base.messenger.send, ["removeElement"]),
             DirectMenuItemEntry("Copy", base.messenger.send, ["copyElement"]),
+            DirectMenuItemEntry("Cut", base.messenger.send, ["cutElement"]),
             DirectMenuItemEntry("Paste", base.messenger.send, ["pasteElement"]),
             DirectMenuItemEntry("Copy options", base.messenger.send, ["copyOptions"]),
             DirectMenuItemEntry("Paste options", base.messenger.send, ["pasteOptions"]),
@@ -126,6 +127,6 @@ class MenuBar(DirectObject):
             popupMenu_frameColor=color,
             highlightColor=color[2])
 
-        self.menuBar.addItem(self.file)
-        self.menuBar.addItem(self.view)
+        self.menuBar.addItem(self.file, skipRefresh=True)
+        self.menuBar.addItem(self.view, skipRefresh=True)
         self.menuBar.addItem(self.tools)

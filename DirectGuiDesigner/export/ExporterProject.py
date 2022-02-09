@@ -19,11 +19,13 @@ from DirectGuiDesigner.dialogs.PathSelect import PathSelect
 from DirectGuiDesigner.tools.JSONTools import JSONTools
 
 class ExporterProject:
-    def __init__(self, fileName, guiElementsDict, getEditorFrame, usePixel2D, exceptionSave=False, autosave=False, tooltip=None):
+    def __init__(self, fileName, guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D, exceptionSave=False, autosave=False, tooltip=None):
         self.guiElementsDict = guiElementsDict
         self.getEditorFrame = getEditorFrame
+        self.getAllEditorPlacers = getAllEditorPlacers
         self.usePixel2D = usePixel2D
         self.isAutosave = False
+        self.allWidgetDefinitions = allWidgetDefinitions
 
         if exceptionSave:
             self.excSave()
@@ -93,7 +95,7 @@ class ExporterProject:
         if not overwrite: return
 
         jsonTools = JSONTools()
-        jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, self.getEditorFrame, self.usePixel2D)
+        jsonElements = jsonTools.getProjectJSON(self.guiElementsDict, self.getEditorFrame, self.getAllEditorPlacers, self.allWidgetDefinitions, self.usePixel2D)
         with open(path, 'w') as outfile:
             json.dump(jsonElements, outfile, indent=2)
 
