@@ -77,7 +77,7 @@ class PropertyHelper:
                     elementInfo.valueHasChanged[nameAdd + propName] = True
                 elementInfo.extraOptions[propName] = value
         elif definition.setFunctionName:
-            if getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
+            if PropertyHelper.getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
                 elementInfo.valueHasChanged[nameAdd + propName] = True
             oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
@@ -105,7 +105,7 @@ class PropertyHelper:
             oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
                 logging.debug(f"Try set value by direct key access. {propName}={value}")
-                if getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
+                if PropertyHelper.getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
                     elementInfo.valueHasChanged[nameAdd + propName] = True
                 # try to set the new value on the property
                 elementInfo.element[propName] = value
