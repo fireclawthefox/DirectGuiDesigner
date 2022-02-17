@@ -392,7 +392,7 @@ DEFINITIONS = {
         COMMAND_ARGS_DEFINITION
     ],
     "DirectScrolledFrame":DEFAULT_DEFINITIONS + [
-        Definition('canvasSize', 'Canvas Size', object, editType=t.base2),
+        Definition('canvasSize', 'Canvas Size', object, editType=t.base4),
         Definition('manageScrollBars', 'Manage Scroll Bars', bool),
         Definition('autoHideScrollBars', 'Auto Hide Scroll Bars', bool),
         Definition('scrollBarWidth', 'Scroll Bar Width', float),
