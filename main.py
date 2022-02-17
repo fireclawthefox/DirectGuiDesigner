@@ -208,7 +208,7 @@ class DirectGuiDesigner(ShowBase):
 
         self.openDialogCloseFunctions = []
 
-        self.copyOptionsElement = None
+        self.copyOptionsElementInfo = None
 
         self.copiedElement = None
 
@@ -954,14 +954,15 @@ class DirectGuiDesigner(ShowBase):
         #parent = t.elementInfo.element.getParent()
         pos = t.elementInfo.element.getPos()
 
-        if pos.x < self.editorFrame.getEditorCanvasSize()[0]:
-            t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[0])
-        if pos.x > self.editorFrame.getEditorCanvasSize()[1]:
-            t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[1])
-        if pos.z < self.editorFrame.getEditorCanvasSize()[2]:
-            t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[2])
-        if pos.z > self.editorFrame.getEditorCanvasSize()[3]:
-            t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[3])
+        if ConfigVariableBool("keep-in-canvas", False).getValue():
+            if pos.x < self.editorFrame.getEditorCanvasSize()[0]:
+                t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[0])
+            if pos.x > self.editorFrame.getEditorCanvasSize()[1]:
+                t.elementInfo.element.setX(self.editorFrame.getEditorCanvasSize()[1])
+            if pos.z < self.editorFrame.getEditorCanvasSize()[2]:
+                t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[2])
+            if pos.z > self.editorFrame.getEditorCanvasSize()[3]:
+                t.elementInfo.element.setZ(self.editorFrame.getEditorCanvasSize()[3])
         self.refreshProperties(t.elementInfo)
 
         if t.hasMoved:
@@ -1261,6 +1262,11 @@ class DirectGuiDesigner(ShowBase):
                     self.setParentOfElement(newElement.element, newParent)
                     newElement.element.reparentTo(newParent)
                 self.__copyOptions(elementInfo.element, newElement.element, parent is not None)
+                for key, changed in self.elementInfo.valueHasChanged.items():
+                    p = ["pos"] if parent is not None else []
+                    if key in ["hpr", "scale"] + p:
+                        continue
+                    self.newElement.valueHasChanged[key] = changed
 
                 self.__copyBranch(elementInfo, newElement.element)
 
@@ -1279,11 +1285,15 @@ class DirectGuiDesigner(ShowBase):
 
     def copyOptions(self):
         if self.selectedElement is None: return
-        self.copyOptionsElement = self.selectedElement.element
+        self.copyOptionsElementInfo = self.selectedElement
 
     def pasteOptions(self):
-        if self.copyOptionsElement is None: return
-        self.__copyOptions(self.copyOptionsElement, self.selectedElement.element)
+        if self.copyOptionsElementInfo is None: return
+        self.__copyOptions(self.copyOptionsElementInfo.element, self.selectedElement.element)
+        for key, changed in self.copyOptionsElementInfo.valueHasChanged.items():
+            if key in ["hpr", "scale", "pos"]:
+                continue
+            self.selectedElement.valueHasChanged[key] = changed
 
     def __copyOptions(self, elementFrom, elementTo, copyPosition=False):
         if elementFrom is None or elementTo is None: return
