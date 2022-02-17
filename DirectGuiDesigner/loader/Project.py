@@ -252,24 +252,34 @@ class ProjectLoader(DirectObject):
                         elementInfo.extraOptions,
                         elementInfo.createAfter,
                         elementInfo.customImportPath)
-                elif elementInfo.element.hascomponent(componentName + "0"):
-                    # we do have stated component here
-                    for i in range(elementInfo.element['numStates']):
-                        element = elementInfo.element.component(componentName + f"{i}")
 
-                        subElementInfo = ElementInfo(
-                            element,
-                            type(element).__name__,
-                            elementInfo.name,
-                            elementInfo.parent,
-                            elementInfo.extraOptions,
-                            elementInfo.createAfter,
-                            elementInfo.customImportPath)
+                # This wouldn't have worked but we shouldn't get in there anyway
+                #elif elementInfo.element.hascomponent(componentName + "0"):
+                #    # we do have stated component here
+                #    for i in range(elementInfo.element['numStates']):
+                #        element = elementInfo.element.component(componentName + f"{i}")
+
+                #        subElementInfo = ElementInfo(
+                #            element,
+                #            type(element).__name__,
+                #            elementInfo.name,
+                #            elementInfo.parent,
+                #            elementInfo.extraOptions,
+                #            elementInfo.createAfter,
+                #            elementInfo.customImportPath)
 
             ei = subElementInfo if subElementInfo is not None else elementInfo
             wdList = self.allWidgetDefinitions[ei.type]
             for wd in wdList:
                 if wd.internalName == optionName:
                     PropertyHelper.setValue(wd, ei, eval(value))
+                    # don't need to continue, we only have one value to set
+                    break
+            if subElementInfo is not None:
+                # update the changed dictionary
+                if len(subElementInfo.valueHasChanged.keys()) > 0:
+                    key = next(iter(subElementInfo.valueHasChanged))
+                    changed = subElementInfo.valueHasChanged[key]
+                    elementInfo.valueHasChanged[name] = changed
         else:
             logging.error(f"Couldn't load property {name}. No Definition available.")

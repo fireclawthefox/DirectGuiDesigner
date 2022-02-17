@@ -104,10 +104,11 @@ class PropertyHelper:
             # get the old value of the property
             oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
-                logging.debug(f"Try set value by direct key access. {propName}={value}")
-                if PropertyHelper.getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
+                v = valueAsString if valueAsString != "" else value
+                logging.debug(f"Try set value by direct key access. {propName}={v}")
+                if PropertyHelper.getValues(definition, elementInfo) != v:
                     elementInfo.valueHasChanged[nameAdd + propName] = True
-                # try to set the new value on the property
+                # try to set the new value as original type on the property
                 elementInfo.element[propName] = value
 
                 # in addition, if this should be stored in extra options
