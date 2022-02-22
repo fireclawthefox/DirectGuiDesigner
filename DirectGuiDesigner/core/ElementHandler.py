@@ -95,6 +95,9 @@ class ElementHandler:
             elementInfo.valueHasChanged = {
                 "text": True,
                 "text0_scale": True,
+                "text1_scale": True,
+                "text2_scale": True,
+                "text3_scale": True,
                 "pos": True,
                 "borderWidth": True}
         self.setupBind(elementInfo)
@@ -252,6 +255,9 @@ class ElementHandler:
             elementInfo.valueHasChanged = {
                 "text": True,
                 "text0_scale": True,
+                "text1_scale": True,
+                "text2_scale": True,
+                "text3_scale": True,
                 "pos": True,
                 "indicator_text_scale": True,
                 "indicator_borderWidth": True,
@@ -326,6 +332,9 @@ class ElementHandler:
             elementInfo.valueHasChanged = {
                 "text": True,
                 "text0_scale": True,
+                "text1_scale": True,
+                "text2_scale": True,
+                "text3_scale": True,
                 "indicator_text_scale": True,
                 "indicator_borderWidth": True,
                 "pos": True,
@@ -510,13 +519,25 @@ class ElementHandler:
                 "state": True,
                 "decButton_pos": True,
                 "decButton_text": True,
-                "decButton_text_scale": True,
-                "decButton_text_align": True,
+                "decButton_text0_scale": True,
+                "decButton_text1_scale": True,
+                "decButton_text2_scale": True,
+                "decButton_text3_scale": True,
+                "decButton_text0_align": True,
+                "decButton_text1_align": True,
+                "decButton_text2_align": True,
+                "decButton_text3_align": True,
                 "decButton_borderWidth": True,
                 "incButton_pos": True,
                 "incButton_text": True,
-                "incButton_text_scale": True,
-                "incButton_text_align": True,
+                "incButton_text0_scale": True,
+                "incButton_text1_scale": True,
+                "incButton_text2_scale": True,
+                "incButton_text3_scale": True,
+                "incButton_text0_align": True,
+                "incButton_text1_align": True,
+                "incButton_text2_align": True,
+                "incButton_text3_align": True,
                 "incButton_borderWidth": True,
                 "forceHeight": True,
                 "numItemsVisible": True,
@@ -562,6 +583,9 @@ class ElementHandler:
             elementInfo.valueHasChanged = {
                 "text": True,
                 "text0_scale": True,
+                "text1_scale": True,
+                "text2_scale": True,
+                "text3_scale": True,
                 "borderWidth": True}
         self.setupBind(elementInfo)
         return elementInfo
