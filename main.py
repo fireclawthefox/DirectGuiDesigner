@@ -1261,12 +1261,7 @@ class DirectGuiDesigner(ShowBase):
                         newParent = self.getEditorRootCanvas().find("**/{}".format(parent.getName()))
                     self.setParentOfElement(newElement.element, newParent)
                     newElement.element.reparentTo(newParent)
-                self.__copyOptions(elementInfo.element, newElement.element, parent is not None)
-                for key, changed in self.elementInfo.valueHasChanged.items():
-                    p = ["pos"] if parent is not None else []
-                    if key in ["hpr", "scale"] + p:
-                        continue
-                    self.newElement.valueHasChanged[key] = changed
+                self.__copyOptions(elementInfo, newElement, parent is not None)
 
                 self.__copyBranch(elementInfo, newElement.element)
 
@@ -1279,6 +1274,11 @@ class DirectGuiDesigner(ShowBase):
             parent = editorFrame
 
         self.theCutElement.element.reparentTo(self.selectedElement.element)
+
+        for elementName, elementInfo in self.elementDict.items():
+            if elementInfo == self.theCutElement:
+                self.elementDict[elementName].parent = self.selectedElement
+
         self.theCutElement = None
 
         base.messenger.send("refreshStructureTree")
@@ -1289,13 +1289,11 @@ class DirectGuiDesigner(ShowBase):
 
     def pasteOptions(self):
         if self.copyOptionsElementInfo is None: return
-        self.__copyOptions(self.copyOptionsElementInfo.element, self.selectedElement.element)
-        for key, changed in self.copyOptionsElementInfo.valueHasChanged.items():
-            if key in ["hpr", "scale", "pos"]:
-                continue
-            self.selectedElement.valueHasChanged[key] = changed
+        self.__copyOptions(self.copyOptionsElementInfo, self.selectedElement)
 
-    def __copyOptions(self, elementFrom, elementTo, copyPosition=False):
+    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False):
+        elementFrom = elementInfoFrom.element
+        elementTo = elementInfoTo.element
         if elementFrom is None or elementTo is None: return
         try:
             # store for undo
@@ -1341,6 +1339,13 @@ class DirectGuiDesigner(ShowBase):
             if copyPosition:
                 elementTo.setPos(pos)
                 newOptions["pos"] = elementTo.getPos()
+
+            # make sure the changed values are set correct
+            for key, changed in elementInfoFrom.valueHasChanged.items():
+                p = ["pos"] if copyPosition else []
+                if key in ["hpr", "scale"] + p:
+                    continue
+                elementInfoTo.valueHasChanged[key] = changed
 
             base.messenger.send("addToKillRing",
                 [elementTo, "copy", "properties", oldOptions, newOptions])
