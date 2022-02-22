@@ -219,7 +219,7 @@ DIRECT_FRAME_DEFINITIONS = DEFAULT_DEFINITIONS + [
     # A midground geometry item
     Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True),
     # A foreground text node
-    Definition('text', 'Text', object, editType=t.list, nullable=True),
+    Definition('text', 'Text', object, editType=t.list, nullable=True, postProcessFunctionName='resetFrameSize'),
     # Change default value of text mayChange flag from 0
     # (OnscreenTexeditType=t.py) to 1
     Definition('textMayChange', 'Text May Change', bool)
@@ -298,8 +298,8 @@ DEFINITIONS = {
     "DirectEntry":DIRECT_FRAME_DEFINITIONS + [
         # Define type of DirectGuiWidget
         Definition('entryFont', 'Entry Font', object, editType=t.path),
-        Definition('width', 'Entry Width', float),
-        Definition('numLines', 'Num Lines', int),
+        Definition('width', 'Entry Width', float, postProcessFunctionName='resetFrameSize'),
+        Definition('numLines', 'Num Lines', int, postProcessFunctionName='resetFrameSize'),
         Definition('focus', 'Focus', bool),
         Definition('cursorKeys', 'Cursor Keys', bool),
         Definition('obscured', 'Obscured', bool),
@@ -309,7 +309,7 @@ DEFINITIONS = {
         Definition('backgroundFocus', 'Background Focus', bool),
         # Text used for the PGEntry text node
         # NOTE: This overrides the DirectFrame text option
-        Definition('initialText', 'Initial Text', str),
+        Definition('initialText', 'Initial Text', str, isInitOption=False, addToExtraOptions=True, getFunctionName="get", setFunctionName="enterText"),
         # Enable or disable text overflow scrolling
         Definition('overflow', 'Overflow', bool),
         # Command to be called on hitting Enter
