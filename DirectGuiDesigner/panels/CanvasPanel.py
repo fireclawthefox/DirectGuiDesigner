@@ -7,7 +7,7 @@ from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
 #from direct.gui.DirectScrolledFrame import DirectScrolledFrame
-from directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
+from DirectGuiDesigner.directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
 
 from direct.directtools.DirectGrid import DirectGrid
 

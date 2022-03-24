@@ -30,7 +30,7 @@ from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectButton import DirectButton
-from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
+from DirectGuiDesigner.directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectCheckButton import DirectCheckButton
 
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser

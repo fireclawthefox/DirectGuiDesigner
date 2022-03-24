@@ -1,44 +1,34 @@
-import sys
-from setuptools import setup
+import setuptools
 
-include = [
-    "**/fonts/*",
-    "**/icons/*.png",
-    "**/LICENSE",
-    "**/models/**",
-]
+with open("README.md", "r") as fh:
+    long_description = fh.read()
 
-linux64 = "manylinux1_x86_64"
-if sys.version_info >= (3, 10):
-    linux64 = "manylinux2010_x86_64"
-mac64 = "macosx_10_6_x86_64"
-win64 = "win_amd64"
-
-setup(
+setuptools.setup(
     name="DirectGuiDesigner",
-    author = "Fireclaw the Fox",
-    author_email = "info@grimfang-studio.org",
-    options = {
-        "build_apps": {
-            "include_patterns": include,
-            "gui_apps": {
-                "directguidesigner": "main.py",
-            },
-            "plugins": [
-                "pandagl",
-            ],
-            "platforms": [
-                linux64,
-                #mac64,
-                win64,
-            ],
-
-            # make sure to contain the icon directory of the browser
-            "package_data_dirs": {
-                "DirectFolderBrowser": [
-                    ("DirectFolderBrowser/icons*", "", {}),
-                ],
-            },
-        }
-    }
+    version="22.03",
+    author="Fireclaw",
+    author_email="fireclawthefox@gmail.com",
+    description="An editor for the Panda3D engines DirectGUI UI framework",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/fireclawthefox/DirectGuiDesigner",
+    packages=setuptools.find_packages(),
+    include_package_data=True,
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: End Users/Desktop",
+        "Topic :: Artistic Software",
+        "Topic :: Multimedia :: Graphics",
+        "Topic :: Multimedia :: Graphics :: Editors",
+    ],
+    install_requires=[
+        'panda3d',
+        'DirectFolderBrowser',
+        'DirectGuiExtension'
+    ],
+    python_requires='>=3.6',
 )

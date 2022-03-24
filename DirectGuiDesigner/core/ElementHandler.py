@@ -10,13 +10,13 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectEntry import DirectEntry
-from directGuiOverrides.DirectEntryScroll import DirectEntryScroll
+from DirectGuiDesigner.directGuiOverrides.DirectEntryScroll import DirectEntryScroll
 from direct.gui.DirectCheckBox import DirectCheckBox
 from direct.gui.DirectCheckButton import DirectCheckButton
-from directGuiOverrides.DirectOptionMenu import DirectOptionMenu
+from DirectGuiDesigner.directGuiOverrides.DirectOptionMenu import DirectOptionMenu
 from direct.gui.DirectRadioButton import DirectRadioButton
-from directGuiOverrides.DirectSlider import DirectSlider
-from directGuiOverrides.DirectScrollBar import DirectScrollBar
+from DirectGuiDesigner.directGuiOverrides.DirectSlider import DirectSlider
+from DirectGuiDesigner.directGuiOverrides.DirectScrollBar import DirectScrollBar
 from direct.gui.DirectScrolledList import DirectScrolledList
 from direct.gui.DirectScrolledList import DirectScrolledListItem
 from direct.gui.DirectWaitBar import DirectWaitBar
