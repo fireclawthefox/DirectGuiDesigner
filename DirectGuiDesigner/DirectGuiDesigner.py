@@ -69,6 +69,8 @@ class DirectGuiDesigner(DirectObject):
 
         self.parent = parent
 
+        self.logfile = ""
+
         self.dirty = False
         self.hasSaved = False
         self.killRing = KillRing()
@@ -221,7 +223,7 @@ class DirectGuiDesigner(DirectObject):
         self.accept("saveProject", self.save)
         self.accept("exportProject", self.export)
         self.accept("loadProject", self.load)
-        self.accept("toggleGrid", self.mainView.editorFrame.toggleGrid)
+        self.accept("DirectGuiDesigner_toggleGrid", self.mainView.editorFrame.toggleGrid)
         self.accept("toggleVisualEditorParent", self.mainView.editorFrame.toggleVisualEditorParent)
         self.accept("setVisualEditorParent", self.mainView.editorFrame.setVisualEditorParent)
         self.accept("setVisualEditorCanvasSize", self.mainView.editorFrame.setVisualEditorCanvasSize)
@@ -1270,7 +1272,7 @@ class DirectGuiDesigner(DirectObject):
         self.dlgSettings.txtSearchPaths.bind(DGG.EXIT, self.tt.hide)
 
         self.dlgSettings.setPos = self.dlgSettings.frmMain.setPos
-        self.dlgSettings.setPos(self.screenWidthPx//2, 0, -self.screenHeightPx//2)
+        self.dlgSettings.setPos(base.getSize()[0] // 2, 0, -base.getSize()[1] // 2)
         self.dlgSettings.cbAskForQuit["indicatorValue"] = not ConfigVariableBool("skip-ask-for-quit", False).getValue()
         self.dlgSettings.cbExecutableScripts["indicatorValue"] = ConfigVariableBool("create-executable-scripts", False).getValue()
         self.dlgSettings.cbShowToolbar["indicatorValue"] = ConfigVariableBool("show-toolbar", True).getValue()
@@ -1433,7 +1435,7 @@ Log messages are written to:
 
 
 \1small\1LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button\2
-""".format(logfile)
+""".format(self.logfile)
         self.dlgHelp = OkDialog(
             text=text,
             state=DGG.NORMAL,

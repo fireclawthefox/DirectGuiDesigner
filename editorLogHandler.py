@@ -57,3 +57,5 @@ def setupLog(editor_name):
             prcFile.write("skip-ask-for-quit #f\n")
             prcFile.write("create-executable-scripts #f\n")
             prcFile.write("show-toolbar #t\n")
+
+    return logfile

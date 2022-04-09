@@ -17,7 +17,7 @@ loadPrcFileData(
     ime-aware #t
     """)
 
-setupLog("DirectGuiDesigner")
+logfilepath = setupLog("DirectGuiDesigner")
 
 base = ShowBase()
 
@@ -34,6 +34,7 @@ def set_clean_name():
 base.accept("request_dirty_name", set_dirty_name)
 base.accept("request_clean_name", set_clean_name)
 
-DirectGuiDesigner(base.pixel2d)
+dgd = DirectGuiDesigner(base.pixel2d)
+dgd.logfile = logfilepath
 
 base.run()

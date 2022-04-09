@@ -172,6 +172,7 @@ class ToolBar(DirectObject):
             frameColor=(0,0,0,1))
         self.toolBar.addItem(placeholder)
 
+        print(self.grid)
         self.cb_grid = DirectCheckBox(
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
@@ -292,11 +293,11 @@ class ToolBar(DirectObject):
             self.toolBar.hide()
 
         self.accept("setVisualEditorParent", self.setVisualEditorParent)
-        self.accept("toggleGrid", self.setGrid)
-        #self.accept("toggleGrid", self.setVisualEditorParent)
+        self.accept("DirectGuiDesigner_toggleGrid", self.setGrid)
+        #self.accept("DirectGuiDesigner_toggleGrid", self.setVisualEditorParent)
 
     def toggleGrid(self, selection):
-        base.messenger.send("toggleGrid", [selection])
+        base.messenger.send("DirectGuiDesigner_toggleGrid", [selection])
 
     def setGrid(self, selection):
         self.cb_grid['isChecked'] = selection

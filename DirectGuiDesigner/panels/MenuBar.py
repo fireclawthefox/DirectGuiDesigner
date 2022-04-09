@@ -66,7 +66,7 @@ class MenuBar(DirectObject):
             highlightColor=color[2])
 
         viewEntries = [
-            DirectMenuItemEntry("Toggle Grid", base.messenger.send, ["toggleGrid", [not self.grid.isHidden()]]),
+            DirectMenuItemEntry("Toggle Grid", base.messenger.send, ["DirectGuiDesigner_toggleGrid", [not self.grid.isHidden()]]),
             DirectMenuItemEntry("Toggle Scale", base.messenger.send, ["toggleVisualEditorParent"]),
             DirectMenuSeparator(),
             DirectMenuItemEntry("Zoom-in", base.messenger.send, ["zoom-in"]),
