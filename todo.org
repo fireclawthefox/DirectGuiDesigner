@@ -18,14 +18,13 @@
 ** TODO Move setup of this dialog outside into its own directory (probably something like help) with all description files and stuff.
 ** TODO Make dialog paged with sub-categories like general, editing, saving, exporting, loading, etc
 * TODO New Element property handling
-** TODO Add definition file with definitions for all widget !properties!
+** DONE Add definition file with definitions for all widget !properties!
    Definition should define the following
    - [X] Internal Name
    - [X] Visible Name
    - [X] Internal Type
    - [X] Editor Type
    - [X] Nullable
-   - [ ] Translatable
    - [X] Support widget states
 
    What to get from the definition in the item itself?
@@ -67,7 +66,12 @@
    - [ ] Suppress Keyboard
    - [X] All states
 
-* TODO New Element saving/storing handling
-** TODO Update the save feature to correctly handle all properties and sub-groups
+* DONE New Element saving/storing handling
+** DONE Update the save feature to correctly handle all properties and sub-groups
 * TODO Add canvas size changing to either settings or task bar
+* Bugs
+** TODO Problem with some default stated properties like text_scale in pixel2d values
+   - Need to store them initally for all states, not just the first
+** TODO Problem with Text in stated properties
+   - if text is entered for just one state, it should be stored as string, not list in the exported python scripts
 
