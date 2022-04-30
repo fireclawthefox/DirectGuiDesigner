@@ -172,17 +172,16 @@ class ToolBar(DirectObject):
             frameColor=(0,0,0,1))
         self.toolBar.addItem(placeholder)
 
-        print(self.grid)
         self.cb_grid = DirectCheckBox(
             frameSize=(-24,24,-24,24),
             frameColor=buttonColor,
             relief=DGG.FLAT,
             text_scale=12,
-            image="icons/GridOff.png" if self.grid.isHidden() else "icons/GridOn.png",
+            image="icons/GridOn.png",
             uncheckedImage="icons/GridOff.png",
             checkedImage="icons/GridOn.png",
             image_scale=24,
-            isChecked=not self.grid.isHidden(),
+            isChecked=True,
             command=self.toggleGrid)
         self.cb_grid.setTransparency(TransparencyAttrib.M_multisample)
         self.cb_grid.bind(DGG.ENTER, self.tt.show, ["Toggle Grid (Ctrl-G)"])
