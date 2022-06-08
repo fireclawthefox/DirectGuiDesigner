@@ -70,6 +70,7 @@ class DirectGuiDesigner(DirectObject):
         self.parent = parent
 
         self.logfile = ""
+        self.prcFileName = ""
 
         self.dirty = False
         self.hasSaved = False
@@ -1325,7 +1326,7 @@ class DirectGuiDesigner(DirectObject):
     def hideSettings(self, accept):
         base.messenger.send("reregisterKeyboardEvents")
         if accept:
-            with open(prcFileName, "w") as prcFile:
+            with open(self.prcFileName, "w") as prcFile:
                 line = "skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f")
                 prcFile.write(line)
                 loadPrcFileData("", line)

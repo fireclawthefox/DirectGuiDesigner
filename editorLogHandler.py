@@ -42,7 +42,7 @@ def setupLog(editor_name):
     consoleHandler = StreamHandler()
     logging.basicConfig(
         level=logging.DEBUG,
-        handlers=[handler])#, consoleHandler])
+        handlers=[handler, consoleHandler])
     prcFileName = os.path.join(basePath, f".{editor_name}.prc")
     if os.path.exists(prcFileName):
         loadPrcFile(Filename.fromOsSpecific(prcFileName))
@@ -58,4 +58,4 @@ def setupLog(editor_name):
             prcFile.write("create-executable-scripts #f\n")
             prcFile.write("show-toolbar #t\n")
 
-    return logfile
+    return logfile, prcFileName
