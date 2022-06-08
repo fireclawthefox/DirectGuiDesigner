@@ -13,7 +13,7 @@ from panda3d.core import (
     ConfigVariableSearchPath,
 )
 
-def setupLog(editor_name):
+def setupLog(editor_name, logToConsole=False):
     # check if we have a config file
     home = os.path.expanduser("~")
     basePath = os.path.join(home, f".{editor_name}")
@@ -40,9 +40,14 @@ def setupLog(editor_name):
     logfile = os.path.join(logPath, f"{editor_name}.log")
     handler = TimedRotatingFileHandler(logfile)
     consoleHandler = StreamHandler()
+    logHandlers = [handler]
+    if logToConsole:
+        logHandlers.append(consoleHandler)
+
     logging.basicConfig(
         level=logging.DEBUG,
-        handlers=[handler, consoleHandler])
+        handlers=logHandlers)
+
     prcFileName = os.path.join(basePath, f".{editor_name}.prc")
     if os.path.exists(prcFileName):
         loadPrcFile(Filename.fromOsSpecific(prcFileName))
