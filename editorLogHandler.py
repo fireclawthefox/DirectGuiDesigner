@@ -13,7 +13,7 @@ from panda3d.core import (
     ConfigVariableSearchPath,
 )
 
-def setupLog(editor_name, logToConsole=False):
+def setupLog(editor_name, log_to_console=False):
     # check if we have a config file
     home = os.path.expanduser("~")
     basePath = os.path.join(home, f".{editor_name}")
@@ -37,20 +37,20 @@ def setupLog(editor_name, logToConsole=False):
             # this file does not have a date ending
             pass
 
-    logfile = os.path.join(logPath, f"{editor_name}.log")
-    handler = TimedRotatingFileHandler(logfile)
+    log_file = os.path.join(logPath, f"{editor_name}.log")
+    handler = TimedRotatingFileHandler(log_file)
     consoleHandler = StreamHandler()
     logHandlers = [handler]
-    if logToConsole:
+    if log_to_console:
         logHandlers.append(consoleHandler)
 
     logging.basicConfig(
         level=logging.DEBUG,
         handlers=logHandlers)
 
-    prcFileName = os.path.join(basePath, f".{editor_name}.prc")
-    if os.path.exists(prcFileName):
-        loadPrcFile(Filename.fromOsSpecific(prcFileName))
+    config_file = os.path.join(basePath, f".{editor_name}.prc")
+    if os.path.exists(config_file):
+        loadPrcFile(Filename.fromOsSpecific(config_file))
 
         # make sure to load our custom paths
         paths_cfg = ConfigVariableSearchPath("custom-model-path", "").getValue()
@@ -58,9 +58,9 @@ def setupLog(editor_name, logToConsole=False):
             line = "model-path {}".format(str(path))
             loadPrcFileData("", line)
     else:
-        with open(prcFileName, "w") as prcFile:
+        with open(config_file, "w") as prcFile:
             prcFile.write("skip-ask-for-quit #f\n")
             prcFile.write("create-executable-scripts #f\n")
             prcFile.write("show-toolbar #t\n")
 
-    return logfile, prcFileName
+    return log_file, config_file

@@ -69,8 +69,8 @@ class DirectGuiDesigner(DirectObject):
 
         self.parent = parent
 
-        self.logfile = ""
-        self.prcFileName = ""
+        self.log_file = ""
+        self.config_file = ""
 
         self.dirty = False
         self.hasSaved = False
@@ -1326,7 +1326,7 @@ class DirectGuiDesigner(DirectObject):
     def hideSettings(self, accept):
         base.messenger.send("reregisterKeyboardEvents")
         if accept:
-            with open(self.prcFileName, "w") as prcFile:
+            with open(self.config_file, "w") as prcFile:
                 line = "skip-ask-for-quit {}\n".format("#t" if self.dlgSettings.cbAskForQuit["indicatorValue"] == 0 else "#f")
                 prcFile.write(line)
                 loadPrcFileData("", line)
@@ -1361,9 +1361,9 @@ class DirectGuiDesigner(DirectObject):
 
             #    # Change the current files attributes to contain the "hidden" attribute
             #    kernel32 = WinDLL("kernel32")
-            #    attrs = stat(prcFileName).st_file_attributes
+            #    attrs = stat(self.config_file).st_file_attributes
             #    attrs = attrs | FILE_ATTRIBUTE_HIDDEN
-            #    kernel32.SetFileAttributesW(prcFileName, attrs)
+            #    kernel32.SetFileAttributesW(self.config_file, attrs)
 
 
         self.dlgSettings.frmMain.hide()
@@ -1436,7 +1436,7 @@ Log messages are written to:
 
 
 \1small\1LMB = Left Mouse Button | RMB = Right Mouse Button | MMB = Middle Mouse Button\2
-""".format(self.logfile)
+""".format(self.log_file)
         self.dlgHelp = OkDialog(
             text=text,
             state=DGG.NORMAL,
