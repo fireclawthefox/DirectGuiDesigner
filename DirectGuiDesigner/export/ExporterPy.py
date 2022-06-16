@@ -204,6 +204,10 @@ app = ShowBase()\n"""
                 v = f"[{','.join(map(str, v))}]"
             elif type(v) is str and optionName not in writeAsIsList:
                 v = f"'{v}'"
+
+            if optionName.endswith("Sound"):
+                v = f"loader.loadSfx({v})"
+
             extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """
         self.{} = {}(

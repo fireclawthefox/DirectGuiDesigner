@@ -715,7 +715,7 @@ class PropertiesPanel(DirectObject):
             value = text
             if text == "" and definition.nullable:
                 value = None
-            elif definition.loaderFunc is not None:
+            elif definition.loaderFunc is not None and text != "":
                 try:
                     if type(definition.loaderFunc) is str:
                         value = eval(definition.loaderFunc)

@@ -124,6 +124,12 @@ class Definition:
         else:
             self.editType = editType
 
+        if self.editType == t.path:
+            # Better use the extra options, some paths can be taken from the
+            # element but some are a bit of a hustle to get again
+            self.canGetValueFromElement = False
+            self.addToExtraOptions = True
+
 
 POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True, getFunctionName="getPos", setFunctionName="setPos")
 ROTATION_DEFINITION = Definition('hpr', 'Rotation (H/P/R)', object, editType=t.base3, nullable=True, getFunctionName="getHpr", setFunctionName="setHpr")
@@ -172,7 +178,7 @@ DEFAULT_DEFINITIONS = [
 ]
 
 GEOM_DEFINITIONS = [
-    Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True, getFunctionName="getGeom", setFunctionName="setGeom"),
+    Definition('geom', 'Geometry', object, editType=t.path, getFunctionName="getGeom", setFunctionName="setGeom"),
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
     Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
@@ -181,7 +187,7 @@ GEOM_DEFINITIONS = [
     #Definition('sort', 'Sort', int)
 ]
 IMAGE_DEFINITIONS = [
-    Definition('image', 'Image', object, editType=t.path, addToExtraOptions=True, getFunctionName="getImage", setFunctionName="setImage"),
+    Definition('image', 'Image', object, editType=t.path, getFunctionName="getImage", setFunctionName="setImage"),
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
     Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
@@ -204,7 +210,7 @@ TEXT_DEFINITIONS = [
     #Definition('wordwrap', 'Wordwrap', object, editType=t.float), #TODO
     #Definition('drawOrder', 'Draw Order', object, editType=t.integer, nullable=True), #TODO
     Definition('decal', 'Decal', int),
-    Definition('font', 'Font', object, editType=t.path, addToExtraOptions=True, loaderFunc="loader.loadFont(value)", nullable=True),
+    Definition('font', 'Font', object, editType=t.path, loaderFunc="loader.loadFont(value)", nullable=True),
     #Definition('parent', 'Parent', object),
     #Definition('sort', 'Sort', int, getFunctionName="textNode.getSort", nullable=True),
     Definition('mayChange', 'May Change', bool),
@@ -215,9 +221,9 @@ TEXT_DEFINITIONS = [
 DIRECT_FRAME_DEFINITIONS = DEFAULT_DEFINITIONS + [
     # Frame can have:
     # A background texture
-    Definition('image', 'Image', object, editType=t.path, addToExtraOptions=True),
+    Definition('image', 'Image', object, editType=t.path),
     # A midground geometry item
-    Definition('geom', 'Geometry', object, editType=t.path, addToExtraOptions=True),
+    Definition('geom', 'Geometry', object, editType=t.path),
     # A foreground text node
     Definition('text', 'Text', object, editType=t.list, nullable=True, postProcessFunctionName='resetFrameSize'),
     # Change default value of text mayChange flag from 0
@@ -232,8 +238,8 @@ DIRECT_BUTTON_DEFINITIONS = DIRECT_FRAME_DEFINITIONS + [
     # Which mouse buttons can be used to click the button
     COMMAND_BUTTONS_DEFINITION,
     # Sounds to be used for button events
-    Definition('rolloverSound', 'Rollover Sound', object, editType=t.path),
-    Definition('clickSound', 'Click Sound', object, editType=t.path),
+    Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
+    Definition('clickSound', 'Click Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
     # Can only be specified at time of widget contruction
     # Do the text/graphics appear to move when the button is clicked
     Definition('pressEffect', 'Press Effect', bool, isInitOption=True),
@@ -324,8 +330,8 @@ DEFINITIONS = {
         Definition('focusOutCommand', 'Focus-Out Command', types.FunctionType),
         Definition('focusOutExtraArgs', 'Focus-Out Command Extra Args', list),
         # Sounds to be used for button events
-        Definition('rolloverSound', 'Rollover Sound', object, editType=t.path),
-        Definition('clickSound', 'Click Sound', object, editType=t.path),
+        Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
+        Definition('clickSound', 'Click Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
         Definition('autoCapitalize', 'Auto Capitalize', bool),
         Definition('autoCapitalizeAllowPrefixes', 'Auto Capitalize Allow Prefixes', list),
         Definition('autoCapitalizeForcePrefixes', 'Auto Capitalize Force Prefixes', list)
