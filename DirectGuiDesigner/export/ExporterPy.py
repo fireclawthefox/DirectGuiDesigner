@@ -199,9 +199,10 @@ app = ShowBase()\n"""
             v = optionValue
             if "others" in optionName:
                 continue
+            writeAsIsList = ["command"]
             if type(v) is list:
                 v = f"[{','.join(map(str, v))}]"
-            elif type(v) is str:
+            elif type(v) is str and optionName not in writeAsIsList:
                 v = f"'{v}'"
             extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """
