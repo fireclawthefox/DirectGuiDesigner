@@ -18,6 +18,9 @@ class PropertyHelper:
 
     def getValues(definition, elementInfo):
         propName = PropertyHelper.getPropertyName(definition)
+        nameAdd = f"{elementInfo.subComponentName}_" if elementInfo.subComponentName != "" else ""
+        propName = nameAdd + propName
+
         if propName in elementInfo.extraOptions:
             value = elementInfo.extraOptions[propName]
             logging.debug(f"Get property from extra options. {propName}={value}")
@@ -44,9 +47,14 @@ class PropertyHelper:
                 component = elementInfo.element
                 prop = propName
                 if propName == "text_align":
-                    return elementInfo.element.component("text0").align
+                    if hasattr(elementInfo.element, "component"):
+                        return elementInfo.element.component("text0").align
+                    else:
+                        # we may already have the component at hand
+                        return elementInfo.element.align
                 if "_" in propName:
-                    component = elementInfo.element.component(propName)
+                    if hasattr(elementInfo.element, "component"):
+                        component = elementInfo.element.component(propName)
                     prop = propName.split("_")[-1]
                 if hasattr(component, prop):
                     value = getattr(component, prop)
@@ -58,13 +66,15 @@ class PropertyHelper:
     def setValue(definition, elementInfo, value, valueAsString=""):
         propName = PropertyHelper.getPropertyName(definition)
         nameAdd = f"{elementInfo.subComponentName}_" if elementInfo.subComponentName != "" else ""
+        propName = nameAdd + propName
+
         if definition.isInitOption:
             # This is an initialization option, so we just store it as extra options
             if valueAsString != "":
                 logging.debug(f"Store value as string in extra options. {propName}={valueAsString}")
 
                 if elementInfo.extraOptions[propName] != valueAsString:
-                    elementInfo.valueHasChanged[nameAdd + propName] = True
+                    elementInfo.valueHasChanged[propName] = True
 
                 # if the value as string is set, this is probably the one we
                 # want to store (e.g. paths to models, fonts, etc)
@@ -74,11 +84,11 @@ class PropertyHelper:
                 logging.debug(f"Store value as extra options. {propName}={value}")
                 if propName not in elementInfo.extraOptions \
                 or elementInfo.extraOptions[propName] != value:
-                    elementInfo.valueHasChanged[nameAdd + propName] = True
+                    elementInfo.valueHasChanged[propName] = True
                 elementInfo.extraOptions[propName] = value
         elif definition.setFunctionName:
             if PropertyHelper.getValues(definition, elementInfo) != valueAsString if valueAsString != "" else value:
-                elementInfo.valueHasChanged[nameAdd + propName] = True
+                elementInfo.valueHasChanged[propName] = True
             oldValue = PropertyHelper.getValues(definition, elementInfo)
             try:
                 if type(definition.setFunctionName) == str:
@@ -107,7 +117,7 @@ class PropertyHelper:
                 v = valueAsString if valueAsString != "" else value
                 logging.debug(f"Try set value by direct key access. {propName}={v}")
                 if PropertyHelper.getValues(definition, elementInfo) != v:
-                    elementInfo.valueHasChanged[nameAdd + propName] = True
+                    elementInfo.valueHasChanged[propName] = True
                 # try to set the new value as original type on the property
                 elementInfo.element[propName] = value
 

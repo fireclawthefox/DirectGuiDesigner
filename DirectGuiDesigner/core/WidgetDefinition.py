@@ -33,7 +33,7 @@ class Definition:
             isInitOption=False,
             getFunctionName=None,
             setFunctionName=None,
-            addToExtraOptions=False,
+            addToExtraOptions=None,
             loaderFunc=None,
             postProcessFunctionName=None,
             canGetValueFromElement=True):
@@ -69,10 +69,6 @@ class Definition:
         # Function pointers or names to get and set the desired property
         self.getFunctionName = getFunctionName
         self.setFunctionName = setFunctionName
-
-        # If enabled, the option will be set on the element itself as well as in
-        # the elementInfos extraOptions dictionary
-        self.addToExtraOptions = addToExtraOptions
 
         # a function which is passed the value entered in the editor to process
         # it prior to setting it in the property (e.g. loadFont or loadModel)
@@ -127,8 +123,12 @@ class Definition:
         if self.editType == t.path:
             # Better use the extra options, some paths can be taken from the
             # element but some are a bit of a hustle to get again
-            self.canGetValueFromElement = False
-            self.addToExtraOptions = True
+            self.addToExtraOptions = True if addToExtraOptions is None else addToExtraOptions
+            self.canGetValueFromElement = False if self.addToExtraOptions else True
+        else:
+            # If enabled, the option will be set on the element itself as well as in
+            # the elementInfos extraOptions dictionary
+            self.addToExtraOptions = False if addToExtraOptions is None else addToExtraOptions
 
 
 POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True, getFunctionName="getPos", setFunctionName="setPos")
