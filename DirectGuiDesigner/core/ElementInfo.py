@@ -37,3 +37,17 @@ class ElementInfo:
 
         self.subComponentName = ""
         self.valueHasChanged = {}
+
+    def __str__(self):
+        return f"""ELEMENT INFO:
+            Element: {self.element}
+            Element Type: {self.type}
+            Name: {self.name}
+            Parent: {self.parent}
+            Extra Options: {self.extraOptions}
+            Create After: {self.createAfter}
+            Custom import path: {self.customImportPath}
+            Command: {self.command}
+            Extra Args: {self.extraArgs}
+            Sub Component Name: {self.subComponentName}
+            Changed Values: {self.valueHasChanged}"""

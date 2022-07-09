@@ -130,6 +130,23 @@ class Definition:
             # the elementInfos extraOptions dictionary
             self.addToExtraOptions = False if addToExtraOptions is None else addToExtraOptions
 
+    def __str__(self):
+        return f"""WIDGET DEFINITION:
+            Internal Name: {self.internalName},
+            Visible Name: {self.visiblename},
+            Internal Type: {self.type},
+            Edit Type: {self.editType},
+            Nullable: {self.nullable},
+            Support States: {self.supportStates},
+            Value Options: {self.valueOptions},
+            Is Init Option: {self.isInitOption},
+            Get Function Name: {self.getFunctionName},
+            Set Function Name: {self.setFunctionName},
+            Add to Extra Options: {self.addToExtraOptions},
+            Loader Func: {self.loaderFunc},
+            Postprocessing Function Name: {self.postProcessFunctionName},
+            Can get value from Element: {self.canGetValueFromElement}"""
+
 
 POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True, getFunctionName="getPos", setFunctionName="setPos")
 ROTATION_DEFINITION = Definition('hpr', 'Rotation (H/P/R)', object, editType=t.base3, nullable=True, getFunctionName="getHpr", setFunctionName="setHpr")
