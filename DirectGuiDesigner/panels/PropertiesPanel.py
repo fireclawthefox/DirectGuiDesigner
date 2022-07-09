@@ -176,6 +176,8 @@ class PropertiesPanel(DirectObject):
         lbl.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.mainBoxFrame.addItem(lbl)
 
+        has_error = False
+        error_count = 0
         # Set up all the properties
         try:
 
@@ -199,7 +201,13 @@ class PropertiesPanel(DirectObject):
 
                 # create the set of properties to edit on the main component
                 for definition in wd:
-                    self.createProperty(definition, self.elementInfo)
+                    try:
+                        self.createProperty(definition, self.elementInfo)
+                    except:
+                        #e = sys.exc_info()[1]
+                        has_error = True
+                        error_count += 1
+                        logging.exception("Failed to load property for properties panel")
 
                 self.updateSection(section)
                 section.toggleCollapsed()
@@ -234,10 +242,17 @@ class PropertiesPanel(DirectObject):
                         subsection = self.createSection()
                         subWd = allDefinitions[wType]
                         for definition in subWd:
-                            # create the property for all the defined
-                            self.createProperty(
-                                definition,
-                                subWidgetElementInfo)
+                            # create the property for all definitions of this
+                            # sub widget
+                            try:
+                                self.createProperty(
+                                    definition,
+                                    subWidgetElementInfo)
+                            except:
+                                #e = sys.exc_info()[1]
+                                has_error = True
+                                error_count += 1
+                                logging.exception("Failed to load property for properties panel")
 
                         self.updateSection(subsection)
                         subsection.toggleCollapsed()
@@ -248,6 +263,10 @@ class PropertiesPanel(DirectObject):
             e = sys.exc_info()[1]
             base.messenger.send("showWarning", [str(e)])
             logging.exception("Error while loading properties panel")
+
+        if has_error:
+            base.messenger.send("showWarning", [f"There were {error_count} Errors while loading the properties panel.\nSee log file for more details."])
+
 
         #
         # Reset property Frame framesize

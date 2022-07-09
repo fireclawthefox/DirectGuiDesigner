@@ -54,13 +54,28 @@ class PropertyHelper:
                         return elementInfo.element.align
                 if "_" in propName:
                     if hasattr(elementInfo.element, "component"):
-                        component = elementInfo.element.component(propName)
+                        comp_name = "_".join(propName.split("_")[:-1])
+                        try:
+                            component = elementInfo.element.component(comp_name)
+                        except:
+                            # The component may already be the one we were looking for
+                            component = elementInfo.element
                     prop = propName.split("_")[-1]
                 if hasattr(component, prop):
                     value = getattr(component, prop)
                 else:
-                    logging.debug(f"Couldn't get value for {propName}")
-                    raise
+                    try:
+                        # last resort, try get the property directly from the
+                        # element with the updated property name without
+                        # component parts.
+                        #
+                        # This is important for components like the popup marker
+                        # of option menus and buttons of dialogs and possibly
+                        # some others too...
+                        value = component[prop]
+                    except:
+                        logging.debug(f"Couldn't get value for {prop} from {elementInfo.element.name}:{type(elementInfo.element)}")
+                        raise
             return value
 
     def setValue(definition, elementInfo, value, valueAsString=""):
