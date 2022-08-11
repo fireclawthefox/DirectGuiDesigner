@@ -141,7 +141,7 @@ class DirectGuiDesigner(DirectObject):
         self.customWidgetsHandler.loadCustomWidgets()
 
         # Exception save-file-handling
-        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
         if os.path.exists(tmpPath):
             logging.info("Loading crash session file {}".format(tmpPath))
             allWidgetDefinitions = {
@@ -459,7 +459,7 @@ class DirectGuiDesigner(DirectObject):
         try:
             filename = ""
             if self.hasSaved:
-                filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json~")
+                filename = os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".gui~")
             allWidgetDefinitions = {
                 **WidgetDefinition.DEFINITIONS,
                 **self.customWidgetsHandler.getCustomWidgetDefinitions()}
@@ -1172,7 +1172,7 @@ class DirectGuiDesigner(DirectObject):
             **WidgetDefinition.DEFINITIONS,
             **self.customWidgetsHandler.getCustomWidgetDefinitions()}
         ExporterProject(
-            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"),
+            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".gui"),
             self.elementDict,
             self.getEditorFrame,
             self.getAllEditorPlacers,
@@ -1202,7 +1202,7 @@ class DirectGuiDesigner(DirectObject):
             **WidgetDefinition.DEFINITIONS,
             **self.customWidgetsHandler.getCustomWidgetDefinitions()}
         projectLoader = ProjectLoader(
-            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".json"),
+            os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".gui"),
             self.visualEditorInfo,
             self.elementHandler,
             self.customWidgetsHandler,

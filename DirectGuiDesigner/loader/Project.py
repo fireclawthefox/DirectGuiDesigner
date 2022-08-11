@@ -55,7 +55,7 @@ class ProjectLoader(DirectObject):
                 self.Load, "Load Project File", "Load file path", "Load", filePath, tooltip)
 
     def excLoad(self):
-        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
         self.__executeLoad(tmpPath)
 
     def get(self):

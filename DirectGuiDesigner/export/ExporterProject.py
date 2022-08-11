@@ -43,7 +43,7 @@ class ExporterProject:
         self.dlgOverwrite = None
         self.dlgOverwriteShadow = None
 
-        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.json")
+        tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
         self.__executeSave(True, tmpPath)
         logging.info("Wrote crash session file to {}".format(tmpPath))
 
@@ -51,7 +51,7 @@ class ExporterProject:
         self.dlgOverwrite = None
         self.dlgOverwriteShadow = None
         if fileName == "":
-            fileName = os.path.join(tempfile.gettempdir(), "DGDAutosave.json")
+            fileName = os.path.join(tempfile.gettempdir(), "DGDAutosave.gui")
         self.__executeSave(True, fileName)
         logging.info("Wrote autosave file to {}".format(fileName))
 
