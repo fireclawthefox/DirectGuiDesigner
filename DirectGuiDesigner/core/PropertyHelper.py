@@ -133,8 +133,10 @@ class PropertyHelper:
                 logging.debug(f"Try set value by direct key access. {propName}={v}")
                 if PropertyHelper.getValues(definition, elementInfo) != v:
                     elementInfo.valueHasChanged[propName] = True
+
                 # try to set the new value as original type on the property
-                elementInfo.element[propName] = value
+                propName_orig = propName.replace(nameAdd, "", 1)
+                elementInfo.element[propName_orig] = value
 
                 # in addition, if this should be stored in extra options
                 # (e.g. if we can't get the property value from the element
@@ -147,6 +149,7 @@ class PropertyHelper:
                     else:
                         logging.debug(f"Additionally store value as extra options. {propName}={value}")
                         elementInfo.extraOptions[propName] = value
+
             except Exception:
                 # setting the element failed, revert to old value in case it was
                 # partly set
