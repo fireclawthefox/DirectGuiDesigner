@@ -46,9 +46,17 @@ class JSONTools:
 
     explIncludeOptions = ["forceHeight", "numItemsVisible", "pos", "hpr", "scrollBarWidth", "initialText"]
 
-    def getProjectJSON(self, guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D):
+    def getProjectJSON(
+            self,
+            guiElementsDict,
+            getEditorFrame,
+            getEditorRootCanvas,
+            getAllEditorPlacers,
+            allWidgetDefinitions,
+            usePixel2D):
         self.guiElementsDict = guiElementsDict
         self.allWidgetDefinitions = allWidgetDefinitions
+        self.getEditorFrame = getEditorFrame
         jsonElements = {}
         jsonElements["ProjectVersion"] = "0.2a"
         jsonElements["EditorConfig"] = {}
@@ -58,6 +66,7 @@ class JSONTools:
 
         self.writtenRoots = []
 
+        self.getEditorRootCanvas = getEditorRootCanvas
         self.getAllEditorPlacers = getAllEditorPlacers
 
         roots = [None] + getAllEditorPlacers()
@@ -95,7 +104,8 @@ class JSONTools:
         }
 
     def __writeParent(self, parent):
-        if parent is None: return "root"
+        if parent is None or parent == self.getEditorRootCanvas():
+            return "root"
         canvasParents = self.getAllEditorPlacers()
         if type(parent) == type(NodePath()):
             if parent in canvasParents:

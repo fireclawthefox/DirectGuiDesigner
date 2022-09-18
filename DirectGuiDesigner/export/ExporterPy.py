@@ -26,12 +26,28 @@ class ExporterPy:
     # list of control names staritng with the following will always be included
     explIncludeControls = ["itemFrame"]
 
-    def __init__(self, saveFile, guiElementsDict, customWidgetHandler, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, tooltip, usePixel2D):
+    def __init__(
+            self,
+            saveFile,
+            guiElementsDict,
+            customWidgetHandler,
+            getEditorFrame,
+            getEditorRootCanvas,
+            getAllEditorPlacers,
+            allWidgetDefinitions,
+            tooltip,
+            usePixel2D):
         self.guiElementsDict = guiElementsDict
         self.customWidgetHandler = customWidgetHandler
 
         jsonTools = JSONTools()
-        self.jsonFileContent = jsonTools.getProjectJSON(self.guiElementsDict, getEditorFrame, getAllEditorPlacers, allWidgetDefinitions, usePixel2D)
+        self.jsonFileContent = jsonTools.getProjectJSON(
+            self.guiElementsDict,
+            getEditorFrame,
+            getEditorRootCanvas,
+            getAllEditorPlacers,
+            allWidgetDefinitions,
+            usePixel2D)
         self.jsonElements = self.jsonFileContent["ComponentList"]
 
         self.createdParents = ["root"]

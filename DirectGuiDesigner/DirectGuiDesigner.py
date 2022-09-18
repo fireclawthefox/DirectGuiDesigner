@@ -436,6 +436,9 @@ class DirectGuiDesigner(DirectObject):
     def getEditorFrame(self):
         return self.mainView.editorFrame.visualEditor
 
+    def getEditorRootCanvas(self):
+        return self.mainView.getEditorRootCanvas()
+
     def do_exception_save(self):
         allWidgetDefinitions = {
             **WidgetDefinition.DEFINITIONS,
@@ -444,6 +447,7 @@ class DirectGuiDesigner(DirectObject):
             "",
             self.elementDict,
             self.getEditorFrame,
+            self.getEditorRootCanvas,
             self.getAllEditorPlacers,
             allWidgetDefinitions,
             not self.mainView.editorFrame.visEditorInAspect2D,
@@ -467,6 +471,7 @@ class DirectGuiDesigner(DirectObject):
                 filename,
                 self.elementDict,
                 self.getEditorFrame,
+                self.getEditorRootCanvas,
                 self.getAllEditorPlacers,
                 allWidgetDefinitions,
                 not self.mainView.editorFrame.visEditorInAspect2D,
@@ -1175,6 +1180,7 @@ class DirectGuiDesigner(DirectObject):
             os.path.join(self.lastDirPath, self.lastFileNameWOExtension + ".gui"),
             self.elementDict,
             self.getEditorFrame,
+            self.getEditorRootCanvas,
             self.getAllEditorPlacers,
             allWidgetDefinitions,
             not self.mainView.editorFrame.visEditorInAspect2D,
@@ -1190,6 +1196,7 @@ class DirectGuiDesigner(DirectObject):
             self.elementDict,
             self.customWidgetsHandler,
             self.getEditorFrame,
+            self.getEditorRootCanvas,
             self.getAllEditorPlacers,
             allWidgetDefinitions,
             self.tt,
