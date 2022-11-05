@@ -36,7 +36,6 @@ from DirectGuiDesigner.export.ExporterPy import ExporterPy
 from DirectGuiDesigner.export.ExporterProject import ExporterProject
 
 from DirectGuiDesigner.loader.Project import ProjectLoader
-from DirectGuiDesigner.loader.PyScript import PyScriptLoader
 
 from DirectGuiDesigner.dialogs.SettingsDialog import GUI as SettingsDialog
 
