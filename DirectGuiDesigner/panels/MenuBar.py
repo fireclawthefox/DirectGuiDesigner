@@ -9,7 +9,7 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectCheckBox import DirectCheckBox
 from DirectGuiExtension.DirectMenuItem import DirectMenuItem, DirectMenuItemEntry, DirectMenuItemSubMenu, DirectMenuSeparator
-from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
+from DirectGuiExtension.DirectMenuBar import DirectMenuBar
 
 class MenuBar(DirectObject):
     def __init__(self, grid):
@@ -29,7 +29,7 @@ class MenuBar(DirectObject):
         #
         # Menubar
         #
-        self.menuBar = DirectBoxSizer(
+        self.menuBar = DirectMenuBar(
             frameColor=(0.25, 0.25, 0.25, 1),
             frameSize=(0,screenWidthPx,-12, 12),
             autoUpdateFrameSize=False,
@@ -127,6 +127,4 @@ class MenuBar(DirectObject):
             popupMenu_frameColor=color,
             highlightColor=color[2])
 
-        self.menuBar.addItem(self.file, skipRefresh=True)
-        self.menuBar.addItem(self.view, skipRefresh=True)
-        self.menuBar.addItem(self.tools)
+        self.menuBar["menuItems"] = [self.file, self.view, self.tools]
