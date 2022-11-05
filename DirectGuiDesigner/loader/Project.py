@@ -12,11 +12,12 @@ import logging
 import tempfile
 
 from direct.showbase.DirectObject import DirectObject
-from direct.gui import DirectGuiGlobals as DGG
-from DirectGuiDesigner.dialogs.PathSelect import PathSelect
 from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
+
+# We need these to be able to load the objects from the json file
 from panda3d.core import TextNode
 from panda3d.core import NodePath
 from panda3d.core import LVecBase2f, LVecBase3f, LVecBase4f, LPoint2f, LPoint3f, LPoint4f
@@ -35,7 +36,7 @@ class ProjectLoader(DirectObject):
     ignoreMap = []#"state"]
     ignoreComponentSplit = ["text", "image"]
 
-    def __init__(self, filePath, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, allWidgetDefinitions, exceptionLoading=False, tooltip=None, newProjectCall=None):
+    def __init__(self, fileName, visualEditorInfo, elementHandler, customWidgetHandler, getEditorPlacer, allWidgetDefinitions, exceptionLoading=False, tooltip=None, newProjectCall=None):
         self.newProjectCall = newProjectCall
         self.extraOptions = ["borderWidth", "frameColor", "initialText", "clipSize"]
         self.parentMap = {}
@@ -51,8 +52,14 @@ class ProjectLoader(DirectObject):
         if exceptionLoading:
             self.excLoad()
         else:
-            self.dlgPathSelect = PathSelect(
-                self.Load, "Load Project File", "Load file path", "Load", filePath, tooltip)
+            self.browser = DirectFolderBrowser(
+                self.Load,
+                True,
+                defaultPath=os.path.dirname(fileName),
+                defaultFilename=os.path.split(fileName)[1],
+                tooltip=tooltip,
+                askForOverwrite=False,
+                title="Load GUI Project")
 
     def excLoad(self):
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
@@ -63,7 +70,7 @@ class ProjectLoader(DirectObject):
 
     def Load(self, doLoad):
         if doLoad:
-            path = self.dlgPathSelect.getPath()
+            path = self.browser.get()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
 
@@ -75,9 +82,8 @@ class ProjectLoader(DirectObject):
                 self.__executeLoad(path)
             else:
                 self.accept("clearDirtyFlag", self.__executeLoad, [path])
-
-        self.dlgPathSelect.destroy()
-        del self.dlgPathSelect
+        self.browser.destroy()
+        del self.browser
 
     def __executeLoad(self, path):
         fileContent = None

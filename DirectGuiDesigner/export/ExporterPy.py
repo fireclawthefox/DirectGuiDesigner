@@ -9,11 +9,8 @@ See License.txt or http://opensource.org/licenses/BSD-2-Clause for more info
 import os
 import logging
 from panda3d.core import ConfigVariableBool
-from direct.gui import DirectGuiGlobals as DGG
-from direct.gui.DirectFrame import DirectFrame
-from direct.gui.DirectDialog import YesNoDialog
+from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
-from DirectGuiDesigner.dialogs.PathSelect import PathSelect
 from DirectGuiDesigner.tools.JSONTools import JSONTools
 
 class ExporterPy:
@@ -28,7 +25,7 @@ class ExporterPy:
 
     def __init__(
             self,
-            saveFile,
+            fileName,
             guiElementsDict,
             customWidgetHandler,
             getEditorFrame,
@@ -165,47 +162,26 @@ app = ShowBase()\n"""
                 self.content += "GUI()\n"
             self.content += "app.run()\n"
 
-        self.dlgPathSelect = PathSelect(
-            self.save, "Save Python File", "Save file path", "Save", saveFile, tooltip)
+        self.browser = DirectFolderBrowser(
+            self.save,
+            True,
+            defaultPath=os.path.dirname(fileName),
+            defaultFilename=os.path.split(fileName)[1],
+            tooltip=tooltip,
+            askForOverwrite=True,
+            title="Export as Python script")
 
     def save(self, doSave):
         if doSave:
-            self.dlgOverwrite = None
-            self.dlgOverwriteShadow = None
-            path = self.dlgPathSelect.getPath()
+            path = self.browser.get()
             path = os.path.expanduser(path)
             path = os.path.expandvars(path)
-            if os.path.exists(path):
-                self.dlgOverwrite = YesNoDialog(
-                    text="File already Exist.\nOverwrite?",
-                    relief=DGG.RIDGE,
-                    frameColor=(1,1,1,1),
-                    frameSize=(-0.5,0.5,-0.3,0.2),
-                    sortOrder=1,
-                    button_relief=DGG.FLAT,
-                    button_frameColor=(0.8, 0.8, 0.8, 1),
-                    command=self.__executeSave,
-                    extraArgs=[path],
-                    scale=300,
-                    pos=(base.getSize()[0]/2, 0, -base.getSize()[1]/2),
-                    parent=base.pixel2d)
-                self.dlgOverwriteShadow = DirectFrame(
-                    pos=(base.getSize()[0]/2 + 10, 0, -base.getSize()[1]/2 - 10),
-                    sortOrder=0,
-                    frameColor=(0,0,0,0.5),
-                    frameSize=self.dlgOverwrite.bounds,
-                    scale=300,
-                    parent=base.pixel2d)
-            else:
-                self.__executeSave(True, path)
+            self.__executeSave(path)
             base.messenger.send("setLastPath", [path])
-        self.dlgPathSelect.destroy()
-        del self.dlgPathSelect
+        self.browser.destroy()
+        del self.browser
 
-    def __executeSave(self, overwrite, path):
-        if self.dlgOverwrite is not None: self.dlgOverwrite.destroy()
-        if self.dlgOverwriteShadow is not None: self.dlgOverwriteShadow.destroy()
-        if not overwrite: return
+    def __executeSave(self, path):
         with open(path, 'w') as outfile:
             outfile.write(self.content)
 
