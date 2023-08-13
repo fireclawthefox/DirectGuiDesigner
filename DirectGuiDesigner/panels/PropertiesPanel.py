@@ -21,7 +21,8 @@ from panda3d.core import (
     PGFrameStyle,
     MouseButton,
     NodePath,
-    ConfigVariableString)
+    ConfigVariableString,
+    Filename)
 from direct.showbase.DirectObject import DirectObject
 
 from direct.gui import DirectGuiGlobals as DGG
@@ -762,7 +763,8 @@ class PropertiesPanel(DirectObject):
 
         def selectPath(confirm):
             if confirm:
-                setPath(self.browser.get())
+                value = Filename.fromOsSpecific(self.browser.get())
+                setPath(str(value))
             self.browser.hide()
 
         def showBrowser():
