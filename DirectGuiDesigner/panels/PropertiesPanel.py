@@ -211,8 +211,6 @@ class PropertiesPanel(DirectObject):
                         logging.exception("Failed to load property for properties panel")
 
                 self.updateSection(section)
-                section.toggleCollapsed()
-                section.toggleCollapsed()
 
                 # create the sub component set of properties to edit
                 groups = {}
@@ -256,8 +254,6 @@ class PropertiesPanel(DirectObject):
                                 logging.exception("Failed to load property for properties panel")
 
                         self.updateSection(subsection)
-                        subsection.toggleCollapsed()
-                        subsection.toggleCollapsed()
 
             self.setupDone = True
         except Exception:
@@ -345,6 +341,7 @@ class PropertiesPanel(DirectObject):
         fs = self.boxFrames[section]["frameSize"]
         section["frameSize"] = (fs[0], fs[1]-SCROLLBARWIDTH, fs[2]-section["headerheight"], fs[3])
         section.updateFrameSize()
+        section.setCollapsed()
 
     def createProperty(self, definition, elementInfo):
         if definition.editType == WidgetDefinition.PropertyEditTypes.integer:
@@ -589,7 +586,7 @@ class PropertiesPanel(DirectObject):
                 entriesBox.refresh()
                 for section, boxFrame in self.boxFrames.items():
                     boxFrame.refresh()
-                self.resizeFrame()
+                    self.updateSection(section)
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
@@ -655,8 +652,9 @@ class PropertiesPanel(DirectObject):
 
             if updateMainBox:
                 entriesBox.refresh()
-                self.boxFrame.refresh()
-                self.resizeFrame()
+                for section, boxFrame in self.boxFrames.items():
+                    boxFrame.refresh()
+                    self.updateSection(section)
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
