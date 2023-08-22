@@ -506,7 +506,7 @@ class DirectGuiDesigner(DirectObject):
             "control-v": [self.pasteElement],
             "shift-control-c": [self.copyOptions],
             "shift-control-v": [self.pasteOptions],
-            "delete": [self.removeElement],
+            "control-delete": [self.removeElement],
             "control-g": [self.mainView.toolBar.cb_grid.commandFunc, [None]],
             "control-h": [self.toggleElementVisibility],
             "f1": [self.showHelp],
