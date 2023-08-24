@@ -81,6 +81,9 @@ class StructurePanel():
         self.refreshStructureTree(elementDict, selectedElement)
 
     def scroll(self, scrollStep, event):
+        if self.structureFrame.verticalScroll.isHidden():
+            return
+
         self.structureFrame.verticalScroll.scrollStep(scrollStep)
 
     def recalcScrollSize(self):

@@ -124,6 +124,9 @@ class PropertiesPanel(DirectObject):
         """Scrolls the properties frame vertically with the given step.
         A negative step will scroll down while a positive step value will scroll
         the frame upwards"""
+        if self.propertiesFrame.verticalScroll.isHidden():
+            return
+
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
 
     def resizeFrame(self):
