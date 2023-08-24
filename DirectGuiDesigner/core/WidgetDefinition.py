@@ -238,9 +238,9 @@ TEXT_DEFINITIONS = [
 DIRECT_FRAME_DEFINITIONS = DEFAULT_DEFINITIONS + [
     # Frame can have:
     # A background texture
-    Definition('image', 'Image', object, editType=t.path),
+    Definition('image', 'Image', object, editType=t.path, nullable=True),
     # A midground geometry item
-    Definition('geom', 'Geometry', object, editType=t.path),
+    Definition('geom', 'Geometry', object, editType=t.path, nullable=True),
     # A foreground text node
     Definition('text', 'Text', object, editType=t.list, nullable=True, postProcessFunctionName='resetFrameSize'),
     # Change default value of text mayChange flag from 0

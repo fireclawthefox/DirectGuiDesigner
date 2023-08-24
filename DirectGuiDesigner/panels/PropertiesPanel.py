@@ -746,8 +746,9 @@ class PropertiesPanel(DirectObject):
             try:
                 PropertyHelper.setValue(definition, elementInfo, value, text)
             except Exception:
-                logging.exception("Couldn't load font: {}".format(text))
-                updateElement[updateAttribute] = None
+                base.messenger.send("showWarning", [f"couldn't load file '{text}'"])
+                logging.exception("Couldn't load file: {}".format(text))
+                elementInfo.element[definition.internalName] = None
 
         def setPath(path):
             update(path)

@@ -154,6 +154,8 @@ class PropertyHelper:
                 # setting the element failed, revert to old value in case it was
                 # partly set
                 logging.exception(f"couldn't set value of {propName} to value {value}")
+                if definition.nullable:
+                    elementInfo.element[propName] = None
                 elementInfo.element[propName] = oldValue
 
         if definition.postProcessFunctionName is not None:
