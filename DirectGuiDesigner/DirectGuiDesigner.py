@@ -1012,6 +1012,10 @@ class DirectGuiDesigner(DirectObject):
         # stores the ids of the source elements that have been copied already
         self.copyCreatedElementIds = []
         self.newElementIds = []
+        # store list of all elements that should be copied,
+        # used to break loops when pasting onto a child of the copied element
+        self.elementsToCopy = self.copiedElement.element.get_children()
+        self.elementsToCopy.append(self.copiedElement.element)
         self.__copyBranch(self.copiedElement, self.selectedElement)
 
         if self.newElementIds == []:
@@ -1021,9 +1025,9 @@ class DirectGuiDesigner(DirectObject):
             [e, "copy", "element", (self.newElementIds[0], e), None])
 
     def __copyBranch(self, startObject, parent=None):
-        if startObject == parent: return
         for elementName, elementInfo in self.elementDict.copy().items():
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
+            if elementInfo.element not in self.elementsToCopy: continue
             if elementInfo.parent == startObject or elementInfo == startObject:
                 newElement = self.__createControl(elementInfo.type)
                 if type(newElement) is tuple:
@@ -1046,15 +1050,18 @@ class DirectGuiDesigner(DirectObject):
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
 
-        parent = self.selectedElement
         if self.selectedElement is None:
-            parent = editorFrame
+            parent = self.mainView.getEditorPlacer("root")
 
-        self.theCutElement.element.reparentTo(self.selectedElement.element)
+            self.theCutElement.element.reparentTo(parent)
+            self.theCutElement.parent = None
 
-        for elementName, elementInfo in self.elementDict.items():
-            if elementInfo == self.theCutElement:
-                self.elementDict[elementName].parent = self.selectedElement
+        else:
+            if self.theCutElement.element.isAncestorOf(self.selectedElement.element): return
+
+            parent = self.selectedElement
+            self.theCutElement.element.reparentTo(parent.element)
+            self.theCutElement.parent = parent
 
         self.theCutElement = None
 
