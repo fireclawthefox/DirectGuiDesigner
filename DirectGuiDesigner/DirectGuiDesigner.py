@@ -638,7 +638,13 @@ class DirectGuiDesigner(DirectObject):
 
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
-            self.selectedElement.element.clearColorScale()
+            # handle coloring for selected and cut elements
+            if self.selectedElement is self.theCutElement:
+                self.selectedElement.element.setColorScale(0.5, 0.5, 0.5, 0.5)
+
+            else:
+                self.selectedElement.element.clearColorScale()
+
             self.ignoreKeyboardEvents()
             self.registerKeyboardEvents()
         if elementInfo is None:
@@ -653,7 +659,12 @@ class DirectGuiDesigner(DirectObject):
         if elementInfo.element is None:
             return
         self.selectedElement = elementInfo
-        elementInfo.element.setColorScale(1,1,0,1)
+        # handle coloring for selected and cut elements
+        if self.selectedElement is self.theCutElement:
+            elementInfo.element.setColorScale(0.5, 0.5, 0, 0.5)
+        else:
+            elementInfo.element.setColorScale(1, 1, 0, 1)
+
         self.refreshProperties(elementInfo)
         base.messenger.send("refreshStructureTree")
 
@@ -996,7 +1007,13 @@ class DirectGuiDesigner(DirectObject):
 
     def cutElement(self):
         if self.selectedElement is None: return
+        # handle color scale of last cut element
+        if self.theCutElement is not None:
+            self.theCutElement.element.clearColorScale()
+
         self.theCutElement = self.selectedElement
+        # set color scale for new cut element
+        self.theCutElement.element.setColorScale(0.5, 0.5, 0, 0.5)
 
     def pasteElement(self):
         # check if we want to have a cut or copy action
@@ -1063,6 +1080,7 @@ class DirectGuiDesigner(DirectObject):
             self.theCutElement.element.reparentTo(parent.element)
             self.theCutElement.parent = parent
 
+        self.theCutElement.element.clearColorScale()
         self.theCutElement = None
 
         base.messenger.send("refreshStructureTree")
