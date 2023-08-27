@@ -161,7 +161,7 @@ class ToolBar(DirectObject):
             image="icons/Delete.png",
             image_scale=24)
         btn.setTransparency(TransparencyAttrib.M_multisample)
-        btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del)"])
+        btn.bind(DGG.ENTER, self.tt.show, ["Delete selected element (Ctrl-Del or Ctrl-D)"])
         btn.bind(DGG.EXIT, self.tt.hide)
         self.toolBar.addItem(btn)
 

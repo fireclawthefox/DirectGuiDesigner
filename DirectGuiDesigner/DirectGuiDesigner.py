@@ -507,6 +507,7 @@ class DirectGuiDesigner(DirectObject):
             "shift-control-c": [self.copyOptions],
             "shift-control-v": [self.pasteOptions],
             "control-delete": [self.removeElement],
+            "control-d": [self.removeElement],
             "control-g": [self.mainView.toolBar.cb_grid.commandFunc, [None]],
             "control-h": [self.toggleElementVisibility],
             "f1": [self.showHelp],
@@ -1453,7 +1454,7 @@ class DirectGuiDesigner(DirectObject):
 \1bold\1Ctrl-V  \2 - Paste copied Element
 \1bold\1Ctrl-Shift-C\2 - Copy selected Elements settings
 \1bold\1Ctrl-Shift-V\2 - Paste copied Element settings to selected element
-\1bold\1Ctrl-Del\2 - Delete selected Element
+\1bold\1Ctrl-Del\2 or \1bold\1Ctrl-D\2 - Delete selected Element
 \1bold\1Ctrl-H  \2 - Toggle selected Element visibility
 \1bold\1Ctrl-G  \2 - Toggle grid and snap to grid
 \1bold\1Ctrl-Z  \2 - Undo
