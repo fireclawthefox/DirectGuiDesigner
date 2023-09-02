@@ -362,6 +362,11 @@ class DirectGuiDesigner(DirectObject):
                     else:
                         workOn.editObject.element[key] = value[1]
 
+        elif workOn.action == "cut":
+            if workOn.objectType == "element":
+                workOn.editObject.element.reparentTo(workOn.oldValue)
+                self.setParentOfElement(workOn.editObject.element, workOn.oldValue)
+
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
         base.messenger.send("setDirtyFlag")
@@ -413,6 +418,11 @@ class DirectGuiDesigner(DirectObject):
                         workOn.editObject.element["text_fg"] = value
                     else:
                         workOn.editObject.element[key] = value[1]
+
+        elif workOn.action == "cut":
+            if workOn.objectType == "element":
+                workOn.editObject.element.reparentTo(workOn.newValue)
+                self.setParentOfElement(workOn.editObject.element, workOn.newValue)
 
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
@@ -575,7 +585,7 @@ class DirectGuiDesigner(DirectObject):
     def __refreshStructureTree(self):
         self.mainView.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
 
-    def __createControl(self, element):
+    def __createControl(self, element, skipAddToKillRing=False):
         funcName = "create{}".format(element)
         parent = None
         elementInfo = None
@@ -627,12 +637,13 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
 
-        if type(elementInfo) is tuple:
-            base.messenger.send("addToKillRing",
-                [elementInfo[0].element, "add", "element", (elementInfo[0].element.guiId, elementInfo[0]), None])
-        else:
-            base.messenger.send("addToKillRing",
-                [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
+        if not skipAddToKillRing:
+            if type(elementInfo) is tuple:
+                base.messenger.send("addToKillRing",
+                    [elementInfo[0].element, "add", "element", (elementInfo[0].element.guiId, elementInfo[0]), None])
+            else:
+                base.messenger.send("addToKillRing",
+                    [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
 
         self.fixElementSortAll()
 
@@ -1048,7 +1059,7 @@ class DirectGuiDesigner(DirectObject):
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
             if elementInfo.element not in self.elementsToCopy: continue
             if elementInfo.parent == startObject or elementInfo == startObject:
-                newElement = self.__createControl(elementInfo.type)
+                newElement = self.__createControl(elementInfo.type, skipAddToKillRing=True)
                 if type(newElement) is tuple:
                     newElement = newElement[0]
                 self.newElementIds.append(newElement.element.guiId)
@@ -1063,13 +1074,14 @@ class DirectGuiDesigner(DirectObject):
                     if isinstance(newParent, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
                         newParent = newParent.canvas
                     newElement.element.reparentTo(newParent)
-                self.__copyOptions(elementInfo, newElement, parent is not None)
+                self.__copyOptions(elementInfo, newElement, parent is not None, skipAddToKillRing=True)
 
                 self.__copyBranch(elementInfo, newElement.element)
 
     def pasteCutElement(self):
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
+        oldParent = self.theCutElement.element.getParent()
 
         if self.selectedElement is None:
             parent = self.mainView.getEditorPlacer("root")
@@ -1090,6 +1102,10 @@ class DirectGuiDesigner(DirectObject):
             self.theCutElement.element.reparentTo(parent)
 
         self.theCutElement.element.clearColorScale()
+
+        base.messenger.send("addToKillRing",
+                            [self.theCutElement, "cut", "element", oldParent, parent])
+
         self.theCutElement = None
 
         base.messenger.send("refreshStructureTree")
@@ -1107,7 +1123,7 @@ class DirectGuiDesigner(DirectObject):
 
         self.__copyOptions(self.copyOptionsElementInfo, self.selectedElement)
 
-    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False):
+    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False, skipAddToKillRing=False):
         elementFrom = elementInfoFrom.element
         elementTo = elementInfoTo.element
         if elementFrom is None or elementTo is None: return
@@ -1163,8 +1179,9 @@ class DirectGuiDesigner(DirectObject):
                     continue
                 elementInfoTo.valueHasChanged[key] = changed
 
-            base.messenger.send("addToKillRing",
-                [elementTo, "copy", "properties", oldOptions, newOptions])
+            if not skipAddToKillRing:
+                base.messenger.send("addToKillRing",
+                    [elementTo, "copy", "properties", oldOptions, newOptions])
         except Exception as e:
             logging.error("Couldn't copy element options")
             logging.exception(e)
