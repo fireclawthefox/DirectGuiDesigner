@@ -26,6 +26,7 @@ from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
 #from direct.gui.DirectScrolledFrame import DirectScrolledFrame
+import direct.gui.DirectGui as DirectGui
 from DirectGuiDesigner.directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectDialog import OkDialog
 from direct.gui.DirectDialog import OkCancelDialog
@@ -1055,10 +1056,12 @@ class DirectGuiDesigner(DirectObject):
                 if parent is not None:
                     newParent = None
                     if type(parent) is ElementInfo:
-                        newParent = self.mainView.getEditorRootCanvas().find("**/{}".format(parent.element.getName()))
+                        newParent = parent.element
                     else:
-                        newParent = self.mainView.getEditorRootCanvas().find("**/{}".format(parent.getName()))
+                        newParent = parent
                     self.setParentOfElement(newElement.element, newParent)
+                    if isinstance(newParent, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
+                        newParent = newParent.canvas
                     newElement.element.reparentTo(newParent)
                 self.__copyOptions(elementInfo, newElement, parent is not None)
 
@@ -1078,8 +1081,13 @@ class DirectGuiDesigner(DirectObject):
             if self.theCutElement.element.isAncestorOf(self.selectedElement.element): return
 
             parent = self.selectedElement
-            self.theCutElement.element.reparentTo(parent.element)
             self.theCutElement.parent = parent
+            if isinstance(parent.element, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
+                parent = parent.element.canvas
+            else:
+                parent = parent.element
+
+            self.theCutElement.element.reparentTo(parent)
 
         self.theCutElement.element.clearColorScale()
         self.theCutElement = None
