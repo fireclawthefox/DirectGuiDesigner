@@ -923,7 +923,10 @@ class PropertiesPanel(DirectObject):
             base.messenger.send("setDirtyFlag")
             parent = self.getEditorPlacer(name)
             elementInfo.element.reparentTo(parent)
-            elementInfo.parent = parent
+            if name == "canvasRoot":
+                elementInfo.parent = None
+            else:
+                elementInfo.parent = parent
             base.messenger.send("refreshStructureTree")
 
         self.__createPropertyHeader("Change Root parent")
