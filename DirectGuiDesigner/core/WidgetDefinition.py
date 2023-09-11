@@ -150,7 +150,7 @@ class Definition:
 
 POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True, getFunctionName="getPos", setFunctionName="setPos")
 ROTATION_DEFINITION = Definition('hpr', 'Rotation (H/P/R)', object, editType=t.base3, nullable=True, getFunctionName="getHpr", setFunctionName="setHpr")
-SCALE_DEFINITION = Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, setFunctionName="setScale")
+SCALE_DEFINITION = Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale")
 COLOR_DEFINITION = Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, nullable=True)
 COMMAND_DEFINITION = Definition('command', 'Command', types.FunctionType)
 COMMAND_ARGS_DEFINITION = Definition('extraArgs', 'Extra Arguments for Command', list, isInitOption = True) # even though, this isn't an init opt, we don't want them to be set on the element
