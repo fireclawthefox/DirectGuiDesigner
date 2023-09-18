@@ -207,6 +207,8 @@ class ProjectLoader(DirectObject):
                 elif parent is not None and "DirectEntryScroll" == parent.type:
                     parent.element.setEntry(elementInfo.element)
                     parent.extraOptions["entry"] = "self." + elementInfo.name
+                elif parent is not None and "DirectScrolledFrame" == parent.type:
+                    elementInfo.element.reparentTo(parent.element.canvas)
                 parentWidget = self.customWidgetHandler.getWidget(parent.type if parent is not None else "")
                 if parentWidget is not None:
                     if parentWidget.addItemFunction is not None:

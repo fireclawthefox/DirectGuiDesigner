@@ -124,6 +124,9 @@ class PropertiesPanel(DirectObject):
         """Scrolls the properties frame vertically with the given step.
         A negative step will scroll down while a positive step value will scroll
         the frame upwards"""
+        if self.propertiesFrame.verticalScroll.isHidden():
+            return
+
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
 
     def resizeFrame(self):
@@ -211,8 +214,6 @@ class PropertiesPanel(DirectObject):
                         logging.exception("Failed to load property for properties panel")
 
                 self.updateSection(section)
-                section.toggleCollapsed()
-                section.toggleCollapsed()
 
                 # create the sub component set of properties to edit
                 groups = {}
@@ -256,8 +257,6 @@ class PropertiesPanel(DirectObject):
                                 logging.exception("Failed to load property for properties panel")
 
                         self.updateSection(subsection)
-                        subsection.toggleCollapsed()
-                        subsection.toggleCollapsed()
 
             self.setupDone = True
         except Exception:
@@ -345,6 +344,7 @@ class PropertiesPanel(DirectObject):
         fs = self.boxFrames[section]["frameSize"]
         section["frameSize"] = (fs[0], fs[1]-SCROLLBARWIDTH, fs[2]-section["headerheight"], fs[3])
         section.updateFrameSize()
+        section.setCollapsed()
 
     def createProperty(self, definition, elementInfo):
         if definition.editType == WidgetDefinition.PropertyEditTypes.integer:
@@ -589,7 +589,7 @@ class PropertiesPanel(DirectObject):
                 entriesBox.refresh()
                 for section, boxFrame in self.boxFrames.items():
                     boxFrame.refresh()
-                self.resizeFrame()
+                    self.updateSection(section)
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
@@ -655,8 +655,9 @@ class PropertiesPanel(DirectObject):
 
             if updateMainBox:
                 entriesBox.refresh()
-                self.boxFrame.refresh()
-                self.resizeFrame()
+                for section, boxFrame in self.boxFrames.items():
+                    boxFrame.refresh()
+                    self.updateSection(section)
 
         self.__createPropertyHeader(definition.visiblename)
         listItems = PropertyHelper.getValues(definition, elementInfo)
@@ -748,8 +749,9 @@ class PropertiesPanel(DirectObject):
             try:
                 PropertyHelper.setValue(definition, elementInfo, value, text)
             except Exception:
-                logging.exception("Couldn't load font: {}".format(text))
-                updateElement[updateAttribute] = None
+                base.messenger.send("showWarning", [f"couldn't load file '{text}'"])
+                logging.exception("Couldn't load file: {}".format(text))
+                elementInfo.element[definition.internalName] = None
 
         def setPath(path):
             update(path)
@@ -921,7 +923,10 @@ class PropertiesPanel(DirectObject):
             base.messenger.send("setDirtyFlag")
             parent = self.getEditorPlacer(name)
             elementInfo.element.reparentTo(parent)
-            elementInfo.parent = parent
+            if name == "canvasRoot":
+                elementInfo.parent = None
+            else:
+                elementInfo.parent = parent
             base.messenger.send("refreshStructureTree")
 
         self.__createPropertyHeader("Change Root parent")

@@ -26,6 +26,7 @@ from direct.gui import DirectGuiGlobals as DGG
 
 from direct.gui.DirectFrame import DirectFrame
 #from direct.gui.DirectScrolledFrame import DirectScrolledFrame
+import direct.gui.DirectGui as DirectGui
 from DirectGuiDesigner.directGuiOverrides.DirectScrolledFrame import DirectScrolledFrame
 from direct.gui.DirectDialog import OkDialog
 from direct.gui.DirectDialog import OkCancelDialog
@@ -361,6 +362,11 @@ class DirectGuiDesigner(DirectObject):
                     else:
                         workOn.editObject.element[key] = value[1]
 
+        elif workOn.action == "cut":
+            if workOn.objectType == "element":
+                workOn.editObject.element.reparentTo(workOn.oldValue)
+                self.setParentOfElement(workOn.editObject.element, workOn.oldValue)
+
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
         base.messenger.send("setDirtyFlag")
@@ -412,6 +418,11 @@ class DirectGuiDesigner(DirectObject):
                         workOn.editObject.element["text_fg"] = value
                     else:
                         workOn.editObject.element[key] = value[1]
+
+        elif workOn.action == "cut":
+            if workOn.objectType == "element":
+                workOn.editObject.element.reparentTo(workOn.newValue)
+                self.setParentOfElement(workOn.editObject.element, workOn.newValue)
 
         if self.selectedElement is not None:
             self.refreshProperties(self.selectedElement)
@@ -506,7 +517,8 @@ class DirectGuiDesigner(DirectObject):
             "control-v": [self.pasteElement],
             "shift-control-c": [self.copyOptions],
             "shift-control-v": [self.pasteOptions],
-            "delete": [self.removeElement],
+            "control-delete": [self.removeElement],
+            "control-d": [self.removeElement],
             "control-g": [self.mainView.toolBar.cb_grid.commandFunc, [None]],
             "control-h": [self.toggleElementVisibility],
             "f1": [self.showHelp],
@@ -573,7 +585,7 @@ class DirectGuiDesigner(DirectObject):
     def __refreshStructureTree(self):
         self.mainView.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
 
-    def __createControl(self, element):
+    def __createControl(self, element, skipAddToKillRing=False):
         funcName = "create{}".format(element)
         parent = None
         elementInfo = None
@@ -625,12 +637,13 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("refreshStructureTree")
         base.messenger.send("setDirtyFlag")
 
-        if type(elementInfo) is tuple:
-            base.messenger.send("addToKillRing",
-                [elementInfo[0].element, "add", "element", (elementInfo[0].element.guiId, elementInfo[0]), None])
-        else:
-            base.messenger.send("addToKillRing",
-                [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
+        if not skipAddToKillRing:
+            if type(elementInfo) is tuple:
+                base.messenger.send("addToKillRing",
+                    [elementInfo[0].element, "add", "element", (elementInfo[0].element.guiId, elementInfo[0]), None])
+            else:
+                base.messenger.send("addToKillRing",
+                    [elementInfo.element, "add", "element", (elementInfo.element.guiId, elementInfo), None])
 
         self.fixElementSortAll()
 
@@ -638,7 +651,13 @@ class DirectGuiDesigner(DirectObject):
 
     def selectElement(self, elementInfo, args=None):
         if self.selectedElement is not None:
-            self.selectedElement.element.clearColorScale()
+            # handle coloring for selected and cut elements
+            if self.selectedElement is self.theCutElement:
+                self.selectedElement.element.setColorScale(0.5, 0.5, 0.5, 0.5)
+
+            else:
+                self.selectedElement.element.clearColorScale()
+
             self.ignoreKeyboardEvents()
             self.registerKeyboardEvents()
         if elementInfo is None:
@@ -653,7 +672,12 @@ class DirectGuiDesigner(DirectObject):
         if elementInfo.element is None:
             return
         self.selectedElement = elementInfo
-        elementInfo.element.setColorScale(1,1,0,1)
+        # handle coloring for selected and cut elements
+        if self.selectedElement is self.theCutElement:
+            elementInfo.element.setColorScale(0.5, 0.5, 0, 0.5)
+        else:
+            elementInfo.element.setColorScale(1, 1, 0, 1)
+
         self.refreshProperties(elementInfo)
         base.messenger.send("refreshStructureTree")
 
@@ -996,7 +1020,13 @@ class DirectGuiDesigner(DirectObject):
 
     def cutElement(self):
         if self.selectedElement is None: return
+        # handle color scale of last cut element
+        if self.theCutElement is not None:
+            self.theCutElement.element.clearColorScale()
+
         self.theCutElement = self.selectedElement
+        # set color scale for new cut element
+        self.theCutElement.element.setColorScale(0.5, 0.5, 0, 0.5)
 
     def pasteElement(self):
         # check if we want to have a cut or copy action
@@ -1012,6 +1042,10 @@ class DirectGuiDesigner(DirectObject):
         # stores the ids of the source elements that have been copied already
         self.copyCreatedElementIds = []
         self.newElementIds = []
+        # store list of all elements that should be copied,
+        # used to break loops when pasting onto a child of the copied element
+        self.elementsToCopy = self.copiedElement.element.get_children()
+        self.elementsToCopy.append(self.copiedElement.element)
         self.__copyBranch(self.copiedElement, self.selectedElement)
 
         if self.newElementIds == []:
@@ -1021,11 +1055,11 @@ class DirectGuiDesigner(DirectObject):
             [e, "copy", "element", (self.newElementIds[0], e), None])
 
     def __copyBranch(self, startObject, parent=None):
-        if startObject == parent: return
         for elementName, elementInfo in self.elementDict.copy().items():
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
+            if elementInfo.element not in self.elementsToCopy: continue
             if elementInfo.parent == startObject or elementInfo == startObject:
-                newElement = self.__createControl(elementInfo.type)
+                newElement = self.__createControl(elementInfo.type, skipAddToKillRing=True)
                 if type(newElement) is tuple:
                     newElement = newElement[0]
                 self.newElementIds.append(newElement.element.guiId)
@@ -1033,28 +1067,44 @@ class DirectGuiDesigner(DirectObject):
                 if parent is not None:
                     newParent = None
                     if type(parent) is ElementInfo:
-                        newParent = self.mainView.getEditorRootCanvas().find("**/{}".format(parent.element.getName()))
+                        newParent = parent.element
                     else:
-                        newParent = self.mainView.getEditorRootCanvas().find("**/{}".format(parent.getName()))
+                        newParent = parent
                     self.setParentOfElement(newElement.element, newParent)
+                    if isinstance(newParent, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
+                        newParent = newParent.canvas
                     newElement.element.reparentTo(newParent)
-                self.__copyOptions(elementInfo, newElement, parent is not None)
+                self.__copyOptions(elementInfo, newElement, parent is not None, skipAddToKillRing=True)
 
                 self.__copyBranch(elementInfo, newElement.element)
 
     def pasteCutElement(self):
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
+        oldParent = self.theCutElement.element.getParent()
 
-        parent = self.selectedElement
         if self.selectedElement is None:
-            parent = editorFrame
+            parent = self.mainView.getEditorPlacer("root")
 
-        self.theCutElement.element.reparentTo(self.selectedElement.element)
+            self.theCutElement.element.reparentTo(parent)
+            self.theCutElement.parent = None
 
-        for elementName, elementInfo in self.elementDict.items():
-            if elementInfo == self.theCutElement:
-                self.elementDict[elementName].parent = self.selectedElement
+        else:
+            if self.theCutElement.element.isAncestorOf(self.selectedElement.element): return
+
+            parent = self.selectedElement
+            self.theCutElement.parent = parent
+            if isinstance(parent.element, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
+                parent = parent.element.canvas
+            else:
+                parent = parent.element
+
+            self.theCutElement.element.reparentTo(parent)
+
+        self.theCutElement.element.clearColorScale()
+
+        base.messenger.send("addToKillRing",
+                            [self.theCutElement, "cut", "element", oldParent, parent])
 
         self.theCutElement = None
 
@@ -1073,7 +1123,7 @@ class DirectGuiDesigner(DirectObject):
 
         self.__copyOptions(self.copyOptionsElementInfo, self.selectedElement)
 
-    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False):
+    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False, skipAddToKillRing=False):
         elementFrom = elementInfoFrom.element
         elementTo = elementInfoTo.element
         if elementFrom is None or elementTo is None: return
@@ -1129,8 +1179,9 @@ class DirectGuiDesigner(DirectObject):
                     continue
                 elementInfoTo.valueHasChanged[key] = changed
 
-            base.messenger.send("addToKillRing",
-                [elementTo, "copy", "properties", oldOptions, newOptions])
+            if not skipAddToKillRing:
+                base.messenger.send("addToKillRing",
+                    [elementTo, "copy", "properties", oldOptions, newOptions])
         except Exception as e:
             logging.error("Couldn't copy element options")
             logging.exception(e)
@@ -1428,7 +1479,7 @@ class DirectGuiDesigner(DirectObject):
 \1bold\1Ctrl-V  \2 - Paste copied Element
 \1bold\1Ctrl-Shift-C\2 - Copy selected Elements settings
 \1bold\1Ctrl-Shift-V\2 - Paste copied Element settings to selected element
-\1bold\1Ctrl-Del\2 - Delete selected Element
+\1bold\1Ctrl-Del\2 or \1bold\1Ctrl-D\2 - Delete selected Element
 \1bold\1Ctrl-H  \2 - Toggle selected Element visibility
 \1bold\1Ctrl-G  \2 - Toggle grid and snap to grid
 \1bold\1Ctrl-Z  \2 - Undo

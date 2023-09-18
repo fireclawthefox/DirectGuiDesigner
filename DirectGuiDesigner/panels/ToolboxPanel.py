@@ -99,6 +99,9 @@ class ToolboxPanel:
         self.createEntries()
 
     def scroll(self, scrollStep, event):
+        if self.toolboxFrame.verticalScroll.isHidden():
+            return
+
         self.toolboxFrame.verticalScroll.scrollStep(scrollStep)
 
     def createEntries(self):

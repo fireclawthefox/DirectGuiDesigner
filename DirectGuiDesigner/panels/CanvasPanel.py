@@ -418,19 +418,9 @@ class CanvasPanel():
             moveVec = t.vMouse2render2d - vMouse2render2d
             t.vMouse2render2d = vMouse2render2d
             newValue = self.visualEditor["verticalScroll_value"] - moveVec.getZ()
-            if newValue <= 1 and newValue >= 0:
-                self.visualEditor["verticalScroll_value"] = newValue
-            elif newValue > 1:
-                self.visualEditor["verticalScroll_value"] = 1
-            elif newValue < 0:
-                self.visualEditor["verticalScroll_value"] = 0
+            self.visualEditor["verticalScroll_value"] = newValue
 
             newValue = self.visualEditor["horizontalScroll_value"] + moveVec.getX()
-            if newValue <= 1 and newValue >= 0:
-                self.visualEditor["horizontalScroll_value"] = newValue
-            elif newValue > 1:
-                self.visualEditor["horizontalScroll_value"] = 1
-            elif newValue < 0:
-                self.visualEditor["horizontalScroll_value"] = 0
+            self.visualEditor["horizontalScroll_value"] = newValue
 
         return t.cont
