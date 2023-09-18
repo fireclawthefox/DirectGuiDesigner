@@ -1,4 +1,5 @@
 class ElementInfo:
+    """Wrapper around a GUI element to hold some extra information."""
     def __init__(self, element, elementType, name=None, parent=None, extraOptions=None, createAfter=None, customImportPath=None):
         # The actual GUI element
         self.element = element

@@ -1,3 +1,5 @@
+"""Module for saving a project to a '.gui' file."""
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 __author__ = "Fireclaw the Fox"
@@ -15,7 +17,10 @@ from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 from DirectGuiDesigner.tools.JSONTools import JSONTools
 
+
 class ExporterProject:
+    """Class for saving a project to a '.gui' file."""
+
     def __init__(
             self,
             fileName,
@@ -55,17 +60,20 @@ class ExporterProject:
             title="Save GUI")
 
     def excSave(self):
+        """Used when the application crashes to save the current project."""
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
         self.__executeSave(tmpPath)
         logging.info("Wrote crash session file to {}".format(tmpPath))
 
     def autoSave(self, fileName=""):
+        """Used to occasionally save the current project."""
         if fileName == "":
             fileName = os.path.join(tempfile.gettempdir(), "DGDAutosave.gui")
         self.__executeSave(fileName)
         logging.info("Wrote autosave file to {}".format(fileName))
 
     def save(self, doSave):
+        """Used when saving manually (via the file browser)."""
         if doSave:
             path = self.browser.get()
             path = os.path.expanduser(path)
@@ -76,6 +84,7 @@ class ExporterProject:
         del self.browser
 
     def __executeSave(self, path):
+        """Actually save the project to 'path'."""
         jsonTools = JSONTools()
         jsonElements = jsonTools.getProjectJSON(
             self.guiElementsDict,

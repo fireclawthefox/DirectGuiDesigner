@@ -1,3 +1,5 @@
+"""Module for loading a project from a '.gui' file."""
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 __author__ = "Fireclaw the Fox"
@@ -26,8 +28,9 @@ from panda3d.core import LVecBase2, LVecBase3, LVecBase4, LPoint2, LPoint3, LPoi
 import importlib.util
 
 
-
 class ProjectLoader(DirectObject):
+    """Class for loading project files (.gui)."""
+
     funcMap = {"initialText":"set"}
     # This prioList will be walked through if all other options not in
     # this list have already been set
@@ -62,13 +65,16 @@ class ProjectLoader(DirectObject):
                 title="Load GUI Project")
 
     def excLoad(self):
+        """Load an exception save."""
         tmpPath = os.path.join(tempfile.gettempdir(), "DGDExceptionSave.gui")
         self.__executeLoad(tmpPath)
 
     def get(self):
+        """Get the loaded project."""
         return self.elementDict
 
     def Load(self, doLoad):
+        """Used when user loads a project manually (using the file browser)."""
         if doLoad:
             path = self.browser.get()
             path = os.path.expanduser(path)
@@ -86,6 +92,7 @@ class ProjectLoader(DirectObject):
         del self.browser
 
     def __executeLoad(self, path):
+        """Do the actual loading from file 'path'."""
         fileContent = None
         with open(path, 'r') as infile:
             try:
@@ -128,6 +135,7 @@ class ProjectLoader(DirectObject):
         base.messenger.send("updateElementDict-afterLoad", [self.elementDict])
 
     def __createElement(self, name, info):
+        """Control the creation of gui elements so that they are created in the correct order."""
         if info["parent"] not in self.createdParents:
             self.postponedElements[name] = info
             return
@@ -146,6 +154,7 @@ class ProjectLoader(DirectObject):
                 self.__createElement(elementName, elementInfo)
 
     def __createControl(self, jsonElementName, jsonElementInfo):
+        """Create a specific gui element."""
         funcName = "create{}".format(jsonElementInfo["type"])
         if hasattr(self.elementHandler, funcName):
             parentName = jsonElementInfo["parent"]
@@ -223,6 +232,7 @@ class ProjectLoader(DirectObject):
             base.messenger.send("refreshStructureTree")
 
     def __setProperties(self, elementInfo, jsonElementInfo):
+        """Set properties of element in 'elementInfo' to values specified in 'jsonElementInfo'."""
         tempOptionDict = {}
         for name, value in jsonElementInfo["element"].items():
             if name == "others":
@@ -240,6 +250,7 @@ class ProjectLoader(DirectObject):
             elementInfo.element.resetFrameSize()
 
     def __setProperty(self, elementInfo, name, value):
+        """Set a specific property of the element in 'elementInfo'."""
         if elementInfo.type in self.allWidgetDefinitions:
             element = elementInfo.element
             subElementInfo = None
