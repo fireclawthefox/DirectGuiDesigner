@@ -79,6 +79,9 @@ from direct.gui.DirectButton import *
 from direct.showbase.MessengerGlobal import messenger
 from direct.task.TaskManagerGlobal import taskMgr
 
+DGG.WHEELUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
+DGG.WHEELDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
+
 class DirectSpinBox(DirectFrame):
     notify = DirectNotifyGlobal.directNotify.newCategory('DirectSpinBox')
 

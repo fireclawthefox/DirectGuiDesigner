@@ -291,7 +291,10 @@ class ProjectLoader(DirectObject):
             wdList = self.allWidgetDefinitions[ei.type]
             for wd in wdList:
                 if wd.internalName == optionName:
-                    PropertyHelper.setValue(wd, ei, eval(value))
+                    if isinstance(value, str):
+                        PropertyHelper.setValue(wd, ei, eval(value), value)
+                    else:
+                        PropertyHelper.setValue(wd, ei, eval(value))
                     # don't need to continue, we only have one value to set
                     break
             if subElementInfo is not None:

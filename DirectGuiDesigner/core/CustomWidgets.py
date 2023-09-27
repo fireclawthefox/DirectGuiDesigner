@@ -3,11 +3,13 @@ import logging
 import json
 import importlib
 import pathlib
+import sys
 import types
 from panda3d.core import ConfigVariableString
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 
-class CustomWidget():
+
+class CustomWidget:
     def __init__(self, dispName, clsName, clsFile, module, addItemFunction, removeItemFunction, importPath):
         self.displayName = dispName
         self.className = clsName
@@ -23,7 +25,8 @@ class CustomWidget():
     def getCreateFunctionName(self):
         return "create{}".format(self.className)
 
-class CustomWidgets():
+
+class CustomWidgets:
     def __init__(self, toolbox, elementHandler):
         self.toolboxExtensionList = [["~Custom Widgets~"]]
         self.toolbox = toolbox
@@ -35,10 +38,10 @@ class CustomWidgets():
         return self.customWidgetDefinitions
 
     def loadCustomWidgets(self):
-        configFiles = []
+        configFiles = []  # list of all widget definition files to load
         defaultPath = str(pathlib.PurePosixPath(__file__).parent) + "/widgets"
         if os.path.exists(defaultPath):
-            configFiles = [f for f in os.listdir(defaultPath) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")]
+            configFiles = [f for f in os.listdir(defaultPath) if os.path.isfile(os.path.join(defaultPath, f)) and f.endswith(".widget")]
 
         path = ConfigVariableString("custom-widgets-path", "").getValue()
         if path != "" and os.path.exists(path):
@@ -47,85 +50,96 @@ class CustomWidgets():
 
         logging.info("no custom widgets found.")
 
-
+        # handle data in files
         for configFile in configFiles:
-            configFileContent = None
-            with open(os.path.join(path, configFile), 'r') as infile:
-                configFileContent = json.load(infile)
-            if configFileContent is None:
-                logging.error("Problems reading widget config file: {}".format(infile))
-                continue
-            pythonFilePath = os.path.join(path, configFileContent["classfilePath"])
-            spec = None
-            if pythonFilePath.endswith(".py"):
-                spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
-            else:
-                spec = importlib.util.find_spec(configFileContent["classfilePath"])
-            if spec is None:
-                continue
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            try:
+                configFileContent = None
+                with open(os.path.join(path, configFile), 'r') as infile:
+                    configFileContent = json.load(infile)
+                if configFileContent is None:
+                    logging.error("Problems reading widget config file: {}".format(infile))
+                    continue
+                pythonFilePath = os.path.join(path, configFileContent["classFilePath"])
+                spec = None
+                if pythonFilePath.endswith(".py"):
+                    spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
+                else:
+                    spec = importlib.util.find_spec(configFileContent["classFilePath"])
+                if spec is None:
+                    continue
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
 
-            if configFileContent["className"] not in self.customWidgetDefinitions:
-               self.customWidgetDefinitions[configFileContent["className"]] = []
+                if configFileContent["className"] not in self.customWidgetDefinitions:
+                    self.customWidgetDefinitions[configFileContent["className"]] = []
 
-            if "baseWidget" in configFileContent:
-                if configFileContent["baseWidget"] in DEFINITIONS:
-                    self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[configFileContent["baseWidget"]]
+                if "baseWidget" in configFileContent:
+                    if configFileContent["baseWidget"] in DEFINITIONS:
+                        self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[configFileContent["baseWidget"]]
 
-            if "customProperties" in configFileContent:
-                for prop in configFileContent["customProperties"]:
+                if "customProperties" in configFileContent:
+                    for prop in configFileContent["customProperties"]:
+                        self.__loadPropertyDefinition(configFileContent, prop)
 
-                    t = None
-                    if "internalType" in prop:
-                        if prop["internalType"] == "int":
-                            t = int
-                        elif prop["internalType"] == "float":
-                            t = float
-                        elif prop["internalType"] == "bool":
-                            t = bool
-                        elif prop["internalType"] == "str":
-                            t = str
-                        elif prop["internalType"] == "function":
-                            t = types.FunctionType
-                        elif prop["internalType"] == "list":
-                            t = list
-                        elif prop["internalType"] == "tuple":
-                            t = tuple
-                        elif prop["internalType"] == "object":
-                            t = object
+                self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
+                    configFileContent["displayName"],
+                    configFileContent["className"],
+                    configFileContent["classFilePath"],
+                    module,
+                    configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
+                    configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
+                    configFileContent["importPath"])
+                self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
 
-                    self.customWidgetDefinitions[configFileContent["className"]].append(
-                        Definition(
-                            prop["internalName"],
-                            prop["visiblename"],
-                            t,
-                            prop["editType"] if "editType" in prop else None,
-                            prop["nullable"] if "nullable" in prop else False,
-                            prop["supportStates"] if "supportStates" in prop else False,
-                            prop["valueOptions"] if "valueOptions" in prop else None,
-                            prop["isInitOption"] if "isInitOption" in prop else False,
-                            prop["getFunctionName"] if "getFunctionName" in prop else None,
-                            prop["setFunctionName"] if "setFunctionName" in prop else None,
-                            prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
-                            prop["loaderFunc"] if "loaderFunc" in prop else None,
-                            prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
-                            prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True
-                        ))
+            except KeyError:
+                e = sys.exc_info()[1]
+                string = f"Parameter: {e} missing from custom definition file '{configFile}'"
+                print(string)
 
-
-
-            self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
-                configFileContent["displayName"],
-                configFileContent["className"],
-                configFileContent["classfilePath"],
-                module,
-                configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
-                configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
-                configFileContent["importPath"])
-            self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
         self.extendToolbox()
         self.extendElementHandler()
+
+    def __loadPropertyDefinition(self, configFileContent, prop):
+        try:
+            t = None
+            if "internalType" in prop:
+                if prop["internalType"] == "int":
+                    t = int
+                elif prop["internalType"] == "float":
+                    t = float
+                elif prop["internalType"] == "bool":
+                    t = bool
+                elif prop["internalType"] == "str":
+                    t = str
+                elif prop["internalType"] == "function":
+                    t = types.FunctionType
+                elif prop["internalType"] == "list":
+                    t = list
+                elif prop["internalType"] == "tuple":
+                    t = tuple
+                elif prop["internalType"] == "object":
+                    t = object
+
+            self.customWidgetDefinitions[configFileContent["className"]].append(
+                Definition(prop["internalName"],
+                           prop["displayName"],
+                           t,
+                           prop["editType"] if "editType" in prop else None,
+                           prop["nullable"] if "nullable" in prop else False,
+                           prop["supportStates"] if "supportStates" in prop else False,
+                           prop["valueOptions"] if "valueOptions" in prop else None,
+                           prop["isInitOption"] if "isInitOption" in prop else False,
+                           prop["getFunctionName"] if "getFunctionName" in prop else None,
+                           prop["setFunctionName"] if "setFunctionName" in prop else None,
+                           prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
+                           prop["loaderFunc"] if "loaderFunc" in prop else None,
+                           prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
+                           prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True))
+        except KeyError:
+            e = sys.exc_info()[1]
+            string = f"Parameter: {e} missing from custom property '{prop}'"
+            logging.error(string)
+            print(string)
 
     def extendToolbox(self):
         self.toolbox.toolboxEntries += self.toolboxExtensionList

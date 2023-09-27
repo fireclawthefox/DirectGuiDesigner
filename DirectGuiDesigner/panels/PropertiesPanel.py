@@ -347,7 +347,7 @@ class PropertiesPanel(DirectObject):
         section.setCollapsed()
 
     def createProperty(self, definition, elementInfo):
-        if definition.editType == WidgetDefinition.PropertyEditTypes.integer:
+        if definition.editType == WidgetDefinition.PropertyEditTypes.int:
             self.__createNumberInput(definition, elementInfo, int)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
             self.__createNumberInput(definition, elementInfo, float)
@@ -475,7 +475,7 @@ class PropertiesPanel(DirectObject):
                 values = tuple(values)
             if allValuesNone or allValuesSet:
                 PropertyHelper.setValue(definition, elementInfo, values)
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         values = PropertyHelper.getValues(definition, elementInfo)
         if type(values) is int or type(values) is float:
             values = [values] * n
@@ -509,7 +509,7 @@ class PropertiesPanel(DirectObject):
             except Exception:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
             PropertyHelper.setValue(definition, elementInfo, value)
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         valueA = PropertyHelper.getValues(definition, elementInfo)
         if valueA is None and not definition.nullable:
             logging.error(f"Got None value for not nullable element {definition.internalName}")
@@ -529,7 +529,7 @@ class PropertiesPanel(DirectObject):
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
             PropertyHelper.setValue(definition, elementInfo, text)
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         text = PropertyHelper.getValues(definition, elementInfo)
         width = DGH.getRealWidth(self.boxFrame) - SCROLLBARWIDTH
         entry = self.__createTextEntry(text, width, update, [elementInfo])
@@ -544,7 +544,7 @@ class PropertiesPanel(DirectObject):
             except:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
             PropertyHelper.setValue(definition, elementInfo, value)
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         valueA = PropertyHelper.getValues(definition, elementInfo)
         btn = DirectCheckButton(
             indicatorValue=valueA,
@@ -591,7 +591,7 @@ class PropertiesPanel(DirectObject):
                     boxFrame.refresh()
                     self.updateSection(section)
 
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         listItems = PropertyHelper.getValues(definition, elementInfo)
 
         # make sure we have a list
@@ -659,7 +659,7 @@ class PropertiesPanel(DirectObject):
                     boxFrame.refresh()
                     self.updateSection(section)
 
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         listItems = PropertyHelper.getValues(definition, elementInfo)
         width = DGH.getRealWidth(self.boxFrame) - SCROLLBARWIDTH
         entriesBox = DirectBoxSizer(
@@ -777,7 +777,7 @@ class PropertiesPanel(DirectObject):
                 "",
                 tooltip=self.tooltip)
             self.browser.show()
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         path = PropertyHelper.getValues(definition, elementInfo)
         if type(path) is not str:
             path = ""
@@ -807,10 +807,21 @@ class PropertiesPanel(DirectObject):
             except Exception as e:
                 logging.exception(f"{definition.internalName} not supported by undo/redo yet")
 
+            value_str = ""
+            if definition.loaderFunc is not None:
+                value_str = value
+                try:
+                    if type(definition.loaderFunc) is str:
+                        value = eval(definition.loaderFunc)
+                    else:
+                        value = definition.loaderFunc(value)
+                except Exception:
+                    logging.exception("Couldn't load path with loader function")
+                    value = value_str
             # actually set the value on the element
-            PropertyHelper.setValue(definition, elementInfo, value)
+            PropertyHelper.setValue(definition, elementInfo, value, value_str)
 
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         if definition.valueOptions is None:
             return
         value = PropertyHelper.getValues(definition, elementInfo)
@@ -830,7 +841,7 @@ class PropertiesPanel(DirectObject):
         self.boxFrame.addItem(menu, skipRefresh=True)
 
     def __createCustomCommand(self, definition, elementInfo):
-        self.__createPropertyHeader(definition.visiblename)
+        self.__createPropertyHeader(definition.visibleName)
         btn = DirectButton(
             text="Run Command",
             pad=(0.25,0.25),

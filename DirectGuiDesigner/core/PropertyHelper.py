@@ -136,6 +136,11 @@ class PropertyHelper:
 
                 # try to set the new value as original type on the property
                 propName_orig = propName.replace(nameAdd, "", 1)
+                if definition.loaderFunc is not None and isinstance(value, str):
+                    if isinstance(definition.loaderFunc, str):
+                        value = eval(definition.loaderFunc)
+                    else:
+                        value = definition.loaderFunc(value)
                 elementInfo.element[propName_orig] = value
 
                 # in addition, if this should be stored in extra options

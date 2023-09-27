@@ -245,7 +245,11 @@ class JSONTools:
                                 hasChanged = False
 
                     if hasChanged:
-                        elementJson[name + wd.internalName] = reprFunc(value)
+                        if isinstance(value, str):
+                            new_value = value
+                        else:
+                            new_value = reprFunc(value)
+                        elementJson[name + wd.internalName] = new_value
 
             if not hasattr(element, "options"): continue
 
@@ -303,7 +307,8 @@ class JSONTools:
                     if option[DGG._OPT_DEFAULT] in self.specialPropMapping:
                         value = self.specialPropMapping[option[DGG._OPT_DEFAULT]][reprFunc(value)]
 
-                    elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(value)
+                    if not (isinstance(value, type) and reprFunc(value).startswith("<class")):
+                        elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(value)
 
             # special options for specific elements
             if elementInfo.type == "DirectRadioButton":
