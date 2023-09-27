@@ -1,3 +1,5 @@
+"""Module for exporting a project to a python (.py) file."""
+
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 __author__ = "Fireclaw the Fox"
@@ -12,6 +14,7 @@ from panda3d.core import ConfigVariableBool
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 from DirectGuiDesigner.tools.JSONTools import JSONTools
+
 
 class ExporterPy:
     functionMapping = {
@@ -172,6 +175,7 @@ app = ShowBase()\n"""
             title="Export as Python script")
 
     def save(self, doSave):
+        """Used when exporting manually (through the file browser)."""
         if doSave:
             path = self.browser.get()
             path = os.path.expanduser(path)
@@ -182,6 +186,7 @@ app = ShowBase()\n"""
         del self.browser
 
     def __executeSave(self, path):
+        """Actually export project to file."""
         with open(path, 'w') as outfile:
             outfile.write(self.content)
 

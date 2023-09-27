@@ -203,6 +203,10 @@ class DirectGuiDesigner(DirectObject):
         self.mainView.editorFrame.setElementHandler(self.elementHandler)
 
     def enable_events(self):
+        """Setup general events for the editor. Both some user inputs (like selecting an object with 'mouse3')
+        and some events for internal functions (for example 'refreshStructureTree' which will update the
+        structure panel to reflect the current state of the current project).
+        """
         self.registerKeyboardEvents()
 
         # these keys will not be ignored until the application is closed
@@ -292,21 +296,33 @@ class DirectGuiDesigner(DirectObject):
         self.accept("window-event", self.windowEventHandler)
 
     def disable_events(self):
+        """Ignore all events that has been accepted previously."""
         self.ignore_all()
 
     def is_dirty(self):
+        """Return True if the current project has unsaved changes, else returns False."""
         return self.dirty
 
     def setDirty(self):
+        """Set dirty tag of self to True and add '*' to the window title."""
         base.messenger.send("request_dirty_name")
         self.dirty = True
 
     def setClean(self):
+        """Set dirty tag of self to False and remove '*' from the window title."""
         base.messenger.send("request_clean_name")
         self.dirty = False
         self.hasSaved = True
 
     def addToKillRing(self, editObject, action, objectType, oldValue, newValue):
+        """Adds a change to the 'KillRing' to be able to undo and redo changes at a later time.
+
+        :param editObject: The object that was changed (can be an element, ElementInfo or something else)
+        :param str action: What kind of change it was, for example 'add' when an element was added
+        :param str objectType: Can specify the type of the editObject or the type of sub-action to use
+        :param oldValue: The old value
+        :param newValue: The new value
+        """
         if action == "set" and oldValue == newValue:
             logging.debug(f"action={action}, type={objectType} was not added to killring, reason: old={oldValue} equals new={newValue}")
             return
@@ -314,6 +330,9 @@ class DirectGuiDesigner(DirectObject):
         self.killRing.push(editObject, action, objectType, oldValue, newValue)
 
     def undo(self):
+        """Undo the latest change in the current branch of the 'KillRing'.
+        If the user hasn't just cycled between redo branches this will be the latest change.
+        """
         # undo this action
         workOn = self.killRing.pop()
 
@@ -372,6 +391,9 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("setDirtyFlag")
 
     def redo(self):
+        """Redo the latest change in the current branch of the 'KillRing'.
+        If the user hasn't just cycled between redo branches this will be the latest change.
+        """
         # redo this
         workOn = self.killRing.pull()
 
@@ -441,6 +463,10 @@ class DirectGuiDesigner(DirectObject):
             self.lastFileNameWOExtension = os.path.splitext(os.path.basename(path))[0]
 
     def getAllEditorPlacers(self):
+        """Get all default positions for elements on the canvas (for example topRight, leftCenter).
+
+        :return list: list of nodePaths
+        """
         return self.mainView.editorFrame.getAllEditorPlacers()
 
     def getEditorFrame(self):
@@ -469,6 +495,7 @@ class DirectGuiDesigner(DirectObject):
         self.do_exception_save()
 
     def autosaveTask(self, task):
+        """Task to autosave the current project (by default every minute)."""
         task.delayTime = ConfigVariableInt("autosave-delay", 60).getValue()
         try:
             filename = ""
@@ -500,6 +527,7 @@ class DirectGuiDesigner(DirectObject):
             self.selectElement(self.visualEditorInfo, None)
 
     def registerKeyboardEvents(self):
+        """Register events for user input."""
         speedUp = 5
         speedDown = 0.5
         self.keyEvents = {
@@ -557,10 +585,12 @@ class DirectGuiDesigner(DirectObject):
                 self.accept(event, actionSet[0])
 
     def ignoreKeyboardEvents(self):
+        """Ignore events for user input."""
         for event, actionSet in self.keyEvents.items():
             self.ignore(event)
 
     def windowEventHandler(self, window=None):
+        """Handle resizing of the window."""
         # call showBase windowEvent which would otherwise get overridden and breaking the app
         base.windowEvent(window)
 
@@ -583,9 +613,15 @@ class DirectGuiDesigner(DirectObject):
         self.mainView.propertiesFrame.setupProperties("Editor Properties", elementInfo, self.elementDict)
 
     def __refreshStructureTree(self):
+        """Update the structure tree panel to reflect the current state of the project."""
         self.mainView.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
 
     def __createControl(self, element, skipAddToKillRing=False):
+        """Create a new element and reparent it to the selected object.
+
+        :param str element: The type of element to add (for example 'DirectScrolledFrame')
+        :return: The new element
+        """
         funcName = "create{}".format(element)
         parent = None
         elementInfo = None
@@ -650,6 +686,11 @@ class DirectGuiDesigner(DirectObject):
         return elementInfo
 
     def selectElement(self, elementInfo, args=None):
+        """Select the element in 'elementInfo'.
+
+        :param ElementInfo elementInfo: The elementInfo for the element to select
+        :param args: Not currently used
+        """
         if self.selectedElement is not None:
             # handle coloring for selected and cut elements
             if self.selectedElement is self.theCutElement:
@@ -682,6 +723,10 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("refreshStructureTree")
 
     def refreshProperties(self, elementInfo):
+        """Clear the properties panel and populate it with the properties of the new elementInfo.
+
+        :param ElementInfo elementInfo: The info for the new selected element
+        """
         self.mainView.propertiesFrame.clear()
         propFuncName = "properties{}".format(elementInfo.type)
         try:
@@ -699,6 +744,11 @@ class DirectGuiDesigner(DirectObject):
             logging.exception("Error while loading properties panel")
 
     def dragStart(self, elementInfo, event):
+        """Called when element is clicked. Selects element and sets up the drag task to enable moving the element.
+
+        :param ElementInfo elementInfo: The info of the clicked element
+        :param event: The mouse event
+        """
         self.selectElement(elementInfo, event)
         element = elementInfo.element
         taskMgr.remove("dragDropTask")
@@ -717,6 +767,7 @@ class DirectGuiDesigner(DirectObject):
         t.hasMoved = False
 
     def dragTask(self, t):
+        """Task for repositioning the selected element by dragging it."""
         mwn = base.mouseWatcherNode
         if mwn.hasMouse():
             vMouse2render2d = Point3(mwn.getMouse()[0], 0, mwn.getMouse()[1])
@@ -751,6 +802,7 @@ class DirectGuiDesigner(DirectObject):
         return t.cont
 
     def dragStop(self, event):
+        """Called when element is no longer clicked to stop dragging it."""
         t = taskMgr.getTasksNamed("dragDropTask")[0]
         #parent = t.elementInfo.element.getParent()
         pos = t.elementInfo.element.getPos()
@@ -773,6 +825,7 @@ class DirectGuiDesigner(DirectObject):
         taskMgr.remove("dragDropTask")
 
     def moveElement(self, direction, speedMult=1):
+        """Move the selected element using the arrow keys."""
         if self.selectedElement is None: return
         workOn = self.selectedElement.element
 
@@ -803,6 +856,7 @@ class DirectGuiDesigner(DirectObject):
             [self.selectedElement, "set", "pos", startPos, workOn.getPos()])
 
     def removeElement(self, element=None, includeWithKillCycle=True):
+        """Remove element from the project."""
         workOn = None
         selectEditor = False
         if element is not None:
@@ -956,6 +1010,10 @@ class DirectGuiDesigner(DirectObject):
         #TODO: Up/Down pgup/gpdown to move selected element up or down in the tree
 
     def __findFirstGUIElement(self, root):
+        """Find the closest ancestor of the root that is an actual gui element.
+        For example if root is the canvas of a scrolledFrame, the scrolledFrame would be returned.
+        If a valid ancestor can not be found None would be returned instead.
+        """
         if hasattr(root, "getParent"):
             if not root.getParent().isEmpty():
                 name = root.getParent().getName()
@@ -983,6 +1041,7 @@ class DirectGuiDesigner(DirectObject):
             return element
 
     def setName(self, elementInfo, name):
+        """Set name of element in 'elementInfo' to 'name'."""
         guiId = elementInfo.element.guiId
         e = self.elementDict[guiId]
         e.name = name
@@ -994,6 +1053,11 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("refreshStructureTree")
 
     def setParentOfElement(self, element, parent):
+        """Set the parent tag in the elements elementInfo to the correct parent based on 'parent'.
+
+        :param element: The element
+        :param parent: Some NodePath
+        """
         self.canvasParents = [
             "canvasTopCenter","canvasBottomCenter","canvasLeftCenter","canvasRightCenter",
             "canvasTopLeft","canvasTopRight","canvasBottomLeft","canvasBottomRight"]
@@ -1015,10 +1079,12 @@ class DirectGuiDesigner(DirectObject):
             self.elementDict[element.guiId].parent = parentElement
 
     def copyElement(self):
+        """Copy the selected element (store element in 'self.copiedElement' to be copied later)."""
         if self.selectedElement is None: return
         self.copiedElement = self.selectedElement
 
     def cutElement(self):
+        """Cut the selected element (store element in 'self.theCutElement' to be cut and pasted later)."""
         if self.selectedElement is None: return
         # handle color scale of last cut element
         if self.theCutElement is not None:
@@ -1029,6 +1095,7 @@ class DirectGuiDesigner(DirectObject):
         self.theCutElement.element.setColorScale(0.5, 0.5, 0, 0.5)
 
     def pasteElement(self):
+        """Paste element that was copied or cut to currently selected element."""
         # check if we want to have a cut or copy action
 
         if self.theCutElement is not None:
@@ -1055,6 +1122,7 @@ class DirectGuiDesigner(DirectObject):
             [e, "copy", "element", (self.newElementIds[0], e), None])
 
     def __copyBranch(self, startObject, parent=None):
+        """Copy 'startObject' and its child-elements to 'parent'."""
         for elementName, elementInfo in self.elementDict.copy().items():
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
             if elementInfo.element not in self.elementsToCopy: continue
@@ -1079,6 +1147,7 @@ class DirectGuiDesigner(DirectObject):
                 self.__copyBranch(elementInfo, newElement.element)
 
     def pasteCutElement(self):
+        """Paste the cut element to the selected element."""
         if self.theCutElement is None: return
         if self.theCutElement == self.selectedElement: return
         oldParent = self.theCutElement.element.getParent()
@@ -1111,10 +1180,12 @@ class DirectGuiDesigner(DirectObject):
         base.messenger.send("refreshStructureTree")
 
     def copyOptions(self):
+        """Copy the selected elements options (properties)."""
         if self.selectedElement is None: return
         self.copyOptionsElementInfo = self.selectedElement
 
     def pasteOptions(self):
+        """Paste options to the selected element."""
         if self.copyOptionsElementInfo is None: return
 
         if self.selectedElement is None:  # if no element is selected
@@ -1188,6 +1259,7 @@ class DirectGuiDesigner(DirectObject):
             base.messenger.send("showWarning", ["Couldn't copy element options"])
 
     def new(self):
+        """Create a new project if there are no unsaved changes, otherwise ask user."""
         if self.dirty:
             self.dlgNewProject = OkCancelDialog(
                 text="You have unsaved changes!\nReally create new project?",
@@ -1214,6 +1286,7 @@ class DirectGuiDesigner(DirectObject):
             return True
 
     def __newProject(self, selection):
+        """Create a new project."""
         if selection == 1:
             for name, elementInfo in list(self.elementDict.items()):
                 self.removeElement(elementInfo.element)
@@ -1227,6 +1300,7 @@ class DirectGuiDesigner(DirectObject):
             self.dlgNewProjectShadow = None
 
     def save(self):
+        """Save project to file."""
         self.selectElement(self.visualEditorInfo)
         allWidgetDefinitions = {
             **WidgetDefinition.DEFINITIONS,
@@ -1242,6 +1316,7 @@ class DirectGuiDesigner(DirectObject):
             tooltip=self.tt)
 
     def export(self):
+        """Export project as python file."""
         self.selectElement(self.visualEditorInfo)
         allWidgetDefinitions = {
             **WidgetDefinition.DEFINITIONS,
@@ -1258,6 +1333,7 @@ class DirectGuiDesigner(DirectObject):
             not self.mainView.editorFrame.visEditorInAspect2D)
 
     def load(self):
+        """Load project from a .gui file."""
         self.selectElement(self.visualEditorInfo)
 
         allWidgetDefinitions = {
@@ -1315,6 +1391,7 @@ class DirectGuiDesigner(DirectObject):
         self.openDialogCloseFunctions.append(self.__quit)
 
     def showSettings(self):
+        """Show settings panel."""
         if self.dlgSettings is not None:
             return
 
@@ -1386,6 +1463,7 @@ class DirectGuiDesigner(DirectObject):
         self.openDialogCloseFunctions.append(self.hideSettings)
 
     def hideSettings(self, accept):
+        """Hide settings panel and save settings if 'accept' is True."""
         base.messenger.send("reregisterKeyboardEvents")
         if accept:
             with open(self.config_file, "w") as prcFile:
@@ -1437,6 +1515,7 @@ class DirectGuiDesigner(DirectObject):
         del self.openDialogCloseFunctions[-1]
 
     def showHelp(self):
+        """Show help panel."""
         if self.dlgHelp is not None:
             self.hideHelp(None)
             return
@@ -1520,6 +1599,7 @@ Log messages are written to:
         self.openDialogCloseFunctions.append(self.hideHelp)
 
     def hideHelp(self, args):
+        """Hide help panel."""
         self.dlgHelp.destroy()
         self.dlgHelpShadow.destroy()
         self.dlgHelp = None
@@ -1527,6 +1607,7 @@ Log messages are written to:
         del self.openDialogCloseFunctions[-1]
 
     def showWarning(self, text):
+        """Show an ok-dialog with a warning message: 'text'."""
         if self.dlgWarning is not None: return
         text = "WARNING!\n\n" + text
         self.dlgWarning = OkDialog(
@@ -1550,6 +1631,7 @@ Log messages are written to:
         self.openDialogCloseFunctions.append(self.hideWarning)
 
     def hideWarning(self, args):
+        """Hide warning dialog."""
         self.dlgWarning.destroy()
         self.dlgWarningShadow.destroy()
         self.dlgWarning = None
@@ -1557,6 +1639,7 @@ Log messages are written to:
         del self.openDialogCloseFunctions[-1]
 
     def showInfo(self, text):
+        """Show an ok-dialog with a info message: 'text'."""
         if self.dlgInfo is not None: return
         text = "INFO:\n\n" + text
         self.dlgInfo = OkDialog(
@@ -1580,6 +1663,7 @@ Log messages are written to:
         self.openDialogCloseFunctions.append(self.hideInfo)
 
     def hideInfo(self, args):
+        """Hide info dialog."""
         self.dlgInfo.destroy()
         self.dlgInfoShadow.destroy()
         self.dlgInfo = None
