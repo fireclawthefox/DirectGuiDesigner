@@ -14,6 +14,7 @@ from panda3d.core import ConfigVariableBool
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 from DirectGuiDesigner.tools.JSONTools import JSONTools
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 
 class ExporterPy:
@@ -202,8 +203,10 @@ app = ShowBase()\n"""
             elif type(v) is str and optionName not in writeAsIsList:
                 v = f"'{v}'"
 
-            if optionName.endswith("Sound"):
-                v = f"loader.loadSfx({v})"
+            definition = PropertyHelper.getDefinition(elementInfo, optionName)
+            if definition.loaderFunc is not None:
+                if isinstance(definition.loaderFunc, str):
+                    v = definition.loaderFunc.replace("value", f"{v}")
 
             extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """

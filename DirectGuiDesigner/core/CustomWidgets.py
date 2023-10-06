@@ -27,12 +27,14 @@ class CustomWidget:
 
 
 class CustomWidgets:
+
+    customWidgetsDict = {}
+    customWidgetDefinitions = {}
+
     def __init__(self, toolbox, elementHandler):
         self.toolboxExtensionList = [["~Custom Widgets~"]]
         self.toolbox = toolbox
         self.elementHandler = elementHandler
-        self.customWidgetsDict = {}
-        self.customWidgetDefinitions = {}
 
     def getCustomWidgetDefinitions(self):
         return self.customWidgetDefinitions
