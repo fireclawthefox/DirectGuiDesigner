@@ -41,12 +41,12 @@
     {
         "displayName":"Minimum value",
         "internalName":"minValue",
-        "editType":"integer"
+        "editType":"int"
     },
     {
         "displayName":"Maximum value",
         "internalName":"maxValue",
-        "editType":"integer"
+        "editType":"int"
     },
     {
         "displayName":"Button repeat delay",
