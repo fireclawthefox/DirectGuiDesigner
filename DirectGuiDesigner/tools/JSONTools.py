@@ -95,12 +95,13 @@ class JSONTools:
 
     def __createJSONEntry(self, elementInfo):
         return {
-            "element":self.__writeElement(elementInfo),
-            "type":elementInfo.type,
-            "parent":self.__writeParent(elementInfo.parent),
-            "command":elementInfo.command,
-            "extraArgs":elementInfo.extraArgs,
-            "extraOptions":elementInfo.extraOptions,
+            "element": self.__writeElement(elementInfo),
+            "type": elementInfo.type,
+            "parent": self.__writeParent(elementInfo.parent),
+            "command": elementInfo.command,
+            "extraArgs": elementInfo.extraArgs,
+            "extraOptions": elementInfo.extraOptions,
+            "addItemExtraArgs": elementInfo.addItemExtraArgs
         }
 
     def __writeParent(self, parent):

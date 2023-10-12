@@ -23,7 +23,7 @@ from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 from panda3d.core import TextNode
 from panda3d.core import NodePath
 from panda3d.core import LVecBase2f, LVecBase3f, LVecBase4f, LPoint2f, LPoint3f, LPoint4f
-from panda3d.core import LVecBase2, LVecBase3, LVecBase4, LPoint2, LPoint3, LPoint4
+from panda3d.core import LVecBase2, LVecBase3, LVecBase4, LPoint2, LPoint3, LPoint4, ConfigVariableString
 
 import importlib.util
 
@@ -180,6 +180,7 @@ class ProjectLoader(DirectObject):
             elementInfo.command = jsonElementInfo["command"]
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
             elementInfo.extraOptions = jsonElementInfo["extraOptions"]
+            elementInfo.addItemExtraArgs = jsonElementInfo["addItemExtraArgs"]
             elementInfo.name = jsonElementName
             if "transparency" in jsonElementInfo:
                 elementInfo.element.setTransparency(eval(jsonElementInfo["transparency"]))
@@ -220,9 +221,8 @@ class ProjectLoader(DirectObject):
                     elementInfo.element.reparentTo(parent.element.canvas)
                 parentWidget = self.customWidgetHandler.getWidget(parent.type if parent is not None else "")
                 if parentWidget is not None:
-                    if parentWidget.addItemFunction is not None:
-                        # call custom widget add function
-                        getattr(parent.element, parentWidget.addItemFunction)(elementInfo.element)
+                    # call custom widget add function
+                    parentWidget.callAddItemFunc(parent, elementInfo)
 
                 self.__setProperties(elementInfo, jsonElementInfo)
                 if elementInfo.type == "DirectScrolledFrame":
@@ -270,7 +270,9 @@ class ProjectLoader(DirectObject):
                         elementInfo.parent,
                         elementInfo.extraOptions,
                         elementInfo.createAfter,
-                        elementInfo.customImportPath)
+                        elementInfo.customImportPath,
+                        elementInfo.addItemExtraArgs
+                    )
 
                 # This wouldn't have worked but we shouldn't get in there anyway
                 #elif elementInfo.element.hascomponent(componentName + "0"):

@@ -132,7 +132,13 @@ class GUI:
                 if name not in self.customWidgetAddDict: continue
                 for element in self.customWidgetAddDict[name]:
                     if widget.addItemFunction is not None:
-                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element})\n"
+                        extraArgs = ""
+                        childInfo = self.jsonElements[element.removeprefix("self.")]  # elementInfo for elements to add
+                        if args := childInfo["addItemExtraArgs"]:  # add extra args to add item function
+                            for arg in args:
+                                extraArgs += f", {arg}"
+
+                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element}{extraArgs})\n"
 
             if elementInfo["parent"] == "root" or elementInfo["parent"].startswith("a2d"):
                 topLevelItems.append(name)

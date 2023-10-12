@@ -138,7 +138,7 @@ class StructurePanel():
         self.recalcScrollSize()
 
     def __fillStructureTree(self, root, level, z):
-        if "DirectGrid" in root.getName(): return
+        if "DirectGrid" == root.getName(): return
         self.itemCounter += 1
 
         elementInfo = None

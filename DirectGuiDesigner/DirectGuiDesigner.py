@@ -664,9 +664,8 @@ class DirectGuiDesigner(DirectObject):
                     self.selectedElement.element.addItem(elementInfo.element)
                 widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
                 if widget is not None:
-                    if widget.addItemFunction is not None:
-                        # call custom widget add function
-                        getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo.element)
+                    # call custom widget add function
+                    widget.callAddItemFunc(self.selectedElement, elementInfo)
             sort = self.getMaxSort(elementInfo)
             elementInfo.element.reparentTo(elementInfo.element.getParent(), sort)
             self.elementDict[elementInfo.element.guiId] = elementInfo

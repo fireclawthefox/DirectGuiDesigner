@@ -6,16 +6,21 @@ import pathlib
 import sys
 import types
 from panda3d.core import ConfigVariableString
+from direct.showbase.DirectObject import DirectObject
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
+from DirectGuiDesigner.dialogs.AddItemDialog import AddItemDialog
 
 
-class CustomWidget:
-    def __init__(self, dispName, clsName, clsFile, module, addItemFunction, removeItemFunction, importPath):
+class CustomWidget(DirectObject):
+    def __init__(self, dispName, clsName, clsFile, module, addItemFunction, addItemExtraArgs, addItemNode, removeItemFunction, importPath):
+        super().__init__()
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile
         self.module = module
         self.addItemFunction = addItemFunction
+        self.addItemExtraArgs = addItemExtraArgs
+        self.addItemNode = addItemNode
         self.removeItemFunction = removeItemFunction
         self.importPath = importPath
 
@@ -24,6 +29,51 @@ class CustomWidget:
 
     def getCreateFunctionName(self):
         return "create{}".format(self.className)
+
+    def callAddItemFunc(self, parentInfo, childInfo):
+        """Handle all edge cases for adding a new item to a custom element.
+
+        :param parentInfo: The elementInfo of the element to add to
+        :param childInfo: The elementInfo of the element to add
+        """
+        parent = parentInfo.element
+        child = childInfo.element
+
+        if self.addItemFunction is not None:
+            # self.__addByFunction(child, parent, childInfo)
+            self.doMethodLater(0, self.__addByFunction, "__addByFunction", [child, parent, childInfo])
+
+        # reparent child to node specified in addItemNode
+        if self.addItemNode is not None:
+            node = getattr(parent, self.addItemNode)
+            child.reparentTo(node)
+
+    async def __addByFunction(self, child, parent, childInfo):
+        func = getattr(parent, self.addItemFunction)
+        if self.addItemExtraArgs is None:
+            func(child)
+            return
+
+        # call with extra args if they are provided
+        extraArgs = []
+        if isinstance(self.addItemExtraArgs, list):
+            extraArgs = self.addItemExtraArgs
+        elif isinstance(self.addItemExtraArgs, dict):
+            if childInfo.addItemExtraArgs:
+                extraArgs = childInfo.addItemExtraArgs
+
+            else:
+                AddItemDialog(self, child, childInfo, func)
+                return
+
+        else:
+            print("addItemExtraArgs should be of type 'list' or 'dict'")
+
+        childInfo.addItemExtraArgs = extraArgs
+        try:
+            func(child, *extraArgs)
+        except Exception:
+            print("error running addItemFunc")
 
 
 class CustomWidgets:
@@ -89,6 +139,8 @@ class CustomWidgets:
                     configFileContent["classFilePath"],
                     module,
                     configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
+                    configFileContent["addItemExtraArgs"] if "addItemExtraArgs" in configFileContent else None,
+                    configFileContent["addItemNode"] if "addItemNode" in configFileContent else None,
                     configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
                     configFileContent["importPath"])
                 self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
