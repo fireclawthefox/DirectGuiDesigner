@@ -9,6 +9,7 @@ from panda3d.core import ConfigVariableString
 from direct.showbase.DirectObject import DirectObject
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 from DirectGuiDesigner.dialogs.AddItemDialog import AddItemDialog
+from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 
 class CustomWidget(DirectObject):
@@ -30,25 +31,27 @@ class CustomWidget(DirectObject):
     def getCreateFunctionName(self):
         return "create{}".format(self.className)
 
-    def callAddItemFunc(self, parentInfo, childInfo):
+    def callAddItemFunc(self, parentInfo, childInfo, forceOpenDialog=False):
         """Handle all edge cases for adding a new item to a custom element.
 
         :param parentInfo: The elementInfo of the element to add to
         :param childInfo: The elementInfo of the element to add
         """
-        parent = parentInfo.element
+        if isinstance(parentInfo, ElementInfo):
+            parent = parentInfo.element
+        else:
+            parent = parentInfo
         child = childInfo.element
 
         if self.addItemFunction is not None:
-            # self.__addByFunction(child, parent, childInfo)
-            self.doMethodLater(0, self.__addByFunction, "__addByFunction", [child, parent, childInfo])
+            self.__addByFunction(child, parent, childInfo, forceOpenDialog)
 
         # reparent child to node specified in addItemNode
         if self.addItemNode is not None:
             node = getattr(parent, self.addItemNode)
             child.reparentTo(node)
 
-    async def __addByFunction(self, child, parent, childInfo):
+    def __addByFunction(self, child, parent, childInfo, forceOpenDialog=False):
         func = getattr(parent, self.addItemFunction)
         if self.addItemExtraArgs is None:
             func(child)
@@ -59,7 +62,7 @@ class CustomWidget(DirectObject):
         if isinstance(self.addItemExtraArgs, list):
             extraArgs = self.addItemExtraArgs
         elif isinstance(self.addItemExtraArgs, dict):
-            if childInfo.addItemExtraArgs:
+            if childInfo.addItemExtraArgs and not forceOpenDialog:
                 extraArgs = childInfo.addItemExtraArgs
 
             else:
