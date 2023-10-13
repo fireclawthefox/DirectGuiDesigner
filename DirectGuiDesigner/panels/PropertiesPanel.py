@@ -574,7 +574,7 @@ class PropertiesPanel(DirectObject):
             PropertyHelper.setValue(definition, elementInfo, value)
 
         def addEntry(text="", updateEntries=True, updateMainBox=True):
-            entry = self.__createTextEntry(text, width, update, [elementInfo])
+            entry = self.__createTextEntry(str(text), width, update, [elementInfo])
             entriesBox.addItem(entry, skipRefresh=True)
             entries.append(entry)
 
