@@ -6,15 +6,13 @@ import pathlib
 import sys
 import types
 from panda3d.core import ConfigVariableString
-from direct.showbase.DirectObject import DirectObject
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
 from DirectGuiDesigner.dialogs.AddItemDialog import AddItemDialog
 from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 
-class CustomWidget(DirectObject):
+class CustomWidget:
     def __init__(self, dispName, clsName, clsFile, module, addItemFunction, addItemExtraArgs, addItemNode, removeItemFunction, importPath):
-        super().__init__()
         self.displayName = dispName
         self.className = clsName
         self.classFile = clsFile

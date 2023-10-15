@@ -17,7 +17,7 @@ from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 DEFAULT_MIN_SCALE = 0.2
 DEFAULT_MAX_SCALE = 2.0
 
-class CanvasPanel():
+class CanvasPanel:
     def __init__(self, parent):
         self.parent = parent
         self.elementHandler = None
