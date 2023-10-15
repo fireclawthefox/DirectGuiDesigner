@@ -49,8 +49,26 @@ class ElementHandler:
         base.messenger.send("dragStop", [event])
 
     def setupBind(self, elementInfo, PassedElementInfo=None):
-        elementInfo.element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
-        elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
+        def addSubComponents(componentList):
+            """Recursively add all components of the elements in componentList to the list.
+            Used to find all elements to bind.
+
+            :param componentList: List of elements
+            """
+            for component in componentList:
+                if not hasattr(component, "components"):
+                    continue
+                subComponents = [component.component(name) for name in component.components()]
+                addSubComponents(subComponents)
+                componentList += subComponents
+
+        components = [elementInfo.element.component(name) for name in elementInfo.element.components()]
+        addSubComponents(components)
+        components.append(elementInfo.element)
+        for element in components:
+            if hasattr(element, "bind"):
+                element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
+                element.bind(DGG.B1RELEASE, self.dragStop)
 
     def createMethod(self, widget, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
