@@ -58,17 +58,24 @@ class ElementHandler:
             for component in componentList:
                 if not hasattr(component, "components"):
                     continue
-                subComponents = [component.component(name) for name in component.components()]
+                subComponents = []
+                for name in component.components():
+                    if name != "thumb":
+                        subComponents.append(component.component(name))
                 addSubComponents(subComponents)
                 componentList += subComponents
 
-        components = [elementInfo.element.component(name) for name in elementInfo.element.components()]
+        components = [elementInfo.element]
         addSubComponents(components)
-        components.append(elementInfo.element)
         for element in components:
-            if hasattr(element, "bind"):
-                element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
-                element.bind(DGG.B1RELEASE, self.dragStop)
+            if not hasattr(element, "bind"):
+                continue
+
+            if element.isAccepting(DGG.B1PRESS + element.guiId):
+                continue
+
+            element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
+            element.bind(DGG.B1RELEASE, self.dragStop)
 
     def createMethod(self, widget, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent

@@ -692,6 +692,9 @@ class DirectGuiDesigner(DirectObject):
         :param ElementInfo elementInfo: The elementInfo for the element to select
         :param args: Not currently used
         """
+        if elementInfo is self.selectedElement:
+            return
+
         if self.selectedElement is not None:
             # handle coloring for selected and cut elements
             if self.selectedElement is self.theCutElement:
@@ -817,11 +820,11 @@ class DirectGuiDesigner(DirectObject):
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[2])
             if pos.z > self.mainView.editorFrame.getEditorCanvasSize()[3]:
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[3])
-        self.refreshProperties(t.elementInfo)
 
         if t.hasMoved:
+            self.refreshProperties(t.elementInfo)
             base.messenger.send("addToKillRing",
-                [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
+                                [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
 
         taskMgr.remove("dragDropTask")
 
