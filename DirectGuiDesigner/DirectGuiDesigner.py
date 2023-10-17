@@ -54,6 +54,7 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectTooltip import DirectTooltip
 
 from DirectGuiDesigner.core import WidgetDefinition
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 
 class DirectGuiDesigner(DirectObject):
@@ -822,6 +823,8 @@ class DirectGuiDesigner(DirectObject):
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[3])
 
         if t.hasMoved:
+            definition = PropertyHelper.getDefinition(t.elementInfo, "pos")
+            PropertyHelper.setValue(definition, t.elementInfo, pos)
             self.refreshProperties(t.elementInfo)
             base.messenger.send("addToKillRing",
                                 [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
