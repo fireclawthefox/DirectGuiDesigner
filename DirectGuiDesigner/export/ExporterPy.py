@@ -260,6 +260,8 @@ app = ShowBase()\n"""
             if elementInfo["parent"] in self.jsonElements and self.jsonElements[elementInfo["parent"]]["type"] == "DirectScrollFrame":
                 # use the canvas as parent
                 elementOptions += indent + "parent=self." + elementInfo["parent"] + ".getCanvas(),\n"
+            elif elementInfo["parent"] in self.jsonElements and elementInfo["addItemNode"] is not None:
+                elementOptions += indent + "parent=self." + elementInfo["parent"] + "." + elementInfo["addItemNode"] + ",\n"
             elif elementInfo["parent"] in self.jsonElements and self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"]) is not None:
                 widget = self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"])
                 if widget.addItemFunction is not None:

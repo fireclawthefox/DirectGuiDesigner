@@ -9,6 +9,7 @@ from direct.gui.DirectLabel import DirectLabel
 from direct.gui.DirectButton import DirectButton
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from direct.gui.DirectEntry import DirectEntry
+from direct.gui.DirectRadioButton import DirectRadioButton
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
@@ -89,7 +90,7 @@ class GUI:
         self.frame.destroy()
 
 
-class AddItemDialog(GUI):
+class AddByFunction(GUI):
     def __init__(self, customWidget, child, childInfo, func, rootParent=None):
         if rootParent is None:
             rootParent = base.pixel2d
@@ -195,3 +196,74 @@ class AddItemDialog(GUI):
         del self.labelList
         del self.entryList
 
+
+class AddByNode(GUI):
+    def __init__(self, customWidget, child, childInfo, parent, rootParent=None):
+        if rootParent is None:
+            rootParent = base.pixel2d
+        super().__init__(rootParent)
+        self.radioList = []
+
+        self.value = [customWidget.addItemNode[0]]
+
+        self.frame.setScale(200)
+        self.frame.setPos(base.getSize()[0] // 2, 0, -base.getSize()[1] // 2)
+
+        self.customWidget = customWidget
+        self.child = child
+        self.childInfo = childInfo
+        self.parent = parent
+
+        self.ok["command"] = self.__callback
+        self.cancel["command"] = self.destroy
+
+        self.bindScroll(self.argFrame)
+        self.bindScroll(self.argFrame.verticalScroll)
+        self.bindScroll(self.argFrame.verticalScroll.thumb)
+        self.bindScroll(self.contentBox)
+
+        self.createContent()
+
+    def scrollStep(self, stepCount, *args):
+        """Scrolls the indicated number of steps forward.  If
+        stepCount is negative, scrolls backward."""
+        gui = self.argFrame.verticalScroll
+        gui['value'] = gui.guiItem.getValue() + gui.guiItem.getScrollSize() * stepCount
+
+    def bindScroll(self, element):
+        element.bind(DGG.MWUP, self.scrollStep, extraArgs=[-20])
+        element.bind(DGG.MWDOWN, self.scrollStep, extraArgs=[20])
+
+    def __callback(self, *args):
+        node = getattr(self.parent, self.value[0])
+        self.child.reparentTo(node)
+
+        self.childInfo.addItemNode = self.value[0]
+
+        self.destroy()
+
+    def createContent(self):
+        for name in self.customWidget.addItemNode:
+            self.addRadioButton(name)
+
+        for radioButton in self.radioList:
+            radioButton.setOthers(self.radioList)
+        self.argFrame["canvasSize"] = self.contentBox["frameSize"]
+
+    def addRadioButton(self, text):
+        newButton = DirectRadioButton(
+            scale=LVecBase3f(0.1, 0.1, 0.1),
+            text=text,
+            variable=self.value,
+            value=[text]
+        )
+        self.contentBox.addItem(newButton)
+        self.radioList.append(newButton)
+        self.bindScroll(newButton)
+
+    def destroy(self):
+        super().destroy()
+        del self.parent
+        del self.child
+        del self.childInfo
+        del self.customWidget

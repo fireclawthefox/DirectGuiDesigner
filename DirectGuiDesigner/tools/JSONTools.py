@@ -101,7 +101,8 @@ class JSONTools:
             "command": elementInfo.command,
             "extraArgs": elementInfo.extraArgs,
             "extraOptions": elementInfo.extraOptions,
-            "addItemExtraArgs": elementInfo.addItemExtraArgs
+            "addItemExtraArgs": elementInfo.addItemExtraArgs,
+            "addItemNode": elementInfo.addItemNode
         }
 
     def __writeParent(self, parent):

@@ -7,7 +7,7 @@ import sys
 import types
 from panda3d.core import ConfigVariableString
 from DirectGuiDesigner.core.WidgetDefinition import PropertyEditTypes, Definition, DEFINITIONS
-from DirectGuiDesigner.dialogs.AddItemDialog import AddItemDialog
+from DirectGuiDesigner.dialogs.AddItemDialog import AddByFunction, AddByNode
 from DirectGuiDesigner.core.ElementInfo import ElementInfo
 
 
@@ -46,8 +46,22 @@ class CustomWidget:
 
         # reparent child to node specified in addItemNode
         if self.addItemNode is not None:
-            node = getattr(parent, self.addItemNode)
-            child.reparentTo(node)
+            self.__AddByNode(child, parent, childInfo, forceOpenDialog)
+
+    def __AddByNode(self, child, parent, childInfo, forceOpenDialog=False):
+        if isinstance(self.addItemNode, list):
+            if childInfo.addItemNode is not None and not forceOpenDialog:
+                node = childInfo.addItemNode
+            else:
+                AddByNode(self, child, childInfo, parent)
+                return
+
+        else:
+            node = self.addItemNode
+
+        childInfo.addItemNode = node
+        node = getattr(parent, node)
+        child.reparentTo(node)
 
     def __addByFunction(self, child, parent, childInfo, forceOpenDialog=False):
         func = getattr(parent, self.addItemFunction)
@@ -64,7 +78,7 @@ class CustomWidget:
                 extraArgs = childInfo.addItemExtraArgs
 
             else:
-                AddItemDialog(self, child, childInfo, func)
+                AddByFunction(self, child, childInfo, func)
                 return
 
         else:

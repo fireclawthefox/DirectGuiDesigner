@@ -181,6 +181,7 @@ class ProjectLoader(DirectObject):
             elementInfo.extraArgs = jsonElementInfo["extraArgs"]
             elementInfo.extraOptions = jsonElementInfo["extraOptions"]
             elementInfo.addItemExtraArgs = jsonElementInfo["addItemExtraArgs"]
+            elementInfo.addItemNode = jsonElementInfo["addItemNode"]
             elementInfo.name = jsonElementName
             if "transparency" in jsonElementInfo:
                 elementInfo.element.setTransparency(eval(jsonElementInfo["transparency"]))
@@ -271,7 +272,8 @@ class ProjectLoader(DirectObject):
                         elementInfo.extraOptions,
                         elementInfo.createAfter,
                         elementInfo.customImportPath,
-                        elementInfo.addItemExtraArgs
+                        elementInfo.addItemExtraArgs,
+                        elementInfo.addItemNode
                     )
 
                 # This wouldn't have worked but we shouldn't get in there anyway
