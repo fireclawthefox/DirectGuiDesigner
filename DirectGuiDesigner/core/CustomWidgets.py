@@ -115,58 +115,117 @@ class CustomWidgets:
             # get a list of all .widget files
             configFiles.extend([f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) and f.endswith(".widget")])
 
-        logging.info("no custom widgets found.")
+        if not configFiles:
+            logging.info("no custom widgets found.")
+
+        filesToLoadLater = {}
+        createdDefinitions = []
 
         # handle data in files
         for configFile in configFiles:
-            try:
-                configFileContent = None
-                with open(os.path.join(path, configFile), 'r') as infile:
-                    configFileContent = json.load(infile)
-                if configFileContent is None:
-                    logging.error("Problems reading widget config file: {}".format(infile))
-                    continue
-                pythonFilePath = os.path.join(path, configFileContent["classFilePath"])
-                spec = None
-                if pythonFilePath.endswith(".py"):
-                    spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
-                else:
-                    spec = importlib.util.find_spec(configFileContent["classFilePath"])
-                if spec is None:
-                    continue
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+            self.__loadElementDefinition(configFile, path, filesToLoadLater, createdDefinitions)
 
-                if configFileContent["className"] not in self.customWidgetDefinitions:
-                    self.customWidgetDefinitions[configFileContent["className"]] = []
-
-                if "baseWidget" in configFileContent:
-                    if configFileContent["baseWidget"] in DEFINITIONS:
-                        self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[configFileContent["baseWidget"]]
-
-                if "customProperties" in configFileContent:
-                    for prop in configFileContent["customProperties"]:
-                        self.__loadPropertyDefinition(configFileContent, prop)
-
-                self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
-                    configFileContent["displayName"],
-                    configFileContent["className"],
-                    configFileContent["classFilePath"],
-                    module,
-                    configFileContent["addItemFunctionName"] if "addItemFunctionName" in configFileContent else None,
-                    configFileContent["addItemExtraArgs"] if "addItemExtraArgs" in configFileContent else None,
-                    configFileContent["addItemNode"] if "addItemNode" in configFileContent else None,
-                    configFileContent["removeItemFunctionName"] if "removeItemFunctionName" in configFileContent else None,
-                    configFileContent["importPath"])
-                self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
-
-            except KeyError:
-                e = sys.exc_info()[1]
-                string = f"Parameter: {e} missing from custom definition file '{configFile}'"
-                print(string)
+            # handle postponed loading (to make sure the baseWidget definition is defined when the child is loaded)
+            keysToDel = []
+            for key, value in filesToLoadLater.items():
+                baseWidget, file = value
+                if baseWidget in createdDefinitions:
+                    keysToDel.append(key)
+                    self.__loadElementDefinition(file, path, filesToLoadLater, createdDefinitions)
+            for key in keysToDel:
+                del filesToLoadLater[key]
 
         self.extendToolbox()
         self.extendElementHandler()
+
+    def __loadElementDefinition(self, configFile, path, filesToLoadLater, createdDefinitions):
+        try:
+            configFileContent = None
+            with open(os.path.join(path, configFile), 'r') as infile:
+                configFileContent = json.load(infile)
+            if configFileContent is None:
+                logging.error("Problems reading widget config file: {}".format(infile))
+                return
+            pythonFilePath = os.path.join(path, configFileContent["classFilePath"])
+            spec = None
+            if pythonFilePath.endswith(".py"):
+                spec = importlib.util.spec_from_file_location(configFileContent["moduleName"], pythonFilePath)
+            else:
+                spec = importlib.util.find_spec(configFileContent["classFilePath"])
+            if spec is None:
+                return
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            if configFileContent["className"] not in self.customWidgetDefinitions:
+                self.customWidgetDefinitions[configFileContent["className"]] = []
+
+            # Inherit definitions from baseWidget
+            if "baseWidget" in configFileContent:
+                if configFileContent["baseWidget"] in DEFINITIONS:  # baseWidget is a normal DirectGui element
+                    self.customWidgetDefinitions[configFileContent["className"]] += DEFINITIONS[
+                        configFileContent["baseWidget"]
+                    ]
+                elif configFileContent["baseWidget"] in self.customWidgetDefinitions:  # baseWidget is a custom widget
+                    self.customWidgetDefinitions[configFileContent["className"]] += self.customWidgetDefinitions[
+                        configFileContent["baseWidget"]
+                    ]
+                else:  # base widget not loaded yet, wait with loading this
+                    filesToLoadLater[configFileContent["className"]] = (configFileContent["baseWidget"], configFile)
+                    return
+
+            if "customProperties" in configFileContent:
+                for prop in configFileContent["customProperties"]:
+                    self.__loadPropertyDefinition(configFileContent, prop)
+
+            # Inherit some other things from the baseWidgets definition
+            if "addItemFunctionName" in configFileContent:
+                addItemFunctionName = configFileContent["addItemFunctionName"]
+            elif "baseWidget" in configFileContent and configFileContent["baseWidget"] in self.customWidgetsDict:
+                addItemFunctionName = self.customWidgetsDict[configFileContent["baseWidget"]].addItemFunction
+            else:
+                addItemFunctionName = None
+
+            if "addItemExtraArgs" in configFileContent:
+                addItemExtraArgs = configFileContent["addItemExtraArgs"]
+            elif "baseWidget" in configFileContent and configFileContent["baseWidget"] in self.customWidgetsDict:
+                addItemExtraArgs = self.customWidgetsDict[configFileContent["baseWidget"]].addItemExtraArgs
+            else:
+                addItemExtraArgs = None
+
+            if "addItemNode" in configFileContent:
+                addItemNode = configFileContent["addItemNode"]
+            elif "baseWidget" in configFileContent and configFileContent["baseWidget"] in self.customWidgetsDict:
+                addItemNode = self.customWidgetsDict[configFileContent["baseWidget"]].addItemNode
+            else:
+                addItemNode = None
+
+            if "removeItemFunctionName" in configFileContent:
+                removeItemFunctionName = configFileContent["removeItemFunctionName"]
+            elif "baseWidget" in configFileContent and configFileContent["baseWidget"] in self.customWidgetsDict:
+                removeItemFunctionName = self.customWidgetsDict[configFileContent["baseWidget"]].removeItemFunction
+            else:
+                removeItemFunctionName = None
+
+            self.customWidgetsDict[configFileContent["name"]] = CustomWidget(
+                configFileContent["displayName"],
+                configFileContent["className"],
+                configFileContent["classFilePath"],
+                module,
+                addItemFunctionName,
+                addItemExtraArgs,
+                addItemNode,
+                removeItemFunctionName,
+                configFileContent["importPath"]
+            )
+            self.toolboxExtensionList.append([configFileContent["displayName"], configFileContent["className"]])
+
+            createdDefinitions.append(configFileContent["className"])
+
+        except KeyError:
+            e = sys.exc_info()[1]
+            string = f"Parameter: {e} missing from custom definition file '{configFile}'"
+            print(string)
 
     def __loadPropertyDefinition(self, configFileContent, prop):
         try:
