@@ -143,12 +143,25 @@ class AddByFunction(GUI):
             if value == "":
                 extraArgs[index] = defaultValue
             else:
-                extraArgs[index] = converter(value)
+                try:
+                    extraArgs[index] = converter(value)
+                except Exception:
+                    print("Could not convert value to the specified type")
+                    base.messenger.send(
+                        "showWarning", [f"The value: '{value}' could not be interpreted as a '{valueType}'."]
+                    )
+                    return
 
             index += 1
 
         self.childInfo.addItemExtraArgs = extraArgs
-        self.func(self.child, *extraArgs)
+        try:
+            self.func(self.child, *extraArgs)
+        except Exception:
+            print("Error running addItemFunc")
+            base.messenger.send(
+                "showWarning", [f"Element could not be added to the parent: {self.customWidget.displayName}"]
+            )
 
         self.destroy()
 
@@ -235,8 +248,14 @@ class AddByNode(GUI):
         element.bind(DGG.MWDOWN, self.scrollStep, extraArgs=[20])
 
     def __callback(self, *args):
-        node = getattr(self.parent, self.value[0])
-        self.child.reparentTo(node)
+        try:
+            node = getattr(self.parent, self.value[0])
+            self.child.reparentTo(node)
+        except Exception:
+            print(f"Error reparenting element to: {self.value[0]}")
+            base.messenger.send(
+                "showWarning", [f"Could not reparent {self.child.name} to node: {self.value[0]}"]
+            )
 
         self.childInfo.addItemNode = self.value[0]
 

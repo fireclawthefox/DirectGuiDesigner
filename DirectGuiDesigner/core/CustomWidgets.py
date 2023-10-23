@@ -88,7 +88,7 @@ class CustomWidget:
         try:
             func(child, *extraArgs)
         except Exception:
-            print("error running addItemFunc")
+            print("Error running addItemFunc")
 
 
 class CustomWidgets:
