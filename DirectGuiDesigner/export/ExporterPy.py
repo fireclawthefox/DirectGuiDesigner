@@ -135,8 +135,21 @@ class GUI:
                         extraArgs = ""
                         childInfo = self.jsonElements[element.removeprefix("self.")]  # elementInfo for elements to add
                         if args := childInfo["addItemExtraArgs"]:  # add extra args to add item function
-                            for arg in args:
-                                extraArgs += f", {arg}"
+                            if isinstance(widget.addItemExtraArgs, dict):
+                                for arg, definition in zip(args, widget.addItemExtraArgs.values()):
+                                    valueType = definition["type"]
+                                    if valueType == "str":
+                                        extraArgs += f", '{arg}'"
+                                    elif valueType == "element":
+                                        extraArgs += f", self.{arg}"
+                                    else:
+                                        extraArgs += f", {arg}"
+                            else:
+                                for arg in args:
+                                    if isinstance(arg, str):
+                                        extraArgs += f", '{arg}'"
+                                    else:
+                                        extraArgs += f", {arg}"
 
                         self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element}{extraArgs})\n"
 

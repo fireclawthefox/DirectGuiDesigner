@@ -94,6 +94,15 @@ class JSONTools:
                 self.writeSortedContent(elementInfo, jsonElements)
 
     def __createJSONEntry(self, elementInfo):
+        from DirectGuiDesigner.DirectGuiDesigner import DirectGuiDesigner
+        addItemExtraArgs = []
+        for arg in elementInfo.addItemExtraArgs:
+            if isinstance(arg, NodePath):
+                name = DirectGuiDesigner.elementDict[arg.guiId].name
+                addItemExtraArgs.append(name)
+            else:
+                addItemExtraArgs.append(arg)
+
         return {
             "element": self.__writeElement(elementInfo),
             "type": elementInfo.type,
@@ -101,7 +110,7 @@ class JSONTools:
             "command": elementInfo.command,
             "extraArgs": elementInfo.extraArgs,
             "extraOptions": elementInfo.extraOptions,
-            "addItemExtraArgs": elementInfo.addItemExtraArgs,
+            "addItemExtraArgs": addItemExtraArgs,
             "addItemNode": elementInfo.addItemNode
         }
 

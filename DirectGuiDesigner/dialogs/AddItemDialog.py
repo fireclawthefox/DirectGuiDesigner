@@ -10,6 +10,7 @@ from direct.gui.DirectButton import DirectButton
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from direct.gui.DirectEntry import DirectEntry
 from direct.gui.DirectRadioButton import DirectRadioButton
+from DirectGuiExtension.DirectCollapsibleFrame import DirectCollapsibleFrame
 from panda3d.core import (
     LPoint3f,
     LVecBase3f,
@@ -19,13 +20,16 @@ from panda3d.core import (
     MouseButton
 )
 
+from direct.showbase.DirectObject import DirectObject
+
 from direct.gui import DirectGuiGlobals as DGG
 DGG.MWUP = PGButton.getPressPrefix() + MouseButton.wheel_up().getName() + '-'
 DGG.MWDOWN = PGButton.getPressPrefix() + MouseButton.wheel_down().getName() + '-'
 
 
-class GUI:
+class GUI(DirectObject):
     def __init__(self, rootParent=None):
+        super().__init__()
         self.frame = DirectFrame(
             frameSize=(-1, 1, -1, 1),
             frameColor=(1, 1, 1, 1),
@@ -49,6 +53,8 @@ class GUI:
         self.contentBox = DirectBoxSizer(
             orientation='vertical',
             parent=self.argFrame.canvas,
+            suppressMouse=True,
+            state=DGG.NORMAL
         )
         self.contentBox.setTransparency(0)
 
@@ -57,6 +63,8 @@ class GUI:
             scale=LVecBase3f(0.1, 0.1, 0.1),
             text=['Select Extra Arguments'],
             parent=self.frame,
+            suppressMouse=True,
+            state=DGG.NORMAL
         )
         self.headline.setTransparency(0)
 
@@ -95,8 +103,11 @@ class AddByFunction(GUI):
         if rootParent is None:
             rootParent = base.pixel2d
         super().__init__(rootParent)
+
+        self.value = {}  # use name to access the element selection for that parameter
+        self.radioList = {}  # dict[name: str, list[radiobutton]]
         self.labelList = []
-        self.entryList = []
+        self.entryList = {}
 
         self.frame.setScale(200)
         self.frame.setPos(base.getSize()[0] // 2, 0, -base.getSize()[1] // 2)
@@ -139,6 +150,9 @@ class AddByFunction(GUI):
                 converter = float
             elif valueType == "str":
                 converter = str
+            elif valueType == "element":
+                def converter(value_):
+                    return value_
 
             if value == "":
                 extraArgs[index] = defaultValue
@@ -167,35 +181,90 @@ class AddByFunction(GUI):
 
     def createContent(self):
         for name, value in self.customWidget.addItemExtraArgs.items():
+            valueType = value["type"]
             defaultValue = str(value["defaultValue"])
             self.addLabel(name)
-            self.addEntry(defaultValue)
+            if valueType == "element":
+                self.addElementSelection(name)
+            else:
+                self.addEntry(defaultValue, name)
 
         self.argFrame["canvasSize"] = self.contentBox["frameSize"]
 
     def addLabel(self, text):
         newLabel = DirectLabel(
             scale=LVecBase3f(0.1, 0.1, 0.1),
-            text=text
+            text=text,
+            suppressMouse=True,
+            state=DGG.NORMAL
         )
         self.contentBox.addItem(newLabel)
         self.labelList.append(newLabel)
         self.bindScroll(newLabel)
 
-    def addEntry(self, text=""):
+    def addEntry(self, text="", name=""):
         newEntry = DirectEntry(
             scale=LVecBase3f(0.1, 0.1, 0.1),
             frameColor=(1, 1, 1, 1),
             initialText=text
         )
         self.contentBox.addItem(newEntry)
-        self.entryList.append(newEntry)
+        self.entryList[name] = newEntry
         self.bindScroll(newEntry)
+
+    def addElementSelection(self, name):
+        selection = DirectCollapsibleFrame(
+            frameSize=(0, 1, -1, 0.1),
+            suppressMouse=True,
+            toggleCollapseButton_suppressMouse=True
+        )
+        self.accept(selection.getExtendedEvent(), self.contentBox.refresh)
+        self.accept(selection.getCollapsedEvent(), self.contentBox.refresh)
+        self.bindScroll(selection)
+        self.bindScroll(selection.toggleCollapseButton)
+        self.contentBox.addItem(selection)
+        selectionBox = DirectBoxSizer(
+            orientation='vertical',
+            parent=selection,
+            suppressMouse=True
+        )
+        self.bindScroll(selectionBox)
+        from DirectGuiDesigner.DirectGuiDesigner import DirectGuiDesigner
+        i = True
+        self.radioList[name] = []
+        for key, elementInfo in DirectGuiDesigner.elementDict.items():
+            if i:
+                self.value[name] = [elementInfo.element]
+                i = False
+            newButton = DirectRadioButton(
+                scale=LVecBase3f(0.1, 0.1, 0.1),
+                text=elementInfo.name,
+                variable=self.value[name],
+                value=[elementInfo.element],
+                suppressMouse=True,
+                indicator_suppressMouse=True
+            )
+            selectionBox.addItem(newButton)
+            self.radioList[name].append(newButton)
+            self.bindScroll(newButton)
+
+        size = selectionBox["frameSize"]
+        selectionBox.setX(-size[0])
+        sSize = selection["frameSize"]
+        selection["frameSize"] = (sSize[0], sSize[1], size[2], sSize[3])
+        selection.updateFrameSize()
+
+        for radioButton in self.radioList[name]:
+            radioButton.setOthers(self.radioList[name])
 
     def getValues(self):
         extraArgs = []
-        for entry in self.entryList:
-            extraArgs.append(entry.get())
+        for name, value in self.customWidget.addItemExtraArgs.items():
+            valueType = value["type"]
+            if valueType == "element":
+                extraArgs.append(self.value[name][0])
+            else:
+                extraArgs.append(self.entryList[name].get())
 
         return extraArgs
 

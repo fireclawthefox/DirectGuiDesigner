@@ -58,6 +58,10 @@ from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 
 class DirectGuiDesigner(DirectObject):
+    # dict of all elements in the visual editor
+    # Key = guiID; Value = elementInfo
+    elementDict = {}
+
     def __init__(self, parent):
         logging.debug("Start Designer")
 
@@ -88,9 +92,6 @@ class DirectGuiDesigner(DirectObject):
         base.win.requestProperties(wp)
 
         self.selectedElement = None
-        # dict of all elements in the visual editor
-        # Key = guiID; Value = elementInfo
-        self.elementDict = {}
 
         map = base.win.get_keyboard_map()
 
@@ -135,7 +136,7 @@ class DirectGuiDesigner(DirectObject):
         self.enable_events()
 
         # editor close and crash handling
-        sys.excepthook = self.excHandler
+        # sys.excepthook = self.excHandler
         base.win.setCloseRequestEvent("quitApp")
 
         # Load user custom widgets

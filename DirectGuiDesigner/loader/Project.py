@@ -222,8 +222,7 @@ class ProjectLoader(DirectObject):
                     elementInfo.element.reparentTo(parent.element.canvas)
                 parentWidget = self.customWidgetHandler.getWidget(parent.type if parent is not None else "")
                 if parentWidget is not None:
-                    # call custom widget add function
-                    parentWidget.callAddItemFunc(parent, elementInfo)
+                    self.__handleWidgetAddItemFunc(elementInfo, parent, parentWidget)
 
                 self.__setProperties(elementInfo, jsonElementInfo)
                 if elementInfo.type == "DirectScrolledFrame":
@@ -231,6 +230,23 @@ class ProjectLoader(DirectObject):
                 self.elementDict[elementInfo.element.guiId] = elementInfo
                 self.parentMap[jsonElementName] = elementInfo.element.guiId
             base.messenger.send("refreshStructureTree")
+
+    def __handleWidgetAddItemFunc(self, elementInfo, parent, parentWidget):
+        if isinstance(parentWidget.addItemExtraArgs, dict):  # get the extra args from the .gui file
+            index = 0
+            for value, parentArg in zip(elementInfo.addItemExtraArgs, parentWidget.addItemExtraArgs.values()):
+                valueType = parentArg["type"]
+                if valueType == "element":  # replace the element name for the element itself
+                    for elInfo in self.elementDict.values():
+                        if elInfo.name == value:
+                            elementInfo.addItemExtraArgs[index] = elInfo.element
+                            break
+                    else:  # if the element was not found
+                        self.doMethodLater(0.2, self.__handleWidgetAddItemFunc, "__handleWidgetAddItem", [elementInfo, parent, parentWidget])
+                        return
+                index += 1
+        # call custom widget add function
+        parentWidget.callAddItemFunc(parent, elementInfo)
 
     def __setProperties(self, elementInfo, jsonElementInfo):
         """Set properties of element in 'elementInfo' to values specified in 'jsonElementInfo'."""
