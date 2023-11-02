@@ -107,7 +107,7 @@ class AddByFunction(GUI):
         self.value = {}  # use name to access the element selection for that parameter
         self.radioList = {}  # dict[name: str, list[radiobutton]]
         self.labelList = []
-        self.entryList = {}
+        self.entryDict = {}
 
         self.frame.setScale(200)
         self.frame.setPos(base.getSize()[0] // 2, 0, -base.getSize()[1] // 2)
@@ -209,7 +209,7 @@ class AddByFunction(GUI):
             initialText=text
         )
         self.contentBox.addItem(newEntry)
-        self.entryList[name] = newEntry
+        self.entryDict[name] = newEntry
         self.bindScroll(newEntry)
 
     def addElementSelection(self, name):
@@ -229,10 +229,9 @@ class AddByFunction(GUI):
             suppressMouse=True
         )
         self.bindScroll(selectionBox)
-        from DirectGuiDesigner.DirectGuiDesigner import DirectGuiDesigner
         i = True
         self.radioList[name] = []
-        for key, elementInfo in DirectGuiDesigner.elementDict.items():
+        for key, elementInfo in base.dgd.elementDict.items():
             if i:
                 self.value[name] = [elementInfo.element]
                 i = False
@@ -264,7 +263,7 @@ class AddByFunction(GUI):
             if valueType == "element":
                 extraArgs.append(self.value[name][0])
             else:
-                extraArgs.append(self.entryList[name].get())
+                extraArgs.append(self.entryDict[name].get())
 
         return extraArgs
 
@@ -276,7 +275,7 @@ class AddByFunction(GUI):
         del self.childInfo
 
         del self.labelList
-        del self.entryList
+        del self.entryDict
 
 
 class AddByNode(GUI):
