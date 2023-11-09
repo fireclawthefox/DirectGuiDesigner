@@ -28,6 +28,7 @@ from direct.gui.DirectDialog import RetryCancelDialog
 
 from panda3d.core import TextNode
 from DirectGuiDesigner.core.ElementInfo import ElementInfo
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 class ElementHandler:
     def __init__(self, propertiesFrame, getEditorRootCanvas):
@@ -80,9 +81,12 @@ class ElementHandler:
     def createMethod(self, widget, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
+        definitions = PropertyHelper.getDefinition(widget)
         element = getattr(widget.module, widget.className)(
             parent=parent,
-            pos=pos)
+            pos=pos,
+            **{de.internalName: de.defaultValue for de in definitions if de.defaultValue is not None}
+        )
         elementInfo = ElementInfo(element, widget.className, customImportPath=widget.importPath)
         self.setupBind(elementInfo)
         return elementInfo

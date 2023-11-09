@@ -175,9 +175,12 @@ class PropertyHelper:
                 definition.postProcessFunctionName()
 
     @staticmethod
-    def getDefinition(elementInfo, internalName):
+    def getDefinition(elementInfo, internalName=None):
         if isinstance(elementInfo, dict):
             elementType = elementInfo["type"]
+
+        elif isinstance(elementInfo, CustomWidgets.CustomWidget):
+            elementType = elementInfo.className
 
         else:
             elementType = elementInfo.type
@@ -191,6 +194,10 @@ class PropertyHelper:
         else:
             raise ValueError(f"{elementType} not found in definitions")
 
+        if internalName is None:  # get definitions for all properties of this widget
+            return definitions
+
+        # get the specific definition specified with internalName
         for definition in definitions:
             if definition.internalName == internalName:
                 return definition

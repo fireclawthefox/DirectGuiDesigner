@@ -262,7 +262,10 @@ class CustomWidgets:
                            prop["addToExtraOptions"] if "addToExtraOptions" in prop else False,
                            prop["loaderFunc"] if "loaderFunc" in prop else None,
                            prop["postProcessFunctionName"] if "postProcessFunctionName" in prop else None,
-                           prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True))
+                           prop["canGetValueFromElement"] if "canGetValueFromElement" in prop else True,
+                           prop["defaultValue"] if "defaultValue" in prop else None
+                           )
+            )
         except KeyError:
             e = sys.exc_info()[1]
             string = f"Parameter: {e} missing from custom property '{prop}'"

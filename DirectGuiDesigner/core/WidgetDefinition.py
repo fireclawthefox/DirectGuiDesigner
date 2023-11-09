@@ -39,7 +39,8 @@ class Definition:
             addToExtraOptions=None,
             loaderFunc=None,
             postProcessFunctionName=None,
-            canGetValueFromElement=True):
+            canGetValueFromElement=True,
+            defaultValue=None):
         # Name to be shown in the editor
         self.visibleName = visibleName
 
@@ -133,6 +134,8 @@ class Definition:
             # the elementInfos extraOptions dictionary
             self.addToExtraOptions = False if addToExtraOptions is None else addToExtraOptions
 
+        self.defaultValue = defaultValue
+
     def __str__(self):
         return f"""WIDGET DEFINITION:
             Internal Name: {self.internalName},
@@ -148,7 +151,8 @@ class Definition:
             Add to Extra Options: {self.addToExtraOptions},
             Loader Func: {self.loaderFunc},
             Postprocessing Function Name: {self.postProcessFunctionName},
-            Can get value from Element: {self.canGetValueFromElement}"""
+            Can get value from Element: {self.canGetValueFromElement},
+            Default value: {self.defaultValue}"""
 
 
 POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True,

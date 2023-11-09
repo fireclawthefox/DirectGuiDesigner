@@ -262,6 +262,9 @@ class JSONTools:
                             new_value = reprFunc(value)
                         elementJson[name + wd.internalName] = new_value
 
+                    elif wd.defaultValue is not None:  # add default values to properties if it was not changed
+                        elementJson[name + wd.internalName] = wd.defaultValue
+
             if not hasattr(element, "options"): continue
 
             for option in element.options():

@@ -136,7 +136,7 @@ class DirectGuiDesigner(DirectObject):
         self.enable_events()
 
         # editor close and crash handling
-        # sys.excepthook = self.excHandler
+        sys.excepthook = self.excHandler
         base.win.setCloseRequestEvent("quitApp")
 
         # Load user custom widgets
