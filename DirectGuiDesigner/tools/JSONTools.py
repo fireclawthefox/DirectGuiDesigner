@@ -263,7 +263,11 @@ class JSONTools:
                         elementJson[name + wd.internalName] = new_value
 
                     elif wd.defaultValue is not None:  # add default values to properties if it was not changed
-                        elementJson[name + wd.internalName] = wd.defaultValue
+                        if isinstance(wd.defaultValue, str):
+                            value = f"'{wd.defaultValue}'"
+                        else:
+                            value = wd.defaultValue
+                        elementJson[name + wd.internalName] = value
 
             if not hasattr(element, "options"): continue
 
