@@ -783,7 +783,12 @@ class DirectGuiDesigner(DirectObject):
             if self.mainView.editorFrame.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
                 return t.cont
 
-            oldPos = t.elementInfo.element.getPos()
+            try:
+                oldPos = t.elementInfo.element.getPos()
+            except AssertionError:  # Required to handle the close button on DirectScrolledWindowFrame
+                self.removeElement(t.elementInfo.element)
+                return
+
             t.elementInfo.element.setPos(render2d, newPos)
 
             if self.mainView.editorFrame.snapToGrid:

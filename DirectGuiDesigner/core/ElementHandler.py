@@ -82,12 +82,19 @@ class ElementHandler:
         parent = self.getEditorRootCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
         definitions = PropertyHelper.getDefinition(widget)
+        if self.visEditorInAspect2D:
+            index = 0
+        else:
+            index = 1
+
+        defaultValues = {de.internalName: de.defaultValue[index] for de in definitions if de.defaultValue is not None and de.defaultValue[index] is not None}
         element = getattr(widget.module, widget.className)(
             parent=parent,
             pos=pos,
-            **{de.internalName: de.defaultValue for de in definitions if de.defaultValue is not None}
+            **defaultValues
         )
         elementInfo = ElementInfo(element, widget.className, customImportPath=widget.importPath)
+        elementInfo.valueHasChanged = {key: True for key, value in defaultValues.items() if value is not None}
         self.setupBind(elementInfo)
         return elementInfo
 

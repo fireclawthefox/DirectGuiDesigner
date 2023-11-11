@@ -256,18 +256,11 @@ class JSONTools:
                                 hasChanged = False
 
                     if hasChanged:
-                        if isinstance(value, str):
+                        if isinstance(value, str) and wd.loaderFunc == "eval(value)":
                             new_value = value
                         else:
                             new_value = reprFunc(value)
                         elementJson[name + wd.internalName] = new_value
-
-                    elif wd.defaultValue is not None:  # add default values to properties if it was not changed
-                        if isinstance(wd.defaultValue, str):
-                            value = f"'{wd.defaultValue}'"
-                        else:
-                            value = wd.defaultValue
-                        elementJson[name + wd.internalName] = value
 
             if not hasattr(element, "options"): continue
 

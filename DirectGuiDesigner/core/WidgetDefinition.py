@@ -1,4 +1,5 @@
 import types
+from copy import deepcopy
 
 from panda3d.core import PGFrameStyle, TransparencyAttrib
 from direct.gui import DirectGuiGlobals as DGG
@@ -135,6 +136,40 @@ class Definition:
             self.addToExtraOptions = False if addToExtraOptions is None else addToExtraOptions
 
         self.defaultValue = defaultValue
+
+    def update(self, definition):
+        newDefinition = deepcopy(self)
+        if "internalName" in definition:
+            newDefinition.internalName = definition["internalName"]
+        if "displayName" in definition:
+            newDefinition.visibleName = definition["displayName"]
+        if "internalType" in definition:
+            newDefinition.stype = definition["internalType"]
+        if "editType" in definition:
+            newDefinition.editType = definition["editType"]
+        if "nullable" in definition:
+            newDefinition.nullable = definition["nullable"]
+        if "supportStates" in definition:
+            newDefinition.supportStates = definition["supportStates"]
+        if "valueOptions" in definition:
+            newDefinition.valueOptions = definition["valueOptions"]
+        if "isInitOption" in definition:
+            newDefinition.isInitOption = definition["isInitOption"]
+        if "getFunctionName" in definition:
+            newDefinition.getFunctionName = definition["getFunctionName"]
+        if "setFunctionName" in definition:
+            newDefinition.setFunctionName = definition["setFunctionName"]
+        if "addToExtraOptions" in definition:
+            newDefinition.addToExtraOptions = definition["addToExtraOptions"]
+        if "loaderFunc" in definition:
+            newDefinition.loaderFunc = definition["loaderFunc"]
+        if "postProcessFunctionName" in definition:
+            newDefinition.postProcessFunctionName = definition["postProcessFunctionName"]
+        if "canGetValueFromElement" in definition:
+            newDefinition.canGetValueFromElement = definition["canGetValueFromElement"]
+        if "defaultValue" in definition:
+            newDefinition.defaultValue = definition["defaultValue"]
+        return newDefinition
 
     def __str__(self):
         return f"""WIDGET DEFINITION:

@@ -248,6 +248,28 @@ class CustomWidgets:
                 elif prop["internalType"] == "object":
                     t = object
 
+                prop["internalType"] = t
+
+            if "defaultValue" in prop:
+                defaultValue = [
+                    prop["defaultValue"],
+                    prop["defaultValue"]
+                ]
+            else:
+                defaultValue = [
+                    prop["defaultAspect"] if "defaultAspect" in prop else None,
+                    prop["defaultPixel"] if "defaultPixel" in prop else None
+                ]
+
+            prop["defaultValue"] = defaultValue
+
+            # if this definition already is in the definitions, just update the original definition
+            for index, de in enumerate(self.customWidgetDefinitions[configFileContent["className"]]):
+                if de.internalName == prop["internalName"]:
+                    self.customWidgetDefinitions[configFileContent["className"]][index] = de.update(prop)
+                    return
+
+            # otherwise create a new definition and append it to the list
             self.customWidgetDefinitions[configFileContent["className"]].append(
                 Definition(prop["internalName"],
                            prop["displayName"],
@@ -266,6 +288,7 @@ class CustomWidgets:
                            prop["defaultValue"] if "defaultValue" in prop else None
                            )
             )
+
         except KeyError:
             e = sys.exc_info()[1]
             string = f"Parameter: {e} missing from custom property '{prop}'"

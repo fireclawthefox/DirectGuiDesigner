@@ -178,7 +178,9 @@ These dictionaries will have the following structure, not all options are mandat
     "loaderFunc":"",
     "postProcessFunctionName":"",
     "canGetValueFromElement":"",
-    "defaultValue":""
+    "defaultValue":"",
+    "defaultAspect":"",
+    "defaultPixel":""
 }
 ```
 
@@ -199,6 +201,8 @@ These dictionaries will have the following structure, not all options are mandat
 | postProcessFunctionName | String | A Function name which will be called after setting this property                                                                                                                                                                                                                                           | Yes      |                                                                                                                                                |
 | canGetValueFromElement  | Bool   | Determines if the value of this property can be got directly from it using the ["internalName"]                                                                                                                                                                                                            | Yes      |                                                                                                                                                |
 | defaultValue            | Any    | Specifies what default value this property should have.                                                                                                                                                                                                                                                    | Yes      |                                                                                                                                                |
+| defaultAspect           | Any    | To specify different default values for aspect2d and pixel2d mode, use this option and the defaultPixel option                                                                                                                                                                                             | Yes      |                                                                                                                                                |
+| defaultPixel            | Any    | To specify different default values for aspect2d and pixel2d mode, use this option and the defaultAspect option                                                                                                                                                                                            | Yes      |                                                                                                                                                |
 
 The values for the internalType are defined as follows:
 
