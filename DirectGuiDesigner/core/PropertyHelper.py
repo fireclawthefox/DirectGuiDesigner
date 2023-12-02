@@ -1,4 +1,7 @@
 import logging
+from DirectGuiDesigner.core import WidgetDefinition
+from DirectGuiDesigner.core import CustomWidgets
+
 
 class PropertyHelper:
     def getFormated(value, isInt=False):
@@ -136,6 +139,11 @@ class PropertyHelper:
 
                 # try to set the new value as original type on the property
                 propName_orig = propName.replace(nameAdd, "", 1)
+                if definition.loaderFunc is not None and isinstance(value, str):
+                    if isinstance(definition.loaderFunc, str):
+                        value = eval(definition.loaderFunc)
+                    else:
+                        value = definition.loaderFunc(value)
                 elementInfo.element[propName_orig] = value
 
                 # in addition, if this should be stored in extra options
@@ -165,3 +173,33 @@ class PropertyHelper:
             else:
                 logging.debug(f"Run postprocess command by pointer. {definition.postProcessFunctionName}")
                 definition.postProcessFunctionName()
+
+    @staticmethod
+    def getDefinition(elementInfo, internalName=None):
+        if isinstance(elementInfo, dict):
+            elementType = elementInfo["type"]
+
+        elif isinstance(elementInfo, CustomWidgets.CustomWidget):
+            elementType = elementInfo.className
+
+        else:
+            elementType = elementInfo.type
+
+        if elementType in WidgetDefinition.DEFINITIONS:
+            definitions = WidgetDefinition.DEFINITIONS[elementType]
+
+        elif elementType in CustomWidgets.CustomWidgets.customWidgetDefinitions:
+            definitions = CustomWidgets.CustomWidgets.customWidgetDefinitions[elementType]
+
+        else:
+            raise ValueError(f"{elementType} not found in definitions")
+
+        if internalName is None:  # get definitions for all properties of this widget
+            return definitions
+
+        # get the specific definition specified with internalName
+        for definition in definitions:
+            if definition.internalName == internalName:
+                return definition
+
+        raise ValueError(f"{internalName} not in definition")

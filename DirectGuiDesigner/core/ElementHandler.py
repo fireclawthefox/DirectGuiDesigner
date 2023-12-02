@@ -28,6 +28,7 @@ from direct.gui.DirectDialog import RetryCancelDialog
 
 from panda3d.core import TextNode
 from DirectGuiDesigner.core.ElementInfo import ElementInfo
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 class ElementHandler:
     def __init__(self, propertiesFrame, getEditorRootCanvas):
@@ -49,16 +50,51 @@ class ElementHandler:
         base.messenger.send("dragStop", [event])
 
     def setupBind(self, elementInfo, PassedElementInfo=None):
-        elementInfo.element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
-        elementInfo.element.bind(DGG.B1RELEASE, self.dragStop)
+        def addSubComponents(componentList):
+            """Recursively add all components of the elements in componentList to the list.
+            Used to find all elements to bind.
+
+            :param componentList: List of elements
+            """
+            for component in componentList:
+                if not hasattr(component, "components"):
+                    continue
+                subComponents = []
+                for name in component.components():
+                    if name != "thumb":
+                        subComponents.append(component.component(name))
+                addSubComponents(subComponents)
+                componentList += subComponents
+
+        components = [elementInfo.element]
+        addSubComponents(components)
+        for element in components:
+            if not hasattr(element, "bind"):
+                continue
+
+            if element.isAccepting(DGG.B1PRESS + element.guiId):
+                continue
+
+            element.bind(DGG.B1PRESS, self.dragStart, [PassedElementInfo if PassedElementInfo is not None else elementInfo])
+            element.bind(DGG.B1RELEASE, self.dragStop)
 
     def createMethod(self, widget, parent=None):
         parent = self.getEditorRootCanvas() if parent is None else parent
         pos = self.editorCenter if parent == self.getEditorRootCanvas() else (0,0,0)
+        definitions = PropertyHelper.getDefinition(widget)
+        if self.visEditorInAspect2D:
+            index = 0
+        else:
+            index = 1
+
+        defaultValues = {de.internalName: de.defaultValue[index] for de in definitions if de.defaultValue is not None and de.defaultValue[index] is not None}
         element = getattr(widget.module, widget.className)(
             parent=parent,
-            pos=pos)
+            pos=pos,
+            **defaultValues
+        )
         elementInfo = ElementInfo(element, widget.className, customImportPath=widget.importPath)
+        elementInfo.valueHasChanged = {key: True for key, value in defaultValues.items() if value is not None}
         self.setupBind(elementInfo)
         return elementInfo
 

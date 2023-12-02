@@ -37,5 +37,6 @@ base.accept("request_clean_name", set_clean_name)
 dgd = DirectGuiDesigner(base.pixel2d)
 dgd.log_file = log_filepath
 dgd.config_file = config_file
+base.dgd = dgd
 
 base.run()

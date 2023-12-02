@@ -18,7 +18,7 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectBoxSizer import DirectBoxSizer
 from DirectGuiExtension.DirectAutoSizer import DirectAutoSizer
 
-class StructurePanel():
+class StructurePanel:
     def __init__(self, parent, getEditorRootCanvas, elementDict, selectedElement):
         height = DGH.getRealHeight(parent)
         self.collapsedElements = []
@@ -138,7 +138,7 @@ class StructurePanel():
         self.recalcScrollSize()
 
     def __fillStructureTree(self, root, level, z):
-        if "DirectGrid" in root.getName(): return
+        if "DirectGrid" == root.getName(): return
         self.itemCounter += 1
 
         elementInfo = None

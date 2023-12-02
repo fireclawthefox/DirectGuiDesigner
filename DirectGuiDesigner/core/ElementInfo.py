@@ -1,6 +1,6 @@
 class ElementInfo:
     """Wrapper around a GUI element to hold some extra information."""
-    def __init__(self, element, elementType, name=None, parent=None, extraOptions=None, createAfter=None, customImportPath=None):
+    def __init__(self, element, elementType, name=None, parent=None, extraOptions=None, createAfter=None, customImportPath=None, addItemExtraArgs=None, addItemNode=None):
         # The actual GUI element
         self.element = element
 
@@ -39,6 +39,14 @@ class ElementInfo:
         self.subComponentName = ""
         self.valueHasChanged = {}
 
+        # extra args to be passed when reparenting to the current parent
+        if addItemExtraArgs is None:
+            self.addItemExtraArgs = []
+        else:
+            self.addItemExtraArgs = addItemExtraArgs
+
+        self.addItemNode = addItemNode
+
     def __str__(self):
         return f"""ELEMENT INFO:
             Element: {self.element}
@@ -51,4 +59,7 @@ class ElementInfo:
             Command: {self.command}
             Extra Args: {self.extraArgs}
             Sub Component Name: {self.subComponentName}
-            Changed Values: {self.valueHasChanged}"""
+            Changed Values: {self.valueHasChanged}
+            Extra args to addItemFunc: {self.addItemExtraArgs}
+            Parent Node: {self.addItemNode}
+            """

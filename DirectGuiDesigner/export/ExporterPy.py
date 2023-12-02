@@ -14,6 +14,7 @@ from panda3d.core import ConfigVariableBool
 from DirectFolderBrowser.DirectFolderBrowser import DirectFolderBrowser
 
 from DirectGuiDesigner.tools.JSONTools import JSONTools
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 
 class ExporterPy:
@@ -131,7 +132,26 @@ class GUI:
                 if name not in self.customWidgetAddDict: continue
                 for element in self.customWidgetAddDict[name]:
                     if widget.addItemFunction is not None:
-                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element})\n"
+                        extraArgs = ""
+                        childInfo = self.jsonElements[element.removeprefix("self.")]  # elementInfo for elements to add
+                        if args := childInfo["addItemExtraArgs"]:  # add extra args to add item function
+                            if isinstance(widget.addItemExtraArgs, dict):
+                                for arg, definition in zip(args, widget.addItemExtraArgs.values()):
+                                    valueType = definition["type"]
+                                    if valueType == "str":
+                                        extraArgs += f", '{arg}'"
+                                    elif valueType == "element":
+                                        extraArgs += f", self.{arg}"
+                                    else:
+                                        extraArgs += f", {arg}"
+                            else:
+                                for arg in args:
+                                    if isinstance(arg, str):
+                                        extraArgs += f", '{arg}'"
+                                    else:
+                                        extraArgs += f", {arg}"
+
+                        self.content += " "*8 + f"self.{name}.{widget.addItemFunction}({element}{extraArgs})\n"
 
             if elementInfo["parent"] == "root" or elementInfo["parent"].startswith("a2d"):
                 topLevelItems.append(name)
@@ -202,8 +222,10 @@ app = ShowBase()\n"""
             elif type(v) is str and optionName not in writeAsIsList:
                 v = f"'{v}'"
 
-            if optionName.endswith("Sound"):
-                v = f"loader.loadSfx({v})"
+            definition = PropertyHelper.getDefinition(elementInfo, optionName)
+            if definition.loaderFunc is not None:
+                if isinstance(definition.loaderFunc, str):
+                    v = definition.loaderFunc.replace("value", f"{v}")
 
             extraOptions += " "*12 + f"{optionName}={v},\n"
         elementCode = """
@@ -251,6 +273,8 @@ app = ShowBase()\n"""
             if elementInfo["parent"] in self.jsonElements and self.jsonElements[elementInfo["parent"]]["type"] == "DirectScrollFrame":
                 # use the canvas as parent
                 elementOptions += indent + "parent=self." + elementInfo["parent"] + ".getCanvas(),\n"
+            elif elementInfo["parent"] in self.jsonElements and elementInfo["addItemNode"] is not None:
+                elementOptions += indent + "parent=self." + elementInfo["parent"] + "." + elementInfo["addItemNode"] + ",\n"
             elif elementInfo["parent"] in self.jsonElements and self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"]) is not None:
                 widget = self.customWidgetHandler.getWidget(self.jsonElements[elementInfo["parent"]]["type"])
                 if widget.addItemFunction is not None:

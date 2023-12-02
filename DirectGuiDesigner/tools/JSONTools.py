@@ -94,13 +94,24 @@ class JSONTools:
                 self.writeSortedContent(elementInfo, jsonElements)
 
     def __createJSONEntry(self, elementInfo):
+        from DirectGuiDesigner.DirectGuiDesigner import DirectGuiDesigner
+        addItemExtraArgs = []
+        for arg in elementInfo.addItemExtraArgs:
+            if isinstance(arg, NodePath):
+                name = DirectGuiDesigner.elementDict[arg.guiId].name
+                addItemExtraArgs.append(name)
+            else:
+                addItemExtraArgs.append(arg)
+
         return {
-            "element":self.__writeElement(elementInfo),
-            "type":elementInfo.type,
-            "parent":self.__writeParent(elementInfo.parent),
-            "command":elementInfo.command,
-            "extraArgs":elementInfo.extraArgs,
-            "extraOptions":elementInfo.extraOptions,
+            "element": self.__writeElement(elementInfo),
+            "type": elementInfo.type,
+            "parent": self.__writeParent(elementInfo.parent),
+            "command": elementInfo.command,
+            "extraArgs": elementInfo.extraArgs,
+            "extraOptions": elementInfo.extraOptions,
+            "addItemExtraArgs": addItemExtraArgs,
+            "addItemNode": elementInfo.addItemNode
         }
 
     def __writeParent(self, parent):
@@ -245,7 +256,11 @@ class JSONTools:
                                 hasChanged = False
 
                     if hasChanged:
-                        elementJson[name + wd.internalName] = reprFunc(value)
+                        if isinstance(value, str) and wd.loaderFunc == "eval(value)":
+                            new_value = value
+                        else:
+                            new_value = reprFunc(value)
+                        elementJson[name + wd.internalName] = new_value
 
             if not hasattr(element, "options"): continue
 
@@ -303,7 +318,8 @@ class JSONTools:
                     if option[DGG._OPT_DEFAULT] in self.specialPropMapping:
                         value = self.specialPropMapping[option[DGG._OPT_DEFAULT]][reprFunc(value)]
 
-                    elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(value)
+                    if not (isinstance(value, type) and reprFunc(value).startswith("<class")):
+                        elementJson[name + option[DGG._OPT_DEFAULT]] = reprFunc(value)
 
             # special options for specific elements
             if elementInfo.type == "DirectRadioButton":

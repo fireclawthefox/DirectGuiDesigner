@@ -1,10 +1,12 @@
 import types
+from copy import deepcopy
 
 from panda3d.core import PGFrameStyle, TransparencyAttrib
 from direct.gui import DirectGuiGlobals as DGG
 
+
 class PropertyEditTypes:
-    integer = "integer"
+    int = "int"
     float = "float"
     bool = "bool"
     text = "text"
@@ -13,18 +15,20 @@ class PropertyEditTypes:
     base4 = "base4"
     command = "command"
     path = "path"
-    optionMenu = "optionmenu"
+    optionMenu = "optionMenu"
     list = "list"
     tuple = "tuple"
     resetFrameSize = "resetFrameSize"
     fitToChildren = "fitToChildren"
 
+
 t = PropertyEditTypes
+
 
 class Definition:
     def __init__(self,
             internalName,
-            visiblename,
+            visibleName,
             internalType,
             editType=None,
             nullable=False,
@@ -36,9 +40,10 @@ class Definition:
             addToExtraOptions=None,
             loaderFunc=None,
             postProcessFunctionName=None,
-            canGetValueFromElement=True):
+            canGetValueFromElement=True,
+            defaultValue=None):
         # Name to be shown in the editor
-        self.visiblename = visiblename
+        self.visibleName = visibleName
 
         # Internal name of this property
         self.internalName = internalName
@@ -92,7 +97,7 @@ class Definition:
             # if the edit type is not given, try to predict it from values
             # that can definitely be determined
             if self.type == int:
-                self.editType = t.integer
+                self.editType = t.int
             elif self.type == float:
                 self.editType = t.float
             elif self.type == bool:
@@ -130,10 +135,46 @@ class Definition:
             # the elementInfos extraOptions dictionary
             self.addToExtraOptions = False if addToExtraOptions is None else addToExtraOptions
 
+        self.defaultValue = defaultValue
+
+    def update(self, definition):
+        newDefinition = deepcopy(self)
+        if "internalName" in definition:
+            newDefinition.internalName = definition["internalName"]
+        if "displayName" in definition:
+            newDefinition.visibleName = definition["displayName"]
+        if "internalType" in definition:
+            newDefinition.stype = definition["internalType"]
+        if "editType" in definition:
+            newDefinition.editType = definition["editType"]
+        if "nullable" in definition:
+            newDefinition.nullable = definition["nullable"]
+        if "supportStates" in definition:
+            newDefinition.supportStates = definition["supportStates"]
+        if "valueOptions" in definition:
+            newDefinition.valueOptions = definition["valueOptions"]
+        if "isInitOption" in definition:
+            newDefinition.isInitOption = definition["isInitOption"]
+        if "getFunctionName" in definition:
+            newDefinition.getFunctionName = definition["getFunctionName"]
+        if "setFunctionName" in definition:
+            newDefinition.setFunctionName = definition["setFunctionName"]
+        if "addToExtraOptions" in definition:
+            newDefinition.addToExtraOptions = definition["addToExtraOptions"]
+        if "loaderFunc" in definition:
+            newDefinition.loaderFunc = definition["loaderFunc"]
+        if "postProcessFunctionName" in definition:
+            newDefinition.postProcessFunctionName = definition["postProcessFunctionName"]
+        if "canGetValueFromElement" in definition:
+            newDefinition.canGetValueFromElement = definition["canGetValueFromElement"]
+        if "defaultValue" in definition:
+            newDefinition.defaultValue = definition["defaultValue"]
+        return newDefinition
+
     def __str__(self):
         return f"""WIDGET DEFINITION:
             Internal Name: {self.internalName},
-            Visible Name: {self.visiblename},
+            Visible Name: {self.visibleName},
             Internal Type: {self.type},
             Edit Type: {self.editType},
             Nullable: {self.nullable},
@@ -145,15 +186,20 @@ class Definition:
             Add to Extra Options: {self.addToExtraOptions},
             Loader Func: {self.loaderFunc},
             Postprocessing Function Name: {self.postProcessFunctionName},
-            Can get value from Element: {self.canGetValueFromElement}"""
+            Can get value from Element: {self.canGetValueFromElement},
+            Default value: {self.defaultValue}"""
 
 
-POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True, getFunctionName="getPos", setFunctionName="setPos")
-ROTATION_DEFINITION = Definition('hpr', 'Rotation (H/P/R)', object, editType=t.base3, nullable=True, getFunctionName="getHpr", setFunctionName="setHpr")
-SCALE_DEFINITION = Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale")
+POSITION_DEFINITION = Definition('pos', 'Position (X/Y/Z)', object, editType=t.base3, nullable=True,
+                                 getFunctionName="getPos", setFunctionName="setPos")
+ROTATION_DEFINITION = Definition('hpr', 'Rotation (H/P/R)', object, editType=t.base3, nullable=True,
+                                 getFunctionName="getHpr", setFunctionName="setHpr")
+SCALE_DEFINITION = Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True,
+                              getFunctionName="getScale", setFunctionName="setScale")
 COLOR_DEFINITION = Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, nullable=True)
 COMMAND_DEFINITION = Definition('command', 'Command', types.FunctionType)
-COMMAND_ARGS_DEFINITION = Definition('extraArgs', 'Extra Arguments for Command', list, isInitOption = True) # even though, this isn't an init opt, we don't want them to be set on the element
+COMMAND_ARGS_DEFINITION = Definition('extraArgs', 'Extra Arguments for Command', list,
+                                     isInitOption=True)  # even though, this isn't an init opt, we don't want them to be set on the element
 COMMAND_BUTTONS_DEFINITION = Definition('commandButtons', 'Command Buttons', tuple)
 
 # definitions for DirectGuiWidget
@@ -168,9 +214,9 @@ DEFAULT_DEFINITIONS = [
     #Definition('invertedFrames', 'Inverted Frames', tuple, editType=t.base?),
     Definition('sortOrder', 'Sort Order', int),
     # Widget's initial state
-    Definition('state', 'State', str, editType=t.optionMenu, valueOptions={"Normal":DGG.NORMAL, "Disabled":DGG.DISABLED}),
+    Definition('state', 'State', str, editType=t.optionMenu, valueOptions={"Normal": DGG.NORMAL, "Disabled": DGG.DISABLED}),
     # Widget's frame characteristics
-    Definition('relief', 'Relief', int, editType=t.optionMenu, nullable=True, valueOptions={"None":PGFrameStyle.TNone, **DGG.FrameStyleDict}),
+    Definition('relief', 'Relief', int, editType=t.optionMenu, nullable=True, valueOptions={"None": PGFrameStyle.TNone, **DGG.FrameStyleDict}),
     Definition('borderWidth', 'Border Width', tuple, editType=t.base2),
     Definition('borderUvWidth', 'Border UV Width', tuple, editType=t.base2),
     Definition('frameSize', 'Frame Size (L/R/B/T)', object, editType=t.base4, nullable=True, postProcessFunctionName='resetFrameSize'),
@@ -191,7 +237,13 @@ DEFAULT_DEFINITIONS = [
     Definition('suppressMouse', 'Suppress Mouse', bool, isInitOption=True),
     Definition('suppressKeys', 'Suppress Keyboard', bool, isInitOption=True),
     #Definition('enableEdit', 'Enable Edit', bool),
-    Definition('transparency', 'Transparency', str, editType=t.optionMenu, valueOptions={"None":TransparencyAttrib.M_none,"Alpha":TransparencyAttrib.M_alpha,"Premultiplied Alpha":TransparencyAttrib.M_premultiplied_alpha,"Multisample":TransparencyAttrib.M_multisample,"Multisample Mask":TransparencyAttrib.M_multisample_mask,"Binary":TransparencyAttrib.M_binary,"Dual":TransparencyAttrib.M_dual}, getFunctionName="getTransparency", setFunctionName="setTransparency")
+    Definition('transparency', 'Transparency', str, editType=t.optionMenu,
+               valueOptions={"None": TransparencyAttrib.M_none, "Alpha": TransparencyAttrib.M_alpha,
+                             "Premultiplied Alpha": TransparencyAttrib.M_premultiplied_alpha,
+                             "Multisample": TransparencyAttrib.M_multisample,
+                             "Multisample Mask": TransparencyAttrib.M_multisample_mask,
+                             "Binary": TransparencyAttrib.M_binary, "Dual": TransparencyAttrib.M_dual},
+               getFunctionName="getTransparency", setFunctionName="setTransparency")
 ]
 
 GEOM_DEFINITIONS = [
@@ -199,7 +251,7 @@ GEOM_DEFINITIONS = [
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
     Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
-    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, getFunctionName="getColor", setFunctionName="setColor", nullable=True)
+    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, nullable=True, getFunctionName="getColor", setFunctionName="setColor")
     #Definition('parent', '', object),
     #Definition('sort', 'Sort', int)
 ]
@@ -208,12 +260,12 @@ IMAGE_DEFINITIONS = [
     POSITION_DEFINITION,
     ROTATION_DEFINITION,
     Definition('scale', 'Scale (W/H/D)', object, editType=t.base3, nullable=True, getFunctionName="getScale", setFunctionName="setScale"),
-    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, getFunctionName="getColor", setFunctionName="setColor", nullable=True)
+    Definition('color', 'Color (R/G/B/A)', object, editType=t.base4, nullable=True, getFunctionName="getColor", setFunctionName="setColor")
     #Definition('parent', '', object),
     #Definition('sort', '', int)
 ]
 TEXT_DEFINITIONS = [
-    Definition('text','Text', str),
+    Definition('text', 'Text', str),
     #Definition('style', 'Style', int), # This is a initialization property only
     Definition('pos', 'Position (X/Y)', object, editType=t.base2),
     Definition('roll', 'Roll', int),
@@ -223,11 +275,11 @@ TEXT_DEFINITIONS = [
     Definition('shadow', 'Shadow Color', object, editType=t.base4, nullable=True),
     #Definition('shadowOffset', 'Shadow Offset', tuple, editType=t.base2), # needs to be set on the textNode, there is no way to set this through OnscreenText
     Definition('frame', 'Frame', object, editType=t.base4, nullable=True),
-    Definition('align', 'Align', object, editType=t.optionMenu, valueOptions={"Left":0,"Right":1,"Center":2,"Boxed Left":3,"Boxed Right":4,"Boxed Center":5}),
+    Definition('align', 'Align', object, editType=t.optionMenu, valueOptions={"Left": 0, "Right": 1, "Center": 2, "Boxed Left": 3, "Boxed Right": 4, "Boxed Center": 5}),
     #Definition('wordwrap', 'Wordwrap', object, editType=t.float), #TODO
-    #Definition('drawOrder', 'Draw Order', object, editType=t.integer, nullable=True), #TODO
+    #Definition('drawOrder', 'Draw Order', object, editType=t.int, nullable=True), #TODO
     Definition('decal', 'Decal', int),
-    Definition('font', 'Font', object, editType=t.path, loaderFunc="loader.loadFont(value)", nullable=True),
+    Definition('font', 'Font', object, editType=t.path, nullable=True, loaderFunc="loader.loadFont(value)"),
     #Definition('parent', 'Parent', object),
     #Definition('sort', 'Sort', int, getFunctionName="textNode.getSort", nullable=True),
     Definition('mayChange', 'May Change', bool),
@@ -255,8 +307,8 @@ DIRECT_BUTTON_DEFINITIONS = DIRECT_FRAME_DEFINITIONS + [
     # Which mouse buttons can be used to click the button
     COMMAND_BUTTONS_DEFINITION,
     # Sounds to be used for button events
-    Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
-    Definition('clickSound', 'Click Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
+    Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, nullable=True, loaderFunc="loader.loadSfx(value)"),
+    Definition('clickSound', 'Click Sound', object, editType=t.path, nullable=True, loaderFunc="loader.loadSfx(value)"),
     # Can only be specified at time of widget contruction
     # Do the text/graphics appear to move when the button is clicked
     Definition('pressEffect', 'Press Effect', bool, isInitOption=True),
@@ -332,7 +384,7 @@ DEFINITIONS = {
         Definition('backgroundFocus', 'Background Focus', bool),
         # Text used for the PGEntry text node
         # NOTE: This overrides the DirectFrame text option
-        Definition('initialText', 'Initial Text', str, isInitOption=False, addToExtraOptions=True, getFunctionName="get", setFunctionName="enterText"),
+        Definition('initialText', 'Initial Text', str, isInitOption=False, getFunctionName="get", setFunctionName="enterText", addToExtraOptions=True),
         # Enable or disable text overflow scrolling
         Definition('overflow', 'Overflow', bool),
         # Command to be called on hitting Enter
@@ -347,8 +399,8 @@ DEFINITIONS = {
         Definition('focusOutCommand', 'Focus-Out Command', types.FunctionType),
         Definition('focusOutExtraArgs', 'Focus-Out Command Extra Args', list),
         # Sounds to be used for button events
-        Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
-        Definition('clickSound', 'Click Sound', object, editType=t.path, loaderFunc="loader.loadSfx(value)", nullable=True),
+        Definition('rolloverSound', 'Rollover Sound', object, editType=t.path, nullable=True, loaderFunc="loader.loadSfx(value)"),
+        Definition('clickSound', 'Click Sound', object, editType=t.path, nullable=True, loaderFunc="loader.loadSfx(value)"),
         Definition('autoCapitalize', 'Auto Capitalize', bool),
         Definition('autoCapitalizeAllowPrefixes', 'Auto Capitalize Allow Prefixes', list),
         Definition('autoCapitalizeForcePrefixes', 'Auto Capitalize Force Prefixes', list)
@@ -376,7 +428,7 @@ DEFINITIONS = {
         Definition('highlightScale', 'Highlight Scale', tuple, editType=t.base2),
         # Alignment to use for text on popup menu button
         # Changing this breaks button layout
-        Definition('text_align', 'Text Align', object, editType=t.optionMenu, valueOptions={"Left":0,"Right":1,"Center":2,"Boxed Left":3,"Boxed Right":4,"Boxed Center":5}),
+        Definition('text_align', 'Text Align', object, editType=t.optionMenu, valueOptions={"Left": 0, "Right": 1, "Center": 2, "Boxed Left": 3, "Boxed Right": 4, "Boxed Center": 5}),
         # Remove press effect because it looks a bit funny
         Definition('pressEffect', 'Press Effect', bool)
     ],
@@ -387,19 +439,19 @@ DEFINITIONS = {
         # value is the value to be set when this radio button is selected
         Definition('value', 'Value', list),
         # others is a list of other radio buttons sharing same variable
-        Definition('others', 'Radio button grouping', list, canGetValueFromElement=False, addToExtraOptions=True, isInitOption=True),
+        Definition('others', 'Radio button grouping', list, isInitOption=True, addToExtraOptions=True, canGetValueFromElement=False),
         # boxBorder defines the space created around the check box
         Definition('boxBorder', 'Box Border', int),
         # boxPlacement maps left, above, right, below
         Definition('boxPlacement', 'Box Placement', str),
         # boxGeom defines geom to indicate current radio button is selected or not
-        Definition('boxGeom', 'Box Geom', object, nullable=True, editType=t.path),
-        Definition('boxGeomColor', 'Box Geom Color', object, nullable=True, editType=t.base4),
-        Definition('boxGeomScale', 'Box Geom Scale', object, nullable=True, editType=t.base3),
-        Definition('boxImage', 'Box Image', object, nullable=True, editType=t.path),
-        Definition('boxImageColor', 'Box Image Color', object, nullable=True, editType=t.base4),
-        Definition('boxImageScale', 'Box Image Scale', object, nullable=True, editType=t.base2),
-        Definition('boxRelief', 'Box Relief', object, editType=t.optionMenu, nullable=True, valueOptions={"None":PGFrameStyle.TNone, **DGG.FrameStyleDict})
+        Definition('boxGeom', 'Box Geom', object, editType=t.path, nullable=True),
+        Definition('boxGeomColor', 'Box Geom Color', object, editType=t.base4, nullable=True),
+        Definition('boxGeomScale', 'Box Geom Scale', object, editType=t.base3, nullable=True),
+        Definition('boxImage', 'Box Image', object, editType=t.path, nullable=True),
+        Definition('boxImageColor', 'Box Image Color', object, editType=t.base4, nullable=True),
+        Definition('boxImageScale', 'Box Image Scale', object, editType=t.base2, nullable=True),
+        Definition('boxRelief', 'Box Relief', object, editType=t.optionMenu, nullable=True, valueOptions={"None": PGFrameStyle.TNone, **DGG.FrameStyleDict})
     ],
     "DirectScrollBar":DEFAULT_DEFINITIONS + [
         Definition('range', 'Range', tuple, editType=t.base2),
@@ -424,15 +476,15 @@ DEFINITIONS = {
     "DirectScrolledList":DEFAULT_DEFINITIONS + [
         # Define type of DirectGuiWidget
         Definition('items', '', list),
-        Definition('itemsAlign', 'Item Align', object, editType=t.optionMenu, valueOptions={"Left":0,"Right":1,"Center":2,"Boxed Left":3,"Boxed Right":4,"Boxed Center":5}),
-        Definition('itemsWordwrap', '', object, nullable=True, editType=t.float),
+        Definition('itemsAlign', 'Item Align', object, editType=t.optionMenu, valueOptions={"Left": 0, "Right": 1, "Center": 2, "Boxed Left": 3, "Boxed Right": 4, "Boxed Center": 5}),
+        Definition('itemsWordwrap', '', object, editType=t.float, nullable=True),
         COMMAND_DEFINITION,
         COMMAND_ARGS_DEFINITION,
         Definition('itemMakeFunction', 'Make Item Function', types.FunctionType),
         Definition('itemMakeExtraArgs', 'Make Item Function Arguments', list),
         Definition('numItemsVisible', 'Number of visible Items', int),
         Definition('scrollSpeed', 'Scroll Speed', int),
-        Definition('forceHeight', 'Force Height', object, nullable=True, editType=t.float),
+        Definition('forceHeight', 'Force Height', object, editType=t.float, nullable=True),
         Definition('incButtonCallback', 'Increment Button Callback', types.FunctionType),
         Definition('decButtonCallback', 'Decrement Button Callback', types.FunctionType)
     ],
@@ -456,9 +508,9 @@ DEFINITIONS = {
         Definition('range', 'Range', float),
         Definition('value', 'Value', float),
         Definition('barBorderWidth', 'Bar Border Width', tuple),
-        Definition('barColor', 'Bar Color', object, nullable=True, editType=t.base4),
+        Definition('barColor', 'Bar Color', object, editType=t.base4, nullable=True),
         Definition('barTexture', 'Bar Texture', object, editType=t.path),
-        Definition('barRelief', 'Bar Relief', int, editType=t.optionMenu, nullable=True, valueOptions={"None":PGFrameStyle.TNone, **DGG.FrameStyleDict}),
+        Definition('barRelief', 'Bar Relief', int, editType=t.optionMenu, nullable=True, valueOptions={"None": PGFrameStyle.TNone, **DGG.FrameStyleDict}),
         #Definition('sortOrder', 'Sort Order', int)
     ],
     "OnscreenGeom":GEOM_DEFINITIONS,

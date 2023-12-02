@@ -54,9 +54,14 @@ from DirectGuiExtension import DirectGuiHelper as DGH
 from DirectGuiExtension.DirectTooltip import DirectTooltip
 
 from DirectGuiDesigner.core import WidgetDefinition
+from DirectGuiDesigner.core.PropertyHelper import PropertyHelper
 
 
 class DirectGuiDesigner(DirectObject):
+    # dict of all elements in the visual editor
+    # Key = guiID; Value = elementInfo
+    elementDict = {}
+
     def __init__(self, parent):
         logging.debug("Start Designer")
 
@@ -87,9 +92,6 @@ class DirectGuiDesigner(DirectObject):
         base.win.requestProperties(wp)
 
         self.selectedElement = None
-        # dict of all elements in the visual editor
-        # Key = guiID; Value = elementInfo
-        self.elementDict = {}
 
         map = base.win.get_keyboard_map()
 
@@ -616,21 +618,25 @@ class DirectGuiDesigner(DirectObject):
         """Update the structure tree panel to reflect the current state of the project."""
         self.mainView.structureFrame.refreshStructureTree(self.elementDict, self.selectedElement)
 
-    def __createControl(self, element, skipAddToKillRing=False):
+    def __createControl(self, element, skipAddToKillRing=False, parentInfo=None, skipAddItemFunc=False):
         """Create a new element and reparent it to the selected object.
 
         :param str element: The type of element to add (for example 'DirectScrolledFrame')
+        :param ElementInfo parentInfo: Parent of the created element. If None: 'selectedElement' is parent instead.
+        :param skipAddItemFunc: Weather or not the addItemFunction will be called for custom widgets.
         :return: The new element
         """
         funcName = "create{}".format(element)
         parent = None
         elementInfo = None
         widget = self.customWidgetsHandler.getWidget(element)
-        if self.selectedElement is not None:
-            if self.selectedElement.type == "DirectScrolledFrame":
-                parent = self.selectedElement.element.canvas
+        if self.selectedElement is not None and parentInfo is None:
+            parentInfo = self.selectedElement
+        if parentInfo is not None:
+            if parentInfo.type == "DirectScrolledFrame":
+                parent = parentInfo.element.canvas
             else:
-                parent = self.selectedElement.element
+                parent = parentInfo.element
         if hasattr(self.elementHandler, funcName):
             if widget is None:
                 elementInfo = getattr(self.elementHandler, funcName)(parent)
@@ -643,30 +649,28 @@ class DirectGuiDesigner(DirectObject):
         if elementInfo is None: return
 
         if type(elementInfo) is tuple:
-            if self.selectedElement is not None and self.selectedElement.type == "DirectScrolledList":
-                self.selectedElement.element.addItem(elementInfo[0].element)
-            elif self.selectedElement is not None:
-                widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
-                if widget is not None:
-                    if widget.addItemFunction is not None:
-                        # call custom widget add function
-                        getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo[0].element)
+            if parentInfo is not None and parentInfo.type == "DirectScrolledList":
+                parentInfo.element.addItem(elementInfo[0].element)
+            elif parentInfo is not None:
+                widget = self.customWidgetsHandler.getWidget(parentInfo.type)
+                if widget is not None and not skipAddItemFunc:
+                    # call custom widget add function
+                    widget.callAddItemFunc(parentInfo, elementInfo)
             for entry in elementInfo:
-                if self.selectedElement is not None and entry.parent is None:
-                    entry.parent = self.selectedElement
+                if parentInfo is not None and entry.parent is None:
+                    entry.parent = parentInfo
                 sort = self.getMaxSort(entry)
                 entry.element.reparentTo(entry.element.getParent(), sort)
                 self.elementDict[entry.element.guiId] = entry
         else:
-            if self.selectedElement is not None:
-                elementInfo.parent = self.selectedElement
-                if self.selectedElement.type == "DirectScrolledList":
-                    self.selectedElement.element.addItem(elementInfo.element)
-                widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
-                if widget is not None:
-                    if widget.addItemFunction is not None:
-                        # call custom widget add function
-                        getattr(self.selectedElement.element, widget.addItemFunction)(elementInfo.element)
+            if parentInfo is not None:
+                elementInfo.parent = parentInfo
+                if parentInfo.type == "DirectScrolledList":
+                    parentInfo.element.addItem(elementInfo.element)
+                widget = self.customWidgetsHandler.getWidget(parentInfo.type)
+                if widget is not None and not skipAddItemFunc:
+                    # call custom widget add function
+                    widget.callAddItemFunc(parentInfo, elementInfo)
             sort = self.getMaxSort(elementInfo)
             elementInfo.element.reparentTo(elementInfo.element.getParent(), sort)
             self.elementDict[elementInfo.element.guiId] = elementInfo
@@ -691,6 +695,9 @@ class DirectGuiDesigner(DirectObject):
         :param ElementInfo elementInfo: The elementInfo for the element to select
         :param args: Not currently used
         """
+        if elementInfo is self.selectedElement:
+            return
+
         if self.selectedElement is not None:
             # handle coloring for selected and cut elements
             if self.selectedElement is self.theCutElement:
@@ -776,7 +783,12 @@ class DirectGuiDesigner(DirectObject):
             if self.mainView.editorFrame.snapToGrid and (t.mouseVec - vMouse2render2d).length() < 0.01:
                 return t.cont
 
-            oldPos = t.elementInfo.element.getPos()
+            try:
+                oldPos = t.elementInfo.element.getPos()
+            except AssertionError:  # Required to handle the close button on DirectScrolledWindowFrame
+                self.removeElement(t.elementInfo.element)
+                return
+
             t.elementInfo.element.setPos(render2d, newPos)
 
             if self.mainView.editorFrame.snapToGrid:
@@ -816,11 +828,13 @@ class DirectGuiDesigner(DirectObject):
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[2])
             if pos.z > self.mainView.editorFrame.getEditorCanvasSize()[3]:
                 t.elementInfo.element.setZ(self.mainView.editorFrame.getEditorCanvasSize()[3])
-        self.refreshProperties(t.elementInfo)
 
         if t.hasMoved:
+            definition = PropertyHelper.getDefinition(t.elementInfo, "pos")
+            PropertyHelper.setValue(definition, t.elementInfo, pos)
+            self.refreshProperties(t.elementInfo)
             base.messenger.send("addToKillRing",
-                [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
+                                [t.elementInfo, "set", "pos", t.startPos, t.elementInfo.element.getPos()])
 
         taskMgr.remove("dragDropTask")
 
@@ -1127,7 +1141,7 @@ class DirectGuiDesigner(DirectObject):
             if elementInfo.element.guiId in self.copyCreatedElementIds: continue
             if elementInfo.element not in self.elementsToCopy: continue
             if elementInfo.parent == startObject or elementInfo == startObject:
-                newElement = self.__createControl(elementInfo.type, skipAddToKillRing=True)
+                newElement = self.__createControl(elementInfo.type, skipAddToKillRing=True, parentInfo=parent, skipAddItemFunc=True)
                 if type(newElement) is tuple:
                     newElement = newElement[0]
                 self.newElementIds.append(newElement.element.guiId)
@@ -1142,9 +1156,9 @@ class DirectGuiDesigner(DirectObject):
                     if isinstance(newParent, (DirectGui.DirectScrolledFrame, DirectScrolledFrame)):
                         newParent = newParent.canvas
                     newElement.element.reparentTo(newParent)
-                self.__copyOptions(elementInfo, newElement, parent is not None, skipAddToKillRing=True)
+                self.__copyOptions(elementInfo, newElement, parent is not None, skipAddToKillRing=True, parentInfo=parent)
 
-                self.__copyBranch(elementInfo, newElement.element)
+                self.__copyBranch(elementInfo, newElement)
 
     def pasteCutElement(self):
         """Paste the cut element to the selected element."""
@@ -1170,6 +1184,11 @@ class DirectGuiDesigner(DirectObject):
 
             self.theCutElement.element.reparentTo(parent)
 
+            widget = self.customWidgetsHandler.getWidget(self.selectedElement.type)
+            if widget is not None:
+                # call custom widget add function
+                widget.callAddItemFunc(self.selectedElement, self.theCutElement, forceOpenDialog=True)
+
         self.theCutElement.element.clearColorScale()
 
         base.messenger.send("addToKillRing",
@@ -1194,7 +1213,7 @@ class DirectGuiDesigner(DirectObject):
 
         self.__copyOptions(self.copyOptionsElementInfo, self.selectedElement)
 
-    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False, skipAddToKillRing=False):
+    def __copyOptions(self, elementInfoFrom, elementInfoTo, copyPosition=False, skipAddToKillRing=False, parentInfo=None):
         elementFrom = elementInfoFrom.element
         elementTo = elementInfoTo.element
         if elementFrom is None or elementTo is None: return
@@ -1249,6 +1268,15 @@ class DirectGuiDesigner(DirectObject):
                 if key in ["hpr", "scale"] + p:
                     continue
                 elementInfoTo.valueHasChanged[key] = changed
+
+            # handle addItemExtra args and AddItemNode
+            elementInfoTo.addItemExtraArgs = elementInfoFrom.addItemExtraArgs.copy()
+            elementInfoTo.addItemNode = elementInfoFrom.addItemNode
+            if parentInfo is not None:
+                widget = self.customWidgetsHandler.getWidget(parentInfo.type)
+                if widget is not None:
+                    # call custom widget add function
+                    widget.callAddItemFunc(parentInfo, elementInfoTo)
 
             if not skipAddToKillRing:
                 base.messenger.send("addToKillRing",
