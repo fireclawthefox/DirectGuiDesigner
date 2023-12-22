@@ -60,6 +60,7 @@ class PropertiesPanel(DirectObject):
         self.tooltip = tooltip
         self.parent = parent
         self.customWidgetDefinitions = {}
+        self.cachedPropertyFrames = {}
 
         self.setupDone = False
 
@@ -72,6 +73,7 @@ class PropertiesPanel(DirectObject):
             updateOnWindowResize=False,
             parent=parent,
             child=self.box,
+            frameColor=(0,1,0,1),
             childUpdateSizeFunc=self.box.refresh)
 
         self.lblHeader = DirectLabel(
@@ -137,10 +139,18 @@ class PropertiesPanel(DirectObject):
                 self.parent["frameSize"][0], self.parent["frameSize"][1],
                 self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
 
-        if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
-            taskMgr.doMethodLater(0.99, self.clear, "clearPropPanel", extraArgs=[])
-            taskMgr.doMethodLater(1, self.refreshProperties, "updatePropPanel", extraArgs=[])
+        if hasattr(self, "mainBoxFrame"):
+            self.propertiesFrame["canvasSize"] = (
+                self.propertiesFrame["frameSize"][0],
+                self.propertiesFrame["frameSize"][1]-SCROLLBARWIDTH,
+                self.mainBoxFrame.bounds[2],
+                0)
 
+        if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
+            #taskMgr.doMethodLater(0.99, self.clear, "clearPropPanel", extraArgs=[])
+            #taskMgr.doMethodLater(0.5, self.refreshProperties, "updatePropPanel", extraArgs=[])
+            taskMgr.doMethodLater(0.1, self.refreshProperties, "updatePropPanel", extraArgs=[])
+            #self.refreshProperties()
 
     def setupProperties(self, headerText, elementInfo, elementDict):
         """Creates the set of editable properties for the given element"""
@@ -150,9 +160,29 @@ class PropertiesPanel(DirectObject):
         self.headerText = headerText
         self.elementInfo = elementInfo
         self.elementDict = elementDict
-        self.refreshProperties()
 
-    def refreshProperties(self):
+        if self.elementInfo in self.cachedPropertyFrames.keys():
+            self.mainBoxFrame = self.cachedPropertyFrames[self.elementInfo][0]
+            self.boxFrames = self.cachedPropertyFrames[self.elementInfo][1]
+            self.definition2PropertyWidget = self.cachedPropertyFrames[self.elementInfo][2]
+            self.widgetNameProp = self.cachedPropertyFrames[self.elementInfo][3]
+            self.headers = self.cachedPropertyFrames[self.elementInfo][4]
+            self.propertyHeaders = self.cachedPropertyFrames[self.elementInfo][5]
+            self.sections = self.cachedPropertyFrames[self.elementInfo][6]
+            self.mainBoxFrame.show()
+            self.updateCanvasSize()
+        else:
+            self.CreateProperties()
+            self.cachedPropertyFrames[self.elementInfo] = [
+                self.mainBoxFrame,
+                self.boxFrames,
+                self.definition2PropertyWidget,
+                self.widgetNameProp,
+                self.headers,
+                self.propertyHeaders,
+                self.sections]
+
+    def CreateProperties(self):
         # create the frame that will hold all our properties
         self.mainBoxFrame = DirectBoxSizer(
             orientation=DGG.VERTICAL,
@@ -188,25 +218,30 @@ class PropertiesPanel(DirectObject):
             allDefinitions = {**WidgetDefinition.DEFINITIONS, **self.customWidgetDefinitions}
 
             self.boxFrames = {}
+            self.definition2PropertyWidget = {}
+            self.widgetNameProp = None
+            self.headers = []
+            self.propertyHeaders = []
+            self.sections = []
 
             # check if we have a definition for this specific GUI element
             if self.elementInfo.type in allDefinitions:
                 # create the main set of properties to edit
                 wd = allDefinitions[self.elementInfo.type]
                 # create a header for this type of element
-                self.__createInbetweenHeader(self.elementInfo.type)
+                self.headers.append(self.__createInbetweenHeader(self.elementInfo.type))
 
                 section = self.createSection()
 
                 # Designer specific entries
-                self.__createNameProperty(self.elementInfo)
+                self.widgetNameProp = self.__createNameProperty(self.elementInfo)
 
                 self.__createRootReParent(self.elementInfo)
 
                 # create the set of properties to edit on the main component
                 for definition in wd:
                     try:
-                        self.createProperty(definition, self.elementInfo)
+                        self.definition2PropertyWidget[definition] = self.createProperty(definition, self.elementInfo)
                     except:
                         #e = sys.exc_info()[1]
                         has_error = True
@@ -216,7 +251,6 @@ class PropertiesPanel(DirectObject):
                 self.updateSection(section)
 
                 # create the sub component set of properties to edit
-                groups = {}
                 for componentName, componentDefinition in self.elementInfo.element._DirectGuiBase__componentInfo.items():
                     widget = componentDefinition[0]
                     wConfigure = componentDefinition[1]
@@ -240,14 +274,14 @@ class PropertiesPanel(DirectObject):
                     # check if this component has definitions
                     if wType in allDefinitions:
                         # write the header for this component
-                        self.__createInbetweenHeader(headerName)
+                        self.headers.append(self.__createInbetweenHeader(headerName))
                         subsection = self.createSection()
                         subWd = allDefinitions[wType]
                         for definition in subWd:
                             # create the property for all definitions of this
                             # sub widget
                             try:
-                                self.createProperty(
+                                self.definition2PropertyWidget[definition] = self.createProperty(
                                     definition,
                                     subWidgetElementInfo)
                             except:
@@ -267,15 +301,99 @@ class PropertiesPanel(DirectObject):
         if has_error:
             base.messenger.send("showWarning", [f"There were {error_count} Errors while loading the properties panel.\nSee log file for more details."])
 
-
         #
         # Reset property Frame framesize
         #
         self.updateCanvasSize()
 
+    def refreshProperties(self):
+        has_error = False
+        error_count = 0
+
+        # Set up all the properties
+        try:
+
+            for header in self.headers:
+                header["frameSize"] = VBase4(self.propertiesFrame["canvasSize"][0], self.propertiesFrame["canvasSize"][1], -10, 20)
+
+            for header in self.propertyHeaders:
+                header["frameSize"] = VBase4(self.propertiesFrame["canvasSize"][0], self.propertiesFrame["canvasSize"][1], -10, 20)
+                #header["text_pos"] = (self.propertiesFrame["frameSize"][0] + 5, 0)
+
+            for section in self.sections:
+                self.updateSection(section)
+
+            allDefinitions = {**WidgetDefinition.DEFINITIONS, **self.customWidgetDefinitions}
+
+            if self.widgetNameProp is not None:
+                width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
+                self.widgetNameProp["width"] = width/12
+
+            # check if we have a definition for this specific GUI element
+            if self.elementInfo.type in allDefinitions:
+                # create the main set of properties to edit
+                wd = allDefinitions[self.elementInfo.type]
+
+                # create the set of properties to edit on the main component
+                for definition in wd:
+                    try:
+                        self.updateProperty(
+                            definition,
+                            self.elementInfo,
+                            self.definition2PropertyWidget[definition])
+                    except:
+                        #e = sys.exc_info()[1]
+                        has_error = True
+                        error_count += 1
+                        logging.exception("Failed to load property for properties panel")
+
+                # create the sub component set of properties to edit
+                for componentName, componentDefinition in self.elementInfo.element._DirectGuiBase__componentInfo.items():
+                    widget = componentDefinition[0]
+                    wConfigure = componentDefinition[1]
+                    wType = componentDefinition[2]
+                    wGet = componentDefinition[3]
+                    group = componentDefinition[4]
+
+                    # store the sub widget as an element info object
+                    subWidgetElementInfo = copy.copy(self.elementInfo)
+                    subWidgetElementInfo.element = widget
+                    subWidgetElementInfo.subComponentName = componentName
+
+                    # check if this component has definitions
+                    if wType in allDefinitions:
+                        subWd = allDefinitions[wType]
+                        for definition in subWd:
+                            # create the property for all definitions of this
+                            # sub widget
+                            try:
+                                self.updateProperty(
+                                    definition,
+                                    subWidgetElementInfo,
+                                    self.definition2PropertyWidget[definition])
+                            except:
+                                #e = sys.exc_info()[1]
+                                has_error = True
+                                error_count += 1
+                                logging.exception("Failed to load property for properties panel")
+
+        except Exception:
+            e = sys.exc_info()[1]
+            base.messenger.send("showWarning", [str(e)])
+            logging.exception("Error while loading properties panel")
+
+        if has_error:
+            base.messenger.send("showWarning", [f"There were {error_count} Errors while loading the properties panel.\nSee log file for more details."])
+
+        #
+        # Reset property Frame framesize
+        #
+        #self.updateCanvasSize()
+
+        self.mainBoxFrame["frameColor"] = (1,0,0,1)
+        self.mainBoxFrame.refresh()
+
     def updateCanvasSize(self):
-        for section, boxFrame in self.boxFrames.items():
-            boxFrame.refresh()
 
         self.mainBoxFrame.refresh()
 
@@ -285,6 +403,8 @@ class PropertiesPanel(DirectObject):
             self.mainBoxFrame.bounds[2],
             0)
         self.propertiesFrame.setCanvasSize()
+
+        self.mainBoxFrame.refresh()
 
         a = self.propertiesFrame["canvasSize"][2]
         b = abs(self.propertiesFrame["frameSize"][2]) + self.propertiesFrame["frameSize"][3]
@@ -333,6 +453,7 @@ class PropertiesPanel(DirectObject):
         self.boxFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
         self.boxFrames[section] = self.boxFrame
+        self.sections.append(section)
 
         return section
 
@@ -348,38 +469,133 @@ class PropertiesPanel(DirectObject):
 
     def createProperty(self, definition, elementInfo):
         if definition.editType == WidgetDefinition.PropertyEditTypes.int:
-            self.__createNumberInput(definition, elementInfo, int)
+            return self.__createNumberInput(definition, elementInfo, int)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
-            self.__createNumberInput(definition, elementInfo, float)
+            return self.__createNumberInput(definition, elementInfo, float)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.bool:
-            self.__createBoolProperty(definition, elementInfo)
+            return self.__createBoolProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.text:
-            self.__createTextProperty(definition, elementInfo)
+            return self.__createTextProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base2:
-            self.__createBaseNInput(definition, elementInfo, 2)
+            return self.__createBaseNInput(definition, elementInfo, 2)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base3:
-            self.__createBaseNInput(definition, elementInfo, 3)
+            return self.__createBaseNInput(definition, elementInfo, 3)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base4:
-            self.__createBaseNInput(definition, elementInfo, 4)
+            return self.__createBaseNInput(definition, elementInfo, 4)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.command:
-            self.__createCustomCommand(definition, elementInfo)
+            return self.__createCustomCommand(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.path:
-            self.__createPathProperty(definition, elementInfo)
+            return self.__createPathProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.optionMenu:
-            self.__createOptionMenuProperty(definition, elementInfo)
+            return self.__createOptionMenuProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.list:
-            self.__createListProperty(definition, elementInfo)
+            return self.__createListProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.tuple:
-            self.__createTupleProperty(definition, elementInfo)
+            return self.__createTupleProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.fitToChildren:
-            self.__createFitToChildren(definition, elementInfo)
+            return self.__createFitToChildren(definition, elementInfo)
+        else:
+            logging.error(f"Edit type {definition.editType} not in Edit type definitions")
+            return None
+
+    def updateProperty(self, definition, elementInfo, element):
+        if definition.editType == WidgetDefinition.PropertyEditTypes.int:
+            valueA = PropertyHelper.getValues(definition, elementInfo)
+            if valueA is None and not definition.nullable:
+                logging.error(f"Got None value for not nullable element {definition.internalName}")
+            if valueA is not None:
+                valueA = PropertyHelper.getFormated(valueA, True)
+            width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
+            #element["width"] = width/12
+            element.enterText(str(valueA))
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
+            valueA = PropertyHelper.getValues(definition, elementInfo)
+            if valueA is None and not definition.nullable:
+                logging.error(f"Got None value for not nullable element {definition.internalName}")
+            if valueA is not None:
+                valueA = PropertyHelper.getFormated(valueA, False)
+            width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
+            #element["width"] = width/12
+            element.enterText(str(valueA))
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.bool:
+            valueA = PropertyHelper.getValues(definition, elementInfo)
+            element["indicatorValue"] = valueA
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.text:
+            text = PropertyHelper.getValues(definition, elementInfo)
+            width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
+            #element["width"] = width/12
+            element.enterText(text)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base2:
+            n = 2
+            values = PropertyHelper.getValues(definition, elementInfo)
+            if type(values) is int or type(values) is float:
+                values = [values] * n
+            if definition.nullable:
+                if values is None:
+                    values = [""] * n
+            width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
+            for i in range(len(values)):
+                value = PropertyHelper.getFormated(values[i])
+                #element[i]["width"] = width/12
+                element[i].enterText(str(value))
+            #self.__createBaseNInput(definition, elementInfo, 2)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base3:
+            n = 3
+            values = PropertyHelper.getValues(definition, elementInfo)
+            if type(values) is int or type(values) is float:
+                values = [values] * n
+            if definition.nullable:
+                if values is None:
+                    values = [""] * n
+            width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
+            for i in range(len(values)):
+                value = PropertyHelper.getFormated(values[i])
+                #element[i]["width"] = width/12
+                element[i].enterText(str(value))
+            #self.__createBaseNInput(definition, elementInfo, 3)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.base4:
+            n = 4
+            values = PropertyHelper.getValues(definition, elementInfo)
+            if type(values) is int or type(values) is float:
+                values = [values] * n
+            if definition.nullable:
+                if values is None:
+                    values = [""] * n
+            width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
+            for i in range(len(values)):
+                value = PropertyHelper.getFormated(values[i])
+                #element[i]["width"] = width/12
+                element[i].enterText(str(value))
+            #self.__createBaseNInput(definition, elementInfo, 4)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.command:
+            pass #nothing to update here
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.path:
+            path = PropertyHelper.getValues(definition, elementInfo)
+            if type(path) is not str:
+                path = ""
+            width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
+            #element[0]["width"] = width/12
+            element[1](path)
+            #self.__createPathProperty(definition, elementInfo)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.optionMenu:
+            ...
+            #self.__createOptionMenuProperty(definition, elementInfo)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.list:
+            ...
+            #self.__createListProperty(definition, elementInfo)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.tuple:
+            ...
+            #self.__createTupleProperty(definition, elementInfo)
+        elif definition.editType == WidgetDefinition.PropertyEditTypes.fitToChildren:
+            pass #nothing to update here
         else:
             logging.error(f"Edit type {definition.editType} not in Edit type definitions")
 
     def clear(self):
         if not hasattr(self, "mainBoxFrame"): return
         if self.mainBoxFrame is not None:
-            self.mainBoxFrame.destroy()
+            #self.mainBoxFrame.destroy()
+            self.mainBoxFrame.hide()
 
     def __createInbetweenHeader(self, description):
         l = DirectLabel(
@@ -392,6 +608,7 @@ class PropertiesPanel(DirectObject):
         l.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.mainBoxFrame.addItem(l, skipRefresh=True)
+        return l
 
     def __createPropertyHeader(self, description):
         l = DirectLabel(
@@ -405,6 +622,7 @@ class PropertiesPanel(DirectObject):
         l.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         l.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(l, skipRefresh=True)
+        self.propertyHeaders.append(l)
 
     def __addToKillRing(self, elementInfo, definition, oldValue, newValue):
         base.messenger.send("addToKillRing",
@@ -489,7 +707,8 @@ class PropertiesPanel(DirectObject):
             entry = self.__createTextEntry(str(value), width, update, [elementInfo])
             entryList.append(entry)
             entryBox.addItem(entry)
-        self.boxFrame.addItem(entryBox, skipRefresh=True)
+        self.boxFrame.addItem(entryBox, skipRefresh=True, updateFunc=entryBox.refresh)
+        return entryList
 
     def __createNumberInput(self, definition, elementInfo, numberType):
         def update(text, elementInfo):
@@ -518,6 +737,7 @@ class PropertiesPanel(DirectObject):
         width = DGH.getRealWidth(self.boxFrame) - SCROLLBARWIDTH
         entry = self.__createTextEntry(str(valueA), width, update, [elementInfo])
         self.boxFrame.addItem(entry, skipRefresh=True)
+        return entry
 
     def __createTextProperty(self, definition, elementInfo):
         def update(text, elementInfo):
@@ -534,6 +754,7 @@ class PropertiesPanel(DirectObject):
         width = DGH.getRealWidth(self.boxFrame) - SCROLLBARWIDTH
         entry = self.__createTextEntry(text, width, update, [elementInfo])
         self.boxFrame.addItem(entry, skipRefresh=True)
+        return entry
 
     def __createBoolProperty(self, definition, elementInfo):
         def update(value):
@@ -555,6 +776,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return btn
 
     def __createListProperty(self, definition, elementInfo):
         def update(text, elementInfo, entries):
@@ -621,6 +843,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return (entriesBox, addEntry)
 
     def __createTupleProperty(self, definition, elementInfo):
         def update(text, elementInfo, entries):
@@ -684,6 +907,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return (entriesBox, addEntry)
 
     def __createCustomCommandProperty(self, description, updateElement, updateAttribute, elementInfo):
         def update(text, elementInfo):
@@ -795,6 +1019,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return (entry, setPath)
 
     def __createOptionMenuProperty(self, definition, elementInfo):
         def update(selection):
@@ -839,6 +1064,7 @@ class PropertiesPanel(DirectObject):
         menu.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         menu.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(menu, skipRefresh=True)
+        return menu
 
     def __createCustomCommand(self, definition, elementInfo):
         self.__createPropertyHeader(definition.visibleName)
@@ -851,6 +1077,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return btn
 
     def __createFitToChildren(self, definition, elementInfo):
         self.__createPropertyHeader("Fit to children")
@@ -912,6 +1139,7 @@ class PropertiesPanel(DirectObject):
         btn.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         btn.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
         self.boxFrame.addItem(btn, skipRefresh=True)
+        return btn
 
     #
     # Designer specific input fields
@@ -928,6 +1156,7 @@ class PropertiesPanel(DirectObject):
         width = DGH.getRealWidth(self.boxFrame) - SCROLLBARWIDTH
         entry = self.__createTextEntry(text, width, update)
         self.boxFrame.addItem(entry, skipRefresh=True)
+        return entry
 
     def __createRootReParent(self, elementInfo):
         def update(name):
