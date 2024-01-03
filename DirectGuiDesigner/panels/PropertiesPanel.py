@@ -62,6 +62,9 @@ class PropertiesPanel(DirectObject):
         self.customWidgetDefinitions = {}
         self.cachedPropertyFrames = {}
 
+        self.frameCount = 0
+        self.isRefreshing = False
+
         self.setupDone = False
 
         self.box = DirectBoxSizer(
@@ -147,10 +150,11 @@ class PropertiesPanel(DirectObject):
                 0)
 
         if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
-            #taskMgr.doMethodLater(0.99, self.clear, "clearPropPanel", extraArgs=[])
-            #taskMgr.doMethodLater(0.5, self.refreshProperties, "updatePropPanel", extraArgs=[])
-            taskMgr.doMethodLater(0.1, self.refreshProperties, "updatePropPanel", extraArgs=[])
-            #self.refreshProperties()
+            #taskMgr.doMethodLater(0.1, self.refreshProperties, "updatePropPanel", extraArgs=[])
+            self.frameCount += 1
+            if self.frameCount % 16 == 0:
+                self.refreshProperties()
+                self.frameCount = 0
 
     def setupProperties(self, headerText, elementInfo, elementDict):
         """Creates the set of editable properties for the given element"""
@@ -307,11 +311,22 @@ class PropertiesPanel(DirectObject):
         self.updateCanvasSize()
 
     def refreshProperties(self):
+        if self.isRefreshing:
+            return
+        self.isRefreshing = True
+
         has_error = False
         error_count = 0
 
         # Set up all the properties
         try:
+
+            propertyHeader = self.mainBoxFrame["items"][0].element
+            propertyHeader["frameSize"] = VBase4(
+                -self.propertiesFrame["frameSize"][1],
+                self.propertiesFrame["frameSize"][1],
+                -10,
+                20)
 
             for header in self.headers:
                 header["frameSize"] = VBase4(self.propertiesFrame["canvasSize"][0], self.propertiesFrame["canvasSize"][1], -10, 20)
@@ -337,6 +352,8 @@ class PropertiesPanel(DirectObject):
                 # create the set of properties to edit on the main component
                 for definition in wd:
                     try:
+                        if definition not in self.definition2PropertyWidget.keys():
+                            continue
                         self.updateProperty(
                             definition,
                             self.elementInfo,
@@ -367,6 +384,8 @@ class PropertiesPanel(DirectObject):
                             # create the property for all definitions of this
                             # sub widget
                             try:
+                                if definition not in self.definition2PropertyWidget.keys():
+                                    continue
                                 self.updateProperty(
                                     definition,
                                     subWidgetElementInfo,
@@ -388,14 +407,14 @@ class PropertiesPanel(DirectObject):
         #
         # Reset property Frame framesize
         #
-        #self.updateCanvasSize()
+        self.updateCanvasSize()
 
-        self.mainBoxFrame["frameColor"] = (1,0,0,1)
+        #self.mainBoxFrame["frameColor"] = (1,0,0,1)
         self.mainBoxFrame.refresh()
+        self.isRefreshing = False
 
     def updateCanvasSize(self):
-
-        self.mainBoxFrame.refresh()
+        #self.mainBoxFrame.refresh()
 
         self.propertiesFrame["canvasSize"] = (
             self.propertiesFrame["frameSize"][0],
@@ -425,7 +444,7 @@ class PropertiesPanel(DirectObject):
                 0, 20))
 
         self.accept(section.getCollapsedEvent(), self.sectionCollapsed, extraArgs=[section])
-        self.accept(section.getExtendedEvent(), self.updateCanvasSize)
+        self.accept(section.getExtendedEvent(), self.sectionExtended, extraArgs=[section])
 
         section.toggleCollapseButton["text_scale"] = 12
         tp = section.toggleCollapseButton["text_pos"]
@@ -457,8 +476,13 @@ class PropertiesPanel(DirectObject):
 
         return section
 
+    def sectionExtended(self, section):
+        self.updateCanvasSize()
+        self.refreshProperties()
+
     def sectionCollapsed(self, section):
         self.updateCanvasSize()
+        self.refreshProperties()
 
     def updateSection(self, section):
         self.boxFrames[section].refresh()
@@ -499,6 +523,8 @@ class PropertiesPanel(DirectObject):
             return None
 
     def updateProperty(self, definition, elementInfo, element):
+        #TODO: Need to fix this
+        if definition.internalName == "font": return
         if definition.editType == WidgetDefinition.PropertyEditTypes.int:
             valueA = PropertyHelper.getValues(definition, elementInfo)
             if valueA is None and not definition.nullable:
@@ -506,7 +532,7 @@ class PropertiesPanel(DirectObject):
             if valueA is not None:
                 valueA = PropertyHelper.getFormated(valueA, True)
             width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
-            #element["width"] = width/12
+            element["width"] = width/12
             element.enterText(str(valueA))
         elif definition.editType == WidgetDefinition.PropertyEditTypes.float:
             valueA = PropertyHelper.getValues(definition, elementInfo)
@@ -515,7 +541,7 @@ class PropertiesPanel(DirectObject):
             if valueA is not None:
                 valueA = PropertyHelper.getFormated(valueA, False)
             width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
-            #element["width"] = width/12
+            element["width"] = width/12
             element.enterText(str(valueA))
         elif definition.editType == WidgetDefinition.PropertyEditTypes.bool:
             valueA = PropertyHelper.getValues(definition, elementInfo)
@@ -523,7 +549,7 @@ class PropertiesPanel(DirectObject):
         elif definition.editType == WidgetDefinition.PropertyEditTypes.text:
             text = PropertyHelper.getValues(definition, elementInfo)
             width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
-            #element["width"] = width/12
+            element["width"] = width/12
             element.enterText(text)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base2:
             n = 2
@@ -536,9 +562,8 @@ class PropertiesPanel(DirectObject):
             width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
             for i in range(len(values)):
                 value = PropertyHelper.getFormated(values[i])
-                #element[i]["width"] = width/12
+                element[i]["width"] = width/12
                 element[i].enterText(str(value))
-            #self.__createBaseNInput(definition, elementInfo, 2)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base3:
             n = 3
             values = PropertyHelper.getValues(definition, elementInfo)
@@ -550,9 +575,8 @@ class PropertiesPanel(DirectObject):
             width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
             for i in range(len(values)):
                 value = PropertyHelper.getFormated(values[i])
-                #element[i]["width"] = width/12
+                element[i]["width"] = width/12
                 element[i].enterText(str(value))
-            #self.__createBaseNInput(definition, elementInfo, 3)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.base4:
             n = 4
             values = PropertyHelper.getValues(definition, elementInfo)
@@ -564,9 +588,8 @@ class PropertiesPanel(DirectObject):
             width = DGH.getRealWidth(self.propertiesFrame) / n - SCROLLBARWIDTH / n
             for i in range(len(values)):
                 value = PropertyHelper.getFormated(values[i])
-                #element[i]["width"] = width/12
+                element[i]["width"] = width/12
                 element[i].enterText(str(value))
-            #self.__createBaseNInput(definition, elementInfo, 4)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.command:
             pass #nothing to update here
         elif definition.editType == WidgetDefinition.PropertyEditTypes.path:
@@ -574,17 +597,15 @@ class PropertiesPanel(DirectObject):
             if type(path) is not str:
                 path = ""
             width = DGH.getRealWidth(self.propertiesFrame) - SCROLLBARWIDTH
-            #element[0]["width"] = width/12
+            element[0]["width"] = width/12
             element[1](path)
-            #self.__createPathProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.optionMenu:
-            ...
-            #self.__createOptionMenuProperty(definition, elementInfo)
+            pass # nothing to update here
         elif definition.editType == WidgetDefinition.PropertyEditTypes.list:
-            ...
+            pass # TODO: Maybe need update
             #self.__createListProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.tuple:
-            ...
+            pass # TODO: Maybe need update
             #self.__createTupleProperty(definition, elementInfo)
         elif definition.editType == WidgetDefinition.PropertyEditTypes.fitToChildren:
             pass #nothing to update here
