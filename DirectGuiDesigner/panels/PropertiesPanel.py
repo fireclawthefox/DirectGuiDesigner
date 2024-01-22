@@ -57,27 +57,21 @@ class PropertiesPanel(DirectObject):
 
     def __init__(self, parent, getEditorRootCanvas, getEditorPlacer, tooltip):
         height = DGH.getRealHeight(parent)
-        self.tooltip = tooltip
         self.parent = parent
+        self.getEditorRootCanvas = getEditorRootCanvas
+        self.getEditorPlacer = getEditorPlacer
+        self.tooltip = tooltip
         self.customWidgetDefinitions = {}
         self.cachedPropertyFrames = {}
-
         self.frameCount = 0
         self.isRefreshing = False
-
         self.setupDone = False
-
-        self.box = DirectBoxSizer(
-            frameColor=(0.25, 0.25, 0.25, 1),
-            autoUpdateFrameSize=False,
-            orientation=DGG.VERTICAL)
-
-        self.sizer = DirectAutoSizer(
-            updateOnWindowResize=False,
-            parent=parent,
-            child=self.box,
-            frameColor=(0,1,0,1),
-            childUpdateSizeFunc=self.box.refresh)
+        self.mainBoxFrame = None
+        color = (
+            (0.8, 0.8, 0.8, 1),  # Normal
+            (0.9, 0.9, 1, 1),  # Click
+            (0.8, 0.8, 1, 1),  # Hover
+            (0.5, 0.5, 0.5, 1))  # Disabled
 
         self.lblHeader = DirectLabel(
             text="Properties",
@@ -86,13 +80,7 @@ class PropertiesPanel(DirectObject):
             text_fg=(1, 1, 1, 1),
             frameColor=VBase4(0, 0, 0, 0),
             )
-        self.box.addItem(self.lblHeader, skipRefresh=True)
 
-        color = (
-            (0.8, 0.8, 0.8, 1),  # Normal
-            (0.9, 0.9, 1, 1),  # Click
-            (0.8, 0.8, 1, 1),  # Hover
-            (0.5, 0.5, 0.5, 1))  # Disabled
         self.propertiesFrame = DirectScrolledFrame(
             # make the frame fit into our background frame
             frameSize=VBase4(
@@ -115,12 +103,24 @@ class PropertiesPanel(DirectObject):
             horizontalScroll_incButton_frameColor=color,
             horizontalScroll_decButton_frameColor=color,
             state=DGG.NORMAL)
-        self.box.addItem(self.propertiesFrame)
+
+        self.box = DirectBoxSizer(
+            frameColor=(0.25, 0.25, 0.25, 1),
+            autoUpdateFrameSize=False,
+            orientation=DGG.VERTICAL)
+
+        self.sizer = DirectAutoSizer(
+            suppressMouse=True,
+            updateOnWindowResize=False,
+            parent=parent,
+            child=self.box,
+            frameColor=(0,1,0,1))
+
         self.propertiesFrame.bind(DGG.MWDOWN, self.scroll, [self.scrollSpeedDown])
         self.propertiesFrame.bind(DGG.MWUP, self.scroll, [self.scrollSpeedUp])
 
-        self.getEditorRootCanvas = getEditorRootCanvas
-        self.getEditorPlacer = getEditorPlacer
+        self.box.addItem(self.lblHeader, skipRefresh=True)
+        self.box.addItem(self.propertiesFrame)
 
     def setCustomWidgetDefinitions(self,customWidgetDefinitions):
         self.customWidgetDefinitions = customWidgetDefinitions
@@ -131,26 +131,28 @@ class PropertiesPanel(DirectObject):
         the frame upwards"""
         if self.propertiesFrame.verticalScroll.isHidden():
             return
-
         self.propertiesFrame.verticalScroll.scrollStep(scrollStep)
+
+    def getScrollBarWidth(self):
+        if self.propertiesFrame.verticalScroll.isHidden():
+            return 0
+        return SCROLLBARWIDTH
 
     def resizeFrame(self):
         """Refreshes the sizer and recalculates the framesize to fit the parents
         frame size"""
         self.sizer.refresh()
         self.propertiesFrame["frameSize"] = (
-                self.parent["frameSize"][0], self.parent["frameSize"][1],
-                self.parent["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.parent["frameSize"][3])
+                self.box["frameSize"][0], self.box["frameSize"][1],
+                self.box["frameSize"][2]+DGH.getRealHeight(self.lblHeader), self.box["frameSize"][3])
 
-        if hasattr(self, "mainBoxFrame"):
+        if self.setupDone:
             self.propertiesFrame["canvasSize"] = (
                 self.propertiesFrame["frameSize"][0],
-                self.propertiesFrame["frameSize"][1]-SCROLLBARWIDTH,
+                self.propertiesFrame["frameSize"][1]-self.getScrollBarWidth(),
                 self.mainBoxFrame.bounds[2],
                 0)
 
-        if self.setupDone and not taskMgr.hasTaskNamed("updatePropPanel"):
-            #taskMgr.doMethodLater(0.1, self.refreshProperties, "updatePropPanel", extraArgs=[])
             self.frameCount += 1
             if self.frameCount % 16 == 0:
                 self.refreshProperties()
@@ -158,12 +160,9 @@ class PropertiesPanel(DirectObject):
 
     def setupProperties(self, headerText, elementInfo, elementDict):
         """Creates the set of editable properties for the given element"""
-        if taskMgr.hasTaskNamed("updatePropPanel"):
-            taskMgr.remove("updatePropPanel")
-        self.ignoreAll()
-        self.headerText = headerText
         self.elementInfo = elementInfo
         self.elementDict = elementDict
+        self.headerText = headerText
 
         if self.elementInfo in self.cachedPropertyFrames.keys():
             self.mainBoxFrame = self.cachedPropertyFrames[self.elementInfo][0]
@@ -409,16 +408,13 @@ class PropertiesPanel(DirectObject):
         #
         self.updateCanvasSize()
 
-        #self.mainBoxFrame["frameColor"] = (1,0,0,1)
         self.mainBoxFrame.refresh()
         self.isRefreshing = False
 
     def updateCanvasSize(self):
-        #self.mainBoxFrame.refresh()
-
         self.propertiesFrame["canvasSize"] = (
             self.propertiesFrame["frameSize"][0],
-            self.propertiesFrame["frameSize"][1]-SCROLLBARWIDTH,
+            self.propertiesFrame["frameSize"][1]-self.getScrollBarWidth(),
             self.mainBoxFrame.bounds[2],
             0)
         self.propertiesFrame.setCanvasSize()
@@ -487,9 +483,11 @@ class PropertiesPanel(DirectObject):
     def updateSection(self, section):
         self.boxFrames[section].refresh()
         fs = self.boxFrames[section]["frameSize"]
-        section["frameSize"] = (fs[0], fs[1]-SCROLLBARWIDTH, fs[2]-section["headerheight"], fs[3])
+        section["frameSize"] = (fs[0], fs[1], fs[2]-section["headerheight"], fs[3])
         section.updateFrameSize()
         section.setCollapsed()
+        section.updateFrameSize()
+        section.toggleCollapseButton["text_pos"] = (DGH.getRealLeft(section)+0.2, DGH.getRealTop(section)-section['headerheight']/2.0)
 
     def createProperty(self, definition, elementInfo):
         if definition.editType == WidgetDefinition.PropertyEditTypes.int:
@@ -615,7 +613,6 @@ class PropertiesPanel(DirectObject):
     def clear(self):
         if not hasattr(self, "mainBoxFrame"): return
         if self.mainBoxFrame is not None:
-            #self.mainBoxFrame.destroy()
             self.mainBoxFrame.hide()
 
     def __createInbetweenHeader(self, description):
